@@ -133,12 +133,11 @@
   },
   "__edge_ssr_module_mapping__": {},
   "__entry_css_files__": {
+    "/Users/cosmokaat/dev/bkmk-next/frontend/src/app/page": [
+      "static/css/_app-client_node_modules_pnpm_next_13_2_4_biqbaboplfbrettd7655fr4n2y_node_modules_next_font_g-d233cc.css"
+    ],
     "/Users/cosmokaat/dev/bkmk-next/frontend/src/app/layout": [
       "static/css/_app-client_src_app_globals_css.css"
-    ],
-    "/Users/cosmokaat/dev/bkmk-next/frontend/src/app/page": [
-      "static/css/_app-client_src_app_page_module_css.css",
-      "static/css/_app-client_node_modules_pnpm_next_13_2_4_biqbaboplfbrettd7655fr4n2y_node_modules_next_font_g-d233cc.css"
     ]
   },
   "/Users/cosmokaat/dev/bkmk-next/frontend/node_modules/.pnpm/next@13.2.4_biqbaboplfbrettd7655fr4n2y/node_modules/next/dist/client/components/app-router.js": {
@@ -357,13 +356,6 @@
     "name": "default",
     "async": false
   },
-  "/Users/cosmokaat/dev/bkmk-next/frontend/src/app/globals.css#": {
-    "id": "null",
-    "name": "",
-    "chunks": [
-      "static/css/_app-client_src_app_globals_css.css"
-    ]
-  },
   "/Users/cosmokaat/dev/bkmk-next/frontend/node_modules/.pnpm/next@13.2.4_biqbaboplfbrettd7655fr4n2y/node_modules/next/font/google/target.css?{\"path\":\"src/app/page.tsx\",\"import\":\"Inter\",\"arguments\":[{\"subsets\":[\"latin\"]}],\"variableName\":\"inter\"}#": {
     "id": "null",
     "name": "",
@@ -371,11 +363,11 @@
       "static/css/_app-client_node_modules_pnpm_next_13_2_4_biqbaboplfbrettd7655fr4n2y_node_modules_next_font_g-d233cc.css"
     ]
   },
-  "/Users/cosmokaat/dev/bkmk-next/frontend/src/app/page.module.css#": {
+  "/Users/cosmokaat/dev/bkmk-next/frontend/src/app/globals.css#": {
     "id": "null",
     "name": "",
     "chunks": [
-      "static/css/_app-client_src_app_page_module_css.css"
+      "static/css/_app-client_src_app_globals_css.css"
     ]
   }
 }
