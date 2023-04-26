@@ -20,15 +20,28 @@
 // });
 
 
-// Require the framework and instantiate it
 const fastify = require('fastify')({ logger: true });
+const cors = require('@fastify/cors');
 
-// Declare a route
-fastify.get('/', async (request, reply) => {
-  return { hello: 'world' }
+fastify.register(cors, {
+  origin: 'http://localhost:3000',
+});
+
+fastify.register(require('@fastify/mysql'), {
+  connectionString: 'mysql://root:Naghammadi1984+@localhost:3306/bkmk'
+});
+
+fastify.get('/', (request, reply) => {
+  fastify.mysql.query(
+    'DESCRIBE user;',
+    null,
+    function onResult (err, result) {
+      // return err || result;
+      reply.send(err || result);
+    }
+  )
 })
 
-// Run the server!
 const start = async () => {
   try {
     await fastify.listen({ port: 3000 })
