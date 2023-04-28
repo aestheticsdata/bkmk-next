@@ -8,10 +8,5 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@fastify/cors": "^8.2.1",
-    "@fastify/mysql": "^4.1.0",
-    "fastify": "^4.14.1"
-  }
+  "license": "ISC"
 }
