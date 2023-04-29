@@ -14,13 +14,17 @@ const Hello = () => {
   useEffect(() => {
     const getHello = async () => {
       const res = await request("/users/hello");
-      setHello(res.data.hello);
+      setHello(res.data);
     }
     getHello();
   }, []);
 
+  useEffect(() => {
+    console.log("hello value from api", hello);
+  }, [hello]);
+
   return (
-    <div>{hello}</div>
+    <div>ABC  {hello}  DEF</div>
   )
 }
 
