@@ -1,13 +1,18 @@
 const config = {
-  CORS_ORIGIN:"http://localhost:3000",
-  MYSQL_LOCAL_URL:"mysql://root:Naghammadi1984+@localhost:3306/bkmk",
+  HOST: "localhost",
+  DB: "bkmk",
+  DB_USER: "root",
+  DB_PASSWORD: "Naghammadi1984+",
+  PORT: 3101,
+  CORS_ORIGIN: "http://localhost:3100",
+  // MYSQL_LOCAL_URL: "mysql://root:Naghammadi1984+@localhost:3306/bkmk",
 };
 
 module.exports = {
   apps : [{
     name: 'bkmk',
     // script: 'apiserver/src/server.js',
-    script: 'server.js',
+    script: 'src/server.js',
     env_dev: {
       PROD: false,
       NODE_ENV: "dev",

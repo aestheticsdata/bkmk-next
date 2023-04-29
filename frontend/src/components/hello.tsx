@@ -13,7 +13,7 @@ const Hello = () => {
 
   useEffect(() => {
     const getHello = async () => {
-      const res = await request("/hello");
+      const res = await request("/users/hello");
       setHello(res.data.hello);
     }
     getHello();
