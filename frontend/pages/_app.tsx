@@ -1,5 +1,6 @@
 'use client';
 
+import Head from 'next/head';
 import '../styles/globals.css';
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -23,6 +24,9 @@ const BKMK_App = ({ Component, pageProps: { ...pageProps } }: BKMK) => {
 
   return (
     <div className="bg-grey1">
+      <Head>
+        <link rel="shortcut icon" href="/images/favicon.ico" />
+      </Head>
       <QueryClientProvider client={queryClient}>
         {
           Component.auth ? (
