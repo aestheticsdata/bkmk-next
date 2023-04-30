@@ -34,7 +34,7 @@ module.exports = {
         addSpending: "rgb(26,58,12)",
         menuItem: "rgb(155, 220, 255)",
         addSpendingHover: "rgb(58,172,249)",
-        spendingItemHover: "rgb(165, 236, 255)",
+        spendingItemHover: "rgb(198,255,165)",
         spendingActionHover: "rgb(42,112,164)",
         initialAmountWeekly: "rgb(155, 220, 255)",
         initialAmount: "rgb(44, 129, 212)",

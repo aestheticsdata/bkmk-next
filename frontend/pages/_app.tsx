@@ -5,10 +5,11 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-// import { useAuthStore } from "@auth/store/authStore";
+import { useAuthStore } from "@auth/store/authStore";
 
 import type { NextComponentType } from "next";
 import type { AppProps } from 'next/app';
+import type { AuthType } from "@auth/store/authStore";
 
 
 type BKMK = AppProps & {
@@ -41,23 +42,22 @@ const BKMK_App = ({ Component, pageProps: { ...pageProps } }: BKMK) => {
 function Auth({ children }: { children: JSX.Element }) {
   const [authorized, setAuthorized] = useState(false);
   const router = useRouter();
-  // const pfaToken = useAuthStore((state) => state.token);
+  const bkmkToken = useAuthStore((state: AuthType) => state.token);
 
   useEffect(() => {
     authCheck();
   }, []);
 
   const authCheck = () => {
-    // if (pfaToken) {
-    //   setAuthorized(true);
-    // } else {
-    //   setAuthorized(false);
-    //   router.push("/login");
-    // }
+    if (bkmkToken) {
+      setAuthorized(true);
+    } else {
+      setAuthorized(false);
+      router.push("/login");
+    }
   };
 
-  // return (authorized && children) || <div>Redirecting ...</div>;
-  return children;
+  return (authorized && children) || <div>Redirecting ...</div>;
 }
 
 export default BKMK_App;

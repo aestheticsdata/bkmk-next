@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 import {
   useEffect,
   useState
 } from "react";
-import useRequestHelper from "@/helpers/useRequestHelper";
+import useRequestHelper from "@helpers/useRequestHelper";
 
 
 const Hello = () => {
