@@ -1,5 +1,3 @@
-'use client';
-
 import Head from 'next/head';
 import '../styles/globals.css';
 import { useRouter } from "next/router";
@@ -8,9 +6,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useAuthStore } from "@auth/store/authStore";
 
+// !!!! fontawesome is broken with  Head and favicon of NextJS
+// see this workaround: https://github.com/vercel/next.js/issues/20682#issuecomment-770565613
+import { config as fontawesomeConfig } from '@fortawesome/fontawesome-svg-core';
+import '@fortawesome/fontawesome-svg-core/styles.css';
+fontawesomeConfig.autoAddCss = false;
+/////////////////////////////////////////////////////////////////////////////////////////////
+
 import type { NextComponentType } from "next";
 import type { AppProps } from 'next/app';
 import type { AuthType } from "@auth/store/authStore";
+
 
 
 type BKMK = AppProps & {
@@ -24,9 +30,12 @@ const BKMK_App = ({ Component, pageProps: { ...pageProps } }: BKMK) => {
 
   return (
     <div className="bg-grey1">
+      {/*!!!! fontawesome is broken with  Head and favicon of NextJS*/}
+      {/*see this workaround: https://github.com/vercel/next.js/issues/20682#issuecomment-770565613*/}
       <Head>
         <link rel="shortcut icon" href="/images/favicon.ico" />
       </Head>
+      {/*/////////////////////////////////////////////////////////////////////////////////////////////*/}
       <QueryClientProvider client={queryClient}>
         {
           Component.auth ? (
