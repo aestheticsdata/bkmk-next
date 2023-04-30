@@ -29,7 +29,7 @@ const NavBar = () => {
     <div className={`flex md:flex-row fixed ${token ? "h-32" : "h-14"} md:h-14 w-screen items-center justify-start bg-blueNavy text-white z-50`}>
       {isWindowResponsive &&
         <div className="mx-4">
-          <FontAwesomeIcon icon={faBookBookmark} size="lg" />
+          <FontAwesomeIcon icon={faBookBookmark} size="xl" color="lime"/>
         </div>
       }
       {token ? (

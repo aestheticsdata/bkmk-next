@@ -20,13 +20,13 @@ module.exports = async (req, res, next) => {
   }
 
   const sqlUser = `
-    SELECT * FROM Users
+    SELECT * FROM user
     WHERE email="${email}";
   `;
   dbConnection.query(
     sqlUser,
     (err, users) => {
-      if (users.length > 0) { return next(createError(500, 'Email already exists')); }
+      if (users?.length > 0) { return next(createError(500, 'Email already exists')); }
 
       const newUser = {
         name,
@@ -44,19 +44,15 @@ module.exports = async (req, res, next) => {
             if (err) console.error('There was an error during hash', err);
             else {
               newUser.password = hash;
-              console.log("registerDate", format(new Date(registerDate), "yyyy-MM-dd HH:mm:ss"));
               const sqlCreateUser = `
-                INSERT INTO Users (name, password, email, registerDate, language, baseCurrency)
-                VALUES (${newUser.name}", "${newUser.password}", "${newUser.email}", "${format(new Date(registerDate), "yyyy-MM-dd HH:mm:ss")}", "fr", "EUR");`;
+                INSERT INTO user (name, password, email, registerDate)
+                VALUES ("${newUser.name}", "${newUser.password}", "${newUser.email}", "${format(new Date(registerDate), 'yyyy-MM-dd')}");`;
               dbConnection.query(
                 sqlCreateUser,
                 () => {
                   signIn(res, {
-                    ID: newUser.ID,
                     name: newUser.name,
                     email: newUser.email,
-                    language: "fr",
-                    baseCurrency: "EUR",
                   });
                 }
               );
