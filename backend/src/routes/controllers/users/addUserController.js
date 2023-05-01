@@ -45,7 +45,7 @@ module.exports = async (req, res, next) => {
             else {
               newUser.password = hash;
               const sqlCreateUser = `
-                INSERT INTO user (name, password, email, registerDate)
+                INSERT INTO user (name, password, email, register_date)
                 VALUES ("${newUser.name}", "${newUser.password}", "${newUser.email}", "${format(new Date(registerDate), 'yyyy-MM-dd')}");`;
               dbConnection.query(
                 sqlCreateUser,

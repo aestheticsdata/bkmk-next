@@ -7,7 +7,7 @@ CREATE TABLE user (
     name         VARCHAR(20) NOT NULL,
     password     VARCHAR(60) NOT NULL,
     email        VARCHAR(250) NOT NULL UNIQUE,
-    registerDate DATE NOT NULL
+    register_date DATE NOT NULL
 );
 
 CREATE TABLE category (
