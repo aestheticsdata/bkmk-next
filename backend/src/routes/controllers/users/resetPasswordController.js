@@ -30,7 +30,7 @@ module.exports = async (req, res, next) => {
   sendSmtpEmail.replyTo = { "email":"hxf.finance@gmail.com", "name":"HXF Finance" };
 
   const sqlUser = `
-    SELECT * FROM Users
+    SELECT * FROM user
     WHERE email="${email}";
   `;
 
@@ -47,7 +47,7 @@ module.exports = async (req, res, next) => {
               if (err) console.error('There was an error during hash', err);
               else {
                 const sqlUserUpdatePassword = `
-                  UPDATE Users
+                  UPDATE user
                   SET password="${hash}"
                   WHERE email="${email}";
                 `;

@@ -14,7 +14,7 @@ module.exports = async (req, res, next) => {
 
   // Check for existing user
   const sqlUser = `
-    SELECT * FROM Users
+    SELECT * FROM user
     WHERE email="${email}";
   `;
 
