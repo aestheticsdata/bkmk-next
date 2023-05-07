@@ -1,7 +1,12 @@
+import { useRouter } from "next/router";
+import { useEffect } from "react";
+
 const Home = () => {
-  return (
-    <div>index file</div>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push("/bookmarks");
+  }, []);
 };
 
 Home.auth = true;

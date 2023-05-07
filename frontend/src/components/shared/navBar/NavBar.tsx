@@ -1,5 +1,4 @@
 import { useRouter } from "next/router";
-import { useAuthStore } from "@auth/store/authStore";
 // import DatePickerWrapper from "@components/datePickerWrapper/DatePickerWrapper";
 // import useGlobalStore from "@components/shared/globalStore";
 import UserMenu from "@components/shared/navBar/userMenu/UserMenu";
@@ -7,9 +6,12 @@ import { ROUTES } from "@components/shared/config/constants";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookBookmark } from "@fortawesome/free-solid-svg-icons";
 import useIsWindowResponsive from "@components/shared/helpers/useIsWindowResponsive";
+import { useAuthStore } from "@auth/store/authStore";
+
+import type { AuthType } from "@auth/store/authStore";
 
 const NavBar = () => {
-  const token = useAuthStore((state) => state.token);
+  const token = useAuthStore((state: AuthType) => state.token);
   // const { isCalendarVisible } = useGlobalStore();
   const router = useRouter();
   const isWindowResponsive = useIsWindowResponsive();
@@ -35,8 +37,8 @@ const NavBar = () => {
       {token ? (
         <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 space-x-5 items-center justify-between font-ubuntu w-full">
           <div className="flex space-x-4">
-            {isWindowResponsive && getLinkItem(ROUTES.spendings)}
-            {isWindowResponsive && getLinkItem(ROUTES.categories)}
+            {isWindowResponsive && getLinkItem(ROUTES.bookmarks)}
+            {isWindowResponsive && getLinkItem(ROUTES.bookmarksCreation)}
             {/*{isCalendarVisible && <DatePickerWrapper />}*/}
           </div>
           <div className="flex">
