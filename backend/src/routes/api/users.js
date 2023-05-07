@@ -1,14 +1,12 @@
 const router = require('express').Router();
 const signInController = require('../controllers/users/signInController');
 const addUserController = require('../controllers/users/addUserController');
-const helloController = require('../controllers/users/helloController');
 // const resetPasswordController = require('../controllers/users/resetPasswordController');
 const catchAsync = require('../../../../frontend/src/utils/catchAsync');
 
 
 router.post('/', catchAsync(signInController));
 router.post('/add', catchAsync(addUserController));
-router.get('/hello', catchAsync(helloController));
 // router.post('/resetpassword', catchAsync(resetPasswordController));
 
 module.exports = router;

@@ -8,7 +8,7 @@ interface User {
   language: string;
 }
 
-interface UserStore {
+export interface UserStore {
   user: User | null;
   setUser: (u: User | null) => void;
 }

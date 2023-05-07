@@ -1,11 +1,11 @@
 import { useRouter } from "next/router";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBookBookmark } from "@fortawesome/free-solid-svg-icons";
 // import DatePickerWrapper from "@components/datePickerWrapper/DatePickerWrapper";
 // import useGlobalStore from "@components/shared/globalStore";
 import UserMenu from "@components/shared/navBar/userMenu/UserMenu";
-import { ROUTES } from "@components/shared/config/constants";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBookBookmark } from "@fortawesome/free-solid-svg-icons";
 import useIsWindowResponsive from "@components/shared/helpers/useIsWindowResponsive";
+import { ROUTES } from "@components/shared/config/constants";
 import { useAuthStore } from "@auth/store/authStore";
 
 import type { AuthType } from "@auth/store/authStore";

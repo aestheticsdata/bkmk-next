@@ -1,13 +1,14 @@
 import Layout from "@src/components/shared/Layout";
+import Bookmarks from "@components/bookmarks/Bookmarks";
 
-const Bookmarks = () => {
+const BookmarksPage = () => {
   return (
     <Layout>
-      <div>Bookmarks</div>
+      <Bookmarks />
     </Layout>
   )
 }
 
-Bookmarks.auth = true;
+BookmarksPage.auth = true;
 
-export default Bookmarks;
+export default BookmarksPage;
