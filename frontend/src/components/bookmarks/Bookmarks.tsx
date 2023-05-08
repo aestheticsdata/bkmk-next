@@ -1,8 +1,6 @@
 import { useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
-import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
+import Stars from "@components/bookmarks/stars";
 
 import type { Bookmark } from "@components/bookmarks/interfaces";
 
@@ -24,23 +22,7 @@ const Bookmarks = () => {
               {bookmark.original_url}
             </div>
             <div>{bookmark.notes}</div>
-            {bookmark.stars && (
-              <div className="flex">
-                {[...Array(bookmark.stars)].map((_, i) => (
-                    <div className="text-pink-600" key={i+200}>
-                      <FontAwesomeIcon icon={faStar} />
-                    </div>
-                  ))
-                }
-                {[...Array(5 - bookmark.stars)].map((_, i) => (
-                  <div className="text-pink-600" key={i+200}>
-                    <FontAwesomeIcon icon={faStarRegular} />
-                  </div>
-                ))
-                }
-              </div>
-              )
-            }
+            {bookmark.stars && <Stars count={bookmark.stars} />}
           </div>
         ))
       }
