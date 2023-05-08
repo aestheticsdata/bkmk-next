@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
-import Stars from "@components/bookmarks/stars";
+import Stars from "@components/bookmarks/Stars";
 
-import type { Bookmark } from "@components/bookmarks/interfaces";
+import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
 const Bookmarks = () => {
   const { bookmarks, isLoading } = useBookmarks();
