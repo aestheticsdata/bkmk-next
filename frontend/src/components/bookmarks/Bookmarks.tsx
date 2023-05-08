@@ -16,11 +16,12 @@ const Bookmarks = () => {
       {isLoading && <div>loading...</div>}
       {bookmarks?.length > 0 &&
         bookmarks.map((bookmark: Bookmark) => (
-          <div className="flex justify-between items-center bg-blue-300 w-11/12 text-sm" key={bookmark.id}>
+          <div className="flex justify-between items-center bg-blue-300 w-11/12 text-xs" key={bookmark.id}>
             <div>{bookmark.title}</div>
             <div className="bg-yellow-500">
               {bookmark.original_url}
             </div>
+            <div>{bookmark.priority}</div>
             <div>{bookmark.notes}</div>
             {bookmark.stars && <Stars count={bookmark.stars} />}
           </div>
