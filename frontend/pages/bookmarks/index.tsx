@@ -1,7 +1,7 @@
 import Layout from "@src/components/shared/Layout";
 import Bookmarks from "@components/bookmarks/Bookmarks";
 
-const BookmarksPage = () => {
+const BookmarksPageList = () => {
   return (
     <Layout>
       <Bookmarks />
@@ -9,6 +9,6 @@ const BookmarksPage = () => {
   )
 }
 
-BookmarksPage.auth = true;
+BookmarksPageList.auth = true;
 
-export default BookmarksPage;
+export default BookmarksPageList;

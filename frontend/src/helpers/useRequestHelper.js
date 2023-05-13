@@ -1,5 +1,4 @@
 import axios from "axios";
-import _ from "lodash";
 import { useRouter } from "next/router";
 import { useAuthStore } from "@auth/store/authStore";
 
@@ -38,7 +37,7 @@ const useRequestHelper = () => {
     );
 
     const requestURL = getRequestURL(url);
-    return axiosInstance(requestURL, _.merge(options, tokenBearer));
+    return axiosInstance(requestURL, {...options, tokenBearer});
   };
 
   const request = (url, options) => {

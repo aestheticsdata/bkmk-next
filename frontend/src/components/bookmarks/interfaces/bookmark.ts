@@ -7,7 +7,7 @@ export interface Bookmark {
   title: string;
   id: number;
   user_id: number;
-  original_url?: number;
+  original_url?: string | null;
   group_id?: number;
   alarm_id?: number;
   screenshot_path?: string;
@@ -16,4 +16,5 @@ export interface Bookmark {
   notes?: string;
   stars?: number;
   date_added?: Date;
+  date_last_modified?: Date;
 }
