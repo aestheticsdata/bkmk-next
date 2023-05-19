@@ -22,17 +22,13 @@ const Bookmarks = () => {
       {isLoading && <div>loading...</div>}
       {bookmarks?.length > 0 &&
         bookmarks.map((bookmark: Bookmark) => (
-          <Link
+          <div
             key={bookmark.id}
             className={`
               flex cursor-pointer px-0.5 py-1 text-xs 
               ${bookmark.original_url ? "hover:bg-blue-300": "hover:bg-yellow-500"}
               transition-colors ease-linear duration-150
             `}
-            href={{
-              pathname: "/bookmarks/[id]",
-              query: { id: bookmark.id },
-            }}
           >
 
             {bookmark.original_url ?
@@ -48,33 +44,40 @@ const Bookmarks = () => {
               :
               <div className="pl-[20px]" />
             }
-            <div
-              title={bookmark.original_url ?? ""}
-              className="w-[400px] truncate font-semibold"
+            <Link
+              className="flex"
+              href={{
+                pathname: "/bookmarks/[id]",
+                query: { id: bookmark.id },
+              }}
             >
-                {bookmark.title}
-            </div>
-            <div className="flex justify-start mx-1 w-[70px]">
-              {bookmark.stars ?
-                <Stars count={bookmark.stars} />
-                :
-                "N/A"
-              }
-            </div>
-            <div className="w-[300px] truncate" title={bookmark.notes}>{bookmark.notes}</div>
-            <div className="flex justify-center items-center w-[80px]">
-              {
-                bookmark.priority &&
-                (new Array(getPriorityNumber(bookmark.priority))
-                  .fill(0))
-                  .map(() =>
-                    <FontAwesomeIcon icon={faArrowUpLong} />
-                  )
-              }
-            </div>
-            <div>ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}</div>
-
-          </Link>
+              <div
+                title={bookmark.original_url ?? ""}
+                className="w-[400px] truncate font-semibold"
+              >
+                  {bookmark.title}
+              </div>
+              <div className="flex justify-start mx-1 w-[70px]">
+                {bookmark.stars ?
+                  <Stars count={bookmark.stars} />
+                  :
+                  "N/A"
+                }
+              </div>
+              <div className="w-[300px] truncate" title={bookmark.notes}>{bookmark.notes}</div>
+              <div className="flex justify-center items-center w-[80px]">
+                {
+                  bookmark.priority &&
+                  (new Array(getPriorityNumber(bookmark.priority))
+                    .fill(0))
+                    .map(() =>
+                      <FontAwesomeIcon icon={faArrowUpLong} />
+                    )
+                }
+              </div>
+              <div>ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}</div>
+            </Link>
+          </div>
         ))
       }
     </div>
