@@ -33,13 +33,7 @@ const useBookmarks = () => {
 
   useEffect(() => {
     if (data) {
-      // setBookmarks(data.data.sort((a: Bookmark, b: Bookmark): Number => Number(Boolean(b.original_url)) - Number(Boolean(a.original_url)))) // Boolean trick and cast to Number for Typescript
-      setBookmarks(data.data.sort((a: Bookmark, b: Bookmark): Number => {
-        const urlA = a.original_url ?? "";
-        const urlB = b.original_url ?? "";
-        return urlA.localeCompare(urlB);
-        // return (new Date(a.date_added) - (new Date(b.date_added)));
-      }));
+      setBookmarks(data.data)
     }
   }, [data]);
 

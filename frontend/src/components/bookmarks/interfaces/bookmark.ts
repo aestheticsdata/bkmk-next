@@ -1,3 +1,5 @@
+import type { Priority } from "@helpers/getPriorityNumber";
+
 export interface Category {
   name: string;
   color: string;
@@ -11,7 +13,7 @@ export interface Bookmark {
   group_id?: number;
   alarm_id?: number;
   screenshot_path?: string;
-  priority?: number;
+  priority?: Priority;
   categories?: Category[];
   notes?: string;
   stars?: number;

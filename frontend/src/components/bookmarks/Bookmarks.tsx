@@ -3,9 +3,10 @@ import Link from 'next/link';
 import fr from "date-fns/locale/fr";
 import format from "date-fns/format";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRightToBracket} from '@fortawesome/free-solid-svg-icons';
+import { faRightToBracket, faArrowUpLong } from '@fortawesome/free-solid-svg-icons';
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import Stars from "@components/bookmarks/Stars";
+import getPriorityNumber from "@helpers/getPriorityNumber";
 
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
@@ -53,15 +54,24 @@ const Bookmarks = () => {
             >
                 {bookmark.title}
             </div>
-            <div className="flex justify-start mx-1 w-[120px]">
+            <div className="flex justify-start mx-1 w-[70px]">
               {bookmark.stars ?
                 <Stars count={bookmark.stars} />
                 :
                 "N/A"
               }
             </div>
-            <div>{bookmark.notes}</div>
-            <div>priorité: {bookmark.priority ?? "N/A"}</div>
+            <div className="w-[300px] truncate" title={bookmark.notes}>{bookmark.notes}</div>
+            <div className="flex justify-center items-center w-[80px]">
+              {
+                bookmark.priority &&
+                (new Array(getPriorityNumber(bookmark.priority))
+                  .fill(0))
+                  .map(() =>
+                    <FontAwesomeIcon icon={faArrowUpLong} />
+                  )
+              }
+            </div>
             <div>ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}</div>
 
           </Link>
