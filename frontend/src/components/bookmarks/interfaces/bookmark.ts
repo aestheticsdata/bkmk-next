@@ -14,7 +14,7 @@ export interface Bookmark {
   alarm_id?: number;
   screenshot_path?: string;
   priority?: Priority;
-  categories?: Category[];
+  categories: Category[];
   notes?: string;
   stars?: number;
   date_added?: Date;

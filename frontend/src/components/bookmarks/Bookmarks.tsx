@@ -8,7 +8,10 @@ import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import Stars from "@components/bookmarks/Stars";
 import getPriorityNumber from "@helpers/getPriorityNumber";
 
-import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
+import type {
+  Bookmark,
+  Category,
+} from "@components/bookmarks/interfaces/bookmark";
 
 const Bookmarks = () => {
   const { bookmarks, isLoading } = useBookmarks();
@@ -65,14 +68,25 @@ const Bookmarks = () => {
                 }
               </div>
               <div className="w-[300px] truncate" title={bookmark.notes}>{bookmark.notes}</div>
-              <div className="flex justify-center items-center w-[80px]">
+              <div className="flex justify-center items-center w-[80px]" title={`priorité: ${bookmark.priority || "N/A"}`}>
                 {
                   bookmark.priority &&
                   (new Array(getPriorityNumber(bookmark.priority))
                     .fill(0))
                     .map(() =>
-                      <FontAwesomeIcon icon={faArrowUpLong} />
+                      <FontAwesomeIcon icon={faArrowUpLong} key={Math.random()*10e7} />
                     )
+                }
+              </div>
+              <div className="flex w-[240px] text-tiny uppercase font-bold">
+                {
+                  bookmark.categories.length > 0 && bookmark.categories.map((c: Category) => {
+                    return (
+                      <div key={Math.random()*10e7} className={`border rounded mx-1 px-1`}>
+                        {c.name}
+                      </div>
+                    )
+                  })
                 }
               </div>
               <div>ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}</div>
