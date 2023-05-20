@@ -6,7 +6,7 @@ import type { Category } from "@components/bookmarks/interfaces/bookmark";
 const getCategoryComponent = (item: Category) => {
   return (
     <div
-      className="flex justify-center rounded border border-categoryBorder mx-1 px-1"
+      className="flex justify-center rounded uppercase mx-1 px-1"
       style={{
         color: `${adjustFontColor(item.color)}`,
         backgroundColor: `${item.color}`,

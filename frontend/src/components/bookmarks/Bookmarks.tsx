@@ -22,7 +22,7 @@ const Bookmarks = () => {
   }, [bookmarks]);
 
   return (
-    <div className="flex flex-col w-full pt-14 divide-y divide-grey2">
+    <div className="flex flex-col w-full pt-14 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
       {isLoading && <div>loading...</div>}
       {bookmarks?.length > 0 &&
         bookmarks.map((bookmark: Bookmark) => (
@@ -79,12 +79,14 @@ const Bookmarks = () => {
                     )
                 }
               </div>
-              <div className="flex w-[240px] text-tiny uppercase font-bold">
+              <div className="flex w-[240px] text-tiny font-bold">
                 { bookmark.categories.length > 0 &&
                   bookmark.categories.map((c: Category) => getCategoryComponent(c))
                 }
               </div>
-              <div>ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}</div>
+              <div className="text-xxs flex-shrink-0">
+                ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
+              </div>
             </Link>
           </div>
         ))
