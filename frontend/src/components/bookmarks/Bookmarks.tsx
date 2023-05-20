@@ -27,7 +27,7 @@ const Bookmarks = () => {
       {bookmarks?.length > 0 &&
         bookmarks.map((bookmark: Bookmark) => (
           <div
-            key={bookmark.id}
+            key={bookmark.id + Math.random()*10e8}
             className={`
               flex cursor-pointer px-0.5 py-1 text-xs 
               ${bookmark.original_url ? "hover:bg-blue-300": "hover:bg-yellow-500"}
@@ -36,7 +36,7 @@ const Bookmarks = () => {
           >
 
             {bookmark.original_url ?
-              <div className="flex justify-center hover:text-blue-500 w-[20px]">
+              <div key={Math.random()*10e9} className="flex justify-center hover:text-blue-500 w-[20px]">
                 <a
                   href={bookmark.original_url}
                   target="_blank"

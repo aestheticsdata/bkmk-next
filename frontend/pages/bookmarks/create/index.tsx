@@ -1,9 +1,10 @@
 import Layout from "@src/components/shared/Layout";
+import CreateBookmark from "@components/bookmarks/CreateBookmark";
 
 const BookmarksCreate = () => {
   return (
     <Layout>
-      <div>create</div>
+      <CreateBookmark />
     </Layout>
   );
 };
