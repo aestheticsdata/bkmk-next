@@ -12,6 +12,7 @@ import type {
   Bookmark,
   Category,
 } from "@components/bookmarks/interfaces/bookmark";
+import getCategoryComponent from "@components/common/category/Category";
 
 const Bookmarks = () => {
   const { bookmarks, isLoading } = useBookmarks();
@@ -79,14 +80,8 @@ const Bookmarks = () => {
                 }
               </div>
               <div className="flex w-[240px] text-tiny uppercase font-bold">
-                {
-                  bookmark.categories.length > 0 && bookmark.categories.map((c: Category) => {
-                    return (
-                      <div key={Math.random()*10e7} className={`border rounded mx-1 px-1`}>
-                        {c.name}
-                      </div>
-                    )
-                  })
+                { bookmark.categories.length > 0 &&
+                  bookmark.categories.map((c: Category) => getCategoryComponent(c))
                 }
               </div>
               <div>ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}</div>

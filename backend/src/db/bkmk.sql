@@ -58,12 +58,12 @@ CREATE TABLE bookmark (
 
 );
 
-CREATE TABLE bookmark_category (
-   bookmark_id INT(11),
-   category_id INT(11),
-   FOREIGN KEY (bookmark_id) REFERENCES bookmark(id),
-   FOREIGN KEY (category_id) REFERENCES category(id)
-);
+# CREATE TABLE bookmark_category (
+#    bookmark_id INT(11),
+#    category_id INT(11),
+#    FOREIGN KEY (bookmark_id) REFERENCES bookmark(id),
+#    FOREIGN KEY (category_id) REFERENCES category(id)
+# );
 
 CREATE TABLE bookmark_category (
    bookmark_id INT(11),
