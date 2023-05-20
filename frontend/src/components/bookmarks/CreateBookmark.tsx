@@ -1,5 +1,6 @@
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
+import StarsSelector from "@components/bookmarks/Stars/StarsSelector";
 
 
 const priorityOptions = [
@@ -10,7 +11,7 @@ const priorityOptions = [
 ];
 
 const CreateBookmark = () => {
-  const { register, handleSubmit, control, formState: { errors, isDirty, isValid} } = useForm({ mode: "onChange" });
+  const { register, handleSubmit, control, setValue, formState: { errors, isDirty, isValid} } = useForm({ mode: "onChange" });
 
   const onSubmit = (e) => {
     console.log("onSubmit ", e);
@@ -69,7 +70,7 @@ const CreateBookmark = () => {
           <div className="flex">
             <div>Priority</div>
             <Controller
-              name="select"
+              name="priority"
               control={control}
               render={({ field }) =>
                 <Select
@@ -78,6 +79,13 @@ const CreateBookmark = () => {
                 />
               }
             />
+          </div>
+        </div>
+
+        <div className="relative w-11/12 flex flex-col justify-center">
+          <div className="flex">
+            <div>stars</div>
+            <StarsSelector setValue={setValue} />
           </div>
         </div>
 

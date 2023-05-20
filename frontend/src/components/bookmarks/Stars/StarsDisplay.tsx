@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 
-const Stars = ({ count }: { count: number }) => {
+const StarsDisplay = ({ count }: { count: number }) => {
   const MAX_STARS = 5;
   const getStars = (starType: "solid" | "empty", i: number) => (
     <div className="text-pink-600" key={i+200}>
@@ -18,4 +18,4 @@ const Stars = ({ count }: { count: number }) => {
   )
 }
 
-export default Stars;
+export default StarsDisplay;

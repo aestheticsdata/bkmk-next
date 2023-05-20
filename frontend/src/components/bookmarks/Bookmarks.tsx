@@ -5,7 +5,7 @@ import format from "date-fns/format";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightToBracket, faArrowUpLong } from '@fortawesome/free-solid-svg-icons';
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
-import Stars from "@components/bookmarks/Stars";
+import StarsDisplay from "@components/bookmarks/Stars/StarsDisplay";
 import getPriorityNumber from "@helpers/getPriorityNumber";
 
 import type {
@@ -63,7 +63,7 @@ const Bookmarks = () => {
               </div>
               <div className="flex justify-start mx-1 w-[70px]">
                 {bookmark.stars ?
-                  <Stars count={bookmark.stars} />
+                  <StarsDisplay count={bookmark.stars} />
                   :
                   "N/A"
                 }
