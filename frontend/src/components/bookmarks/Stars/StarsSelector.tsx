@@ -1,26 +1,44 @@
+import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 
 const StarsSelector = ({ setValue }: { setValue: any }) => {
+  const [starsNumberHover, setStarsNumberHover] = useState<number>(0);
+  const [starsNumberClicked, setStarsNumberClicked] = useState<number>(0);
+
   return (
-    <>
-      <div className="hover:cursor-pointer mx-0.5" onClick={() => {setValue("stars", 1)}}>
-        <FontAwesomeIcon icon={faStarRegular} />
-      </div>
-      <div className="hover:cursor-pointer mx-0.5" onClick={() => {setValue("stars", 2)}}>
-        <FontAwesomeIcon icon={faStarRegular} />
-      </div>
-      <div className="hover:cursor-pointer mx-0.5" onClick={() => {setValue("stars", 3)}}>
-        <FontAwesomeIcon icon={faStarRegular} />
-      </div>
-      <div className="hover:cursor-pointer mx-0.5" onClick={() => {setValue("stars", 4)}}>
-        <FontAwesomeIcon icon={faStarRegular} />
-      </div>
-      <div className="hover:cursor-pointer mx-0.5" onClick={() => {setValue("stars", 5)}}>
-        <FontAwesomeIcon icon={faStarRegular} />
-      </div>
-    </>
+    <div
+      className="flex items-center h-6"
+      onMouseLeave={() => !starsNumberClicked && setStarsNumberHover(0)}
+    >
+      {
+        [1,2,3,4,5].map(i => {
+          return (
+            <div
+              key={`star-${i}`}
+              className="hover:cursor-pointer mx-0.5 text-pink-600"
+              onMouseOver={() => !starsNumberClicked && setStarsNumberHover(i)}
+              onClick={() => {
+                if (!starsNumberClicked) {
+                  setStarsNumberClicked(i);
+                  setValue("stars", i);
+                }}
+              }
+            >
+              {starsNumberClicked >= i ?
+                <FontAwesomeIcon icon={faStar} />
+                :
+                starsNumberHover >= i ?
+                  <FontAwesomeIcon icon={faStar} />
+                  :
+                  <FontAwesomeIcon icon={faStarRegular} />
+              }
+            </div>
+          )
+        })
+      }
+    </div>
   );
 }
 
