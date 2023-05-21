@@ -5,4 +5,5 @@ export const QUERY_OPTIONS = {
 
 export const QUERY_KEYS = {
   BOOKMARKS: "bookmarks",
+  CATEGORIES: "categories",
 };
