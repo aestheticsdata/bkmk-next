@@ -30,7 +30,12 @@ const useCategories = () => {
 
   useEffect(() => {
     if (data) {
-      setCategories(data.data)
+      data.data.forEach((category: any) => {
+        category.label = category.name;
+        category.value = category.id;
+      });
+      console.log("data.data après le foreach", data.data);
+      setCategories(data.data);
     }
   }, [data]);
 

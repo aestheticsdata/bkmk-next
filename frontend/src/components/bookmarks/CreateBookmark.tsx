@@ -2,27 +2,17 @@ import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
 import CreatableSelect from 'react-select/creatable';
 import StarsSelector from "@components/bookmarks/Stars/StarsSelector";
+import useCategories from "@components/common/category/services/useCategories";
 
 import type { FieldValues } from "react-hook-form";
+import { useEffect } from "react";
+import { log } from "util";
 
 const priorityOptions = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
   { value: 'highest', label: 'Highest' },
-];
-
-const categoriesList = [
-  { value: 'ocean', label: 'Ocean', color: '#00B8D9' },
-  { value: 'blue', label: 'Blue', color: '#0052CC' },
-  { value: 'purple', label: 'Purple', color: '#5243AA' },
-  { value: 'red', label: 'Red', color: '#FF5630'},
-  { value: 'orange', label: 'Orange', color: '#FF8B00' },
-  { value: 'yellow', label: 'Yellow', color: '#FFC400' },
-  { value: 'green', label: 'Green', color: '#36B37E' },
-  { value: 'forest', label: 'Forest', color: '#00875A' },
-  { value: 'slate', label: 'Slate', color: '#253858' },
-  { value: 'silver', label: 'Silver', color: '#666666' },
 ];
 
 const selectOptionsCSS = (width) => ({
@@ -55,6 +45,11 @@ const selectOptionsCSS = (width) => ({
 
 const CreateBookmark = () => {
   const { register, handleSubmit, control, setValue, formState: { errors, isDirty, isValid} } = useForm({ mode: "onChange" });
+  const { categories } = useCategories();
+
+  useEffect(() => {
+    categories.length > 0 && console.log("categories", categories);
+  }, [categories]);
 
   const onSubmit = (e: FieldValues) => {
     console.log("onSubmit ", e);
@@ -138,7 +133,7 @@ const CreateBookmark = () => {
                   isMulti
                   styles={selectOptionsCSS("500px")}
                   {...field}
-                  options={categoriesList}
+                  options={categories}
                 />
             }
             />
