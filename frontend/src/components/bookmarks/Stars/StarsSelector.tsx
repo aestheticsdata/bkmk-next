@@ -14,7 +14,7 @@ const StarsSelector = ({ setValue }: { setValue: UseFormSetValue<FieldValues> })
 
   return (
     <div
-      className="flex items-center h-6"
+      className="flex h-6"
       onMouseLeave={() => !starsNumberClicked && setStarsNumberHover(0)}
     >
       {

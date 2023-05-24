@@ -1,12 +1,12 @@
+import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
 import CreatableSelect from 'react-select/creatable';
 import StarsSelector from "@components/bookmarks/Stars/StarsSelector";
 import useCategories from "@components/common/category/services/useCategories";
+import Row from "@components/bookmarks/create/Row";
 
 import type { FieldValues } from "react-hook-form";
-import { useEffect } from "react";
-import { log } from "util";
 
 const priorityOptions = [
   { value: 'low', label: 'Low' },
@@ -56,75 +56,40 @@ const CreateBookmark = () => {
   }
 
   return (
-    <div className="pt-14">
+    <div className="flex w-full pt-14 text-sm">
       <form
-        className="flex flex-col items-center space-y-8 w-full text-formsGlobalColor"
+        className="flex flex-col pl-4 pt-4 space-y-8 w-full text-formsGlobalColor"
         onSubmit={handleSubmit(onSubmit)}
       >
-        <div className="relative w-11/12 flex flex-col justify-center">
-          <div className="flex">
-            <div>Title</div>
+        <div className=" w-11/12 flex flex-col">
+          <Row label="Title">
             <input
               type="text"
               placeholder="title"
-              className="w-full border-b border-b-formsGlobalColor bg-transparent px-2 text-xl placeholder-grey2
+              className="w-full border-b border-b-formsGlobalColor bg-transparent px-2 text-sm placeholder-grey2
                 outline-none focus:border-b-2"
               {...register("title", { required: true })}
             />
-          </div>
+          </Row>
           {errors.title &&
             <div className="flex text-red-500 justify-start">titre obligatoire</div>
           }
         </div>
 
-        <div className="relative w-11/12 flex flex-col justify-center">
-          <div className="flex">
-            <div>url</div>
+        <div className=" w-11/12 flex flex-col">
+          <Row label="Url">
             <input
               type="text"
               placeholder="url"
-              className="w-full border-b border-b-formsGlobalColor bg-transparent px-2 text-xl placeholder-grey2
+              className="w-full border-b border-b-formsGlobalColor bg-transparent px-2 text-sm placeholder-grey2
                 outline-none focus:border-b-2"
               {...register("url")}
             />
-          </div>
+          </Row>
         </div>
 
-        <div className="relative w-11/12 flex flex-col justify-center">
-          <div className="flex">
-            <div>Notes</div>
-            <textarea
-              cols={80}
-              rows={10}
-              className="bg-transparent border rounded border-formsGlobalColor
-                outline-gray-600 focus:border-none focus:outline-none focus:outline-formsGlobalColorHover
-                focus:border-none"
-              {...register("notes")}
-            />
-          </div>
-        </div>
-
-        <div className="relative w-11/12 flex flex-col justify-center">
-          <div className="flex">
-            <div>Priority</div>
-            <Controller
-              name="priority"
-              control={control}
-              render={({ field }) =>
-                <Select
-                  isClearable={true}
-                  styles={selectOptionsCSS("170px")}
-                  {...field}
-                  options={priorityOptions}
-                />
-              }
-            />
-          </div>
-        </div>
-
-        <div className="relative w-11/12 flex flex-col justify-center">
-          <div className="flex">
-            <div>catégories</div>
+        <div className="w-11/12 flex flex-col">
+          <Row label="Categories">
             <Controller
               name="categories"
               control={control}
@@ -137,26 +102,58 @@ const CreateBookmark = () => {
                 />
             }
             />
-          </div>
+          </Row>
         </div>
 
-        <div className="relative w-11/12 flex flex-col justify-center">
-          <div className="flex">
-            <div>stars</div>
+        <div className="w-11/12 flex flex-col">
+          <Row label="Notes">
+            <textarea
+              cols={80}
+              rows={10}
+              className="bg-transparent border rounded border-formsGlobalColor
+                outline-gray-600 focus:border-none focus:outline-none focus:outline-formsGlobalColorHover
+                focus:border-none"
+              {...register("notes")}
+            />
+          </Row>
+        </div>
+
+        <div className="w-11/12 flex flex-col">
+          <Row label="Stars">
             <StarsSelector setValue={setValue} />
-          </div>
+          </Row>
         </div>
 
-        <button
-          disabled={!isDirty || !isValid}
-          className={`h-8 w-11/12 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-2xl
-            font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
-            hover:shadow-login focus:outline-none
-            ${(!isDirty || !isValid) && "pointer-events-none text-grey01 border-grey01"}`
-          }
-        >
-          submit
-        </button>
+        <div className="w-11/12 flex flex-col">
+          <Row label="Priority">
+            <Controller
+              name="priority"
+              control={control}
+              render={({ field }) =>
+                <Select
+                  isClearable={true}
+                  styles={selectOptionsCSS("170px")}
+                  {...field}
+                  options={priorityOptions}
+                />
+              }
+            />
+          </Row>
+        </div>
+
+
+        <div className="w-[120px]">
+          <button
+            disabled={!isDirty || !isValid}
+            className={`h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
+              font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
+              hover:shadow-login focus:outline-none p-1
+              ${(!isDirty || !isValid) && "pointer-events-none text-grey01 border-grey01"}`
+            }
+          >
+            submit
+          </button>
+        </div>
 
       </form>
     </div>
