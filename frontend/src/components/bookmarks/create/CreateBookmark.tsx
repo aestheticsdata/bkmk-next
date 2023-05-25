@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
 import CreatableSelect from 'react-select/creatable';
@@ -9,11 +9,20 @@ import Row from "@components/bookmarks/create/Row";
 import type { FieldValues } from "react-hook-form";
 
 const priorityOptions = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-  { value: 'highest', label: 'Highest' },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "highest", label: "Highest" },
 ];
+
+const alarmOptions = [
+  { value: 1, label: "1 jour"},
+  { value: 2, label: "2 jours"},
+  { value: 5, label: "5 jours"},
+  { value: 10, label: "10 jours"},
+  { value: 15, label: "2 semaines"},
+  { value: 30, label: "1 mois"},
+]
 
 const selectOptionsCSS = (width) => ({
   // voir https://react-select.com/styles#inner-components
@@ -43,9 +52,16 @@ const selectOptionsCSS = (width) => ({
   })
 });
 
+
 const CreateBookmark = () => {
   const { register, handleSubmit, control, setValue, formState: { errors, isDirty, isValid} } = useForm({ mode: "onChange" });
   const { categories } = useCategories();
+
+  const [invoicefile, setInvoicefile] = useState<string | File>("");
+  const onFileInputChange = (e) => { setInvoicefile(e.target.files[0]) };
+  useEffect(() => {
+    console.log("invoiceFile", invoicefile);
+  }, [invoicefile]);
 
   useEffect(() => {
     categories.length > 0 && console.log("categories", categories);
@@ -58,9 +74,10 @@ const CreateBookmark = () => {
   return (
     <div className="flex w-full pt-14 text-sm">
       <form
-        className="flex flex-col pl-4 pt-4 space-y-8 w-full text-formsGlobalColor"
+        className="flex flex-col pl-4 pt-4 space-y-4 w-full text-formsGlobalColor"
         onSubmit={handleSubmit(onSubmit)}
       >
+
         <div className=" w-11/12 flex flex-col">
           <Row label="Title">
             <input
@@ -76,7 +93,7 @@ const CreateBookmark = () => {
           }
         </div>
 
-        <div className=" w-11/12 flex flex-col">
+        <div className="w-11/12 flex flex-col">
           <Row label="Url">
             <input
               type="text"
@@ -127,7 +144,7 @@ const CreateBookmark = () => {
         <div className="w-11/12 flex flex-col">
           <Row label="Priority">
             <Controller
-              name="priority"
+              name="Priority"
               control={control}
               render={({ field }) =>
                 <Select
@@ -141,18 +158,56 @@ const CreateBookmark = () => {
           </Row>
         </div>
 
+        <div className="w-11/12 flex flex-col">
+          <Row label="Reminder">
+            <Controller
+              name="Reminder"
+              control={control}
+              render={({ field }) =>
+                <Select
+                  isClearable={true}
+                  styles={selectOptionsCSS("170px")}
+                  {...field}
+                  options={alarmOptions}
+                />
+              }
+            />
+          </Row>
+        </div>
 
-        <div className="w-[120px]">
-          <button
-            disabled={!isDirty || !isValid}
-            className={`h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
-              font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
-              hover:shadow-login focus:outline-none p-1
-              ${(!isDirty || !isValid) && "pointer-events-none text-grey01 border-grey01"}`
-            }
-          >
-            submit
-          </button>
+        <div className="w-11/12 flex flex-col">
+          <Row label="Screenshot">
+            <input
+              type="file"
+              id="invoicefileinputid"
+              accept="image/jpeg"
+              onChange={onFileInputChange}
+              {...register("screenshot")}
+            />
+          </Row>
+        </div>
+
+        <div className="w-11/12 flex flex-col">
+          <Row label="Group">
+            <div>group</div>
+          </Row>
+        </div>
+
+        <div className="w-11/12 flex flex-col">
+          <Row label="">
+            <div className="w-[120px]">
+              <button
+                disabled={!isDirty || !isValid}
+                className={`h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
+                  font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
+                  hover:shadow-login focus:outline-none p-1
+                  ${(!isDirty || !isValid) && "pointer-events-none text-grey01 border-grey01"}`
+                }
+              >
+                Submit
+              </button>
+            </div>
+          </Row>
         </div>
 
       </form>
