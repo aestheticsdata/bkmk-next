@@ -54,18 +54,31 @@ const selectOptionsCSS = (width) => ({
 
 
 const CreateBookmark = () => {
-  const { register, handleSubmit, control, setValue, formState: { errors, isDirty, isValid} } = useForm({ mode: "onChange" });
+  const { register, handleSubmit, control, setValue, watch, formState: { errors, isDirty, isValid} } = useForm({ mode: "onChange" });
+  const watchImageFile = watch("screenshot");
   const { categories } = useCategories();
 
-  const [invoicefile, setInvoicefile] = useState<string | File>("");
-  const onFileInputChange = (e) => { setInvoicefile(e.target.files[0]) };
+  const [screenshotFile, setScreenshotFile] = useState<string>("");
+  // const onFileInputChange = (e) => { setInvoicefile(e.target.files[0]) };
   useEffect(() => {
-    console.log("invoiceFile", invoicefile);
-  }, [invoicefile]);
+    console.log("screenshotFile", screenshotFile);
+  }, [screenshotFile]);
 
   useEffect(() => {
     categories.length > 0 && console.log("categories", categories);
   }, [categories]);
+
+  useEffect(() => {
+    // console.log("watchImageFile", watchImageFile);
+    if (watchImageFile && watchImageFile.length > 0) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshotFile(reader.result.toString());
+      }
+      console.log("watchImageFile", watchImageFile[0])
+      reader.readAsDataURL(watchImageFile[0]);
+    }
+  }, [watchImageFile]);
 
   const onSubmit = (e: FieldValues) => {
     console.log("onSubmit ", e);
@@ -177,13 +190,15 @@ const CreateBookmark = () => {
 
         <div className="w-11/12 flex flex-col">
           <Row label="Screenshot">
-            <input
-              type="file"
-              id="invoicefileinputid"
-              accept="image/jpeg"
-              onChange={onFileInputChange}
-              {...register("screenshot")}
-            />
+            <>
+              <input
+                type="file"
+                id="screnshotFileInputID"
+                accept="image/jpeg"
+                {...register("screenshot")}
+              />
+              {screenshotFile && <img src={screenshotFile} />}
+            </>
           </Row>
         </div>
 
