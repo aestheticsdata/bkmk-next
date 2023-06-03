@@ -59,21 +59,16 @@ const CreateBookmark = () => {
   const { categories } = useCategories();
 
   const [screenshotFile, setScreenshotFile] = useState<string>("");
-  // const onFileInputChange = (e) => { setInvoicefile(e.target.files[0]) };
-  useEffect(() => {
-    console.log("screenshotFile", screenshotFile);
-  }, [screenshotFile]);
 
   useEffect(() => {
     categories.length > 0 && console.log("categories", categories);
   }, [categories]);
 
   useEffect(() => {
-    // console.log("watchImageFile", watchImageFile);
     if (watchImageFile && watchImageFile.length > 0) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setScreenshotFile(reader.result.toString());
+        setScreenshotFile(reader.result!.toString());
       }
       console.log("watchImageFile", watchImageFile[0])
       reader.readAsDataURL(watchImageFile[0]);
@@ -197,7 +192,7 @@ const CreateBookmark = () => {
                 accept="image/jpeg"
                 {...register("screenshot")}
               />
-              {screenshotFile && <img src={screenshotFile} />}
+              {screenshotFile && <img src={screenshotFile} width="320" />}
             </>
           </Row>
         </div>

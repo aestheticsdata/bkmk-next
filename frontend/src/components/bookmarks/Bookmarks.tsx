@@ -27,7 +27,7 @@ const Bookmarks = () => {
       {bookmarks?.length > 0 &&
         bookmarks.map((bookmark: Bookmark) => (
           <div
-            key={bookmark.id + Math.random()*10e8}
+            key={`${bookmark.id}-${bookmark.title}`}
             className={`
               flex cursor-pointer px-0.5 py-1 text-xs 
               ${bookmark.original_url ? "hover:bg-blue-300": "hover:bg-yellow-500"}
@@ -36,7 +36,7 @@ const Bookmarks = () => {
           >
 
             {bookmark.original_url ?
-              <div key={Math.random()*10e9} className="flex justify-center hover:text-blue-500 w-[20px]">
+              <div className="flex justify-center hover:text-blue-500 w-[20px]">
                 <a
                   href={bookmark.original_url}
                   target="_blank"
@@ -74,8 +74,11 @@ const Bookmarks = () => {
                   bookmark.priority &&
                   (new Array(getPriorityNumber(bookmark.priority))
                     .fill(0))
-                    .map(() =>
-                      <FontAwesomeIcon icon={faArrowUpLong} key={Math.random()*10e7} />
+                    .map((_, idx) =>
+                      <FontAwesomeIcon
+                        icon={faArrowUpLong}
+                        key={`${bookmark.id}-${bookmark.title}-${bookmark.priority}-${idx}`}
+                      />
                     )
                 }
               </div>
