@@ -5,6 +5,7 @@ import CreatableSelect from 'react-select/creatable';
 import StarsSelector from "@components/bookmarks/Stars/StarsSelector";
 import useCategories from "@components/common/category/services/useCategories";
 import Row from "@components/bookmarks/create/Row";
+import useBookmarks from "@components/bookmarks/services/useBookmarks";
 
 import type { FieldValues } from "react-hook-form";
 
@@ -54,15 +55,19 @@ const selectOptionsCSS = (width) => ({
 
 
 const CreateBookmark = () => {
-  const { register, handleSubmit, control, setValue, watch, formState: { errors, isDirty, isValid} } = useForm({ mode: "onChange" });
-  const watchImageFile = watch("screenshot");
+  const { register, handleSubmit, control, setValue, watch, formState: { errors, isDirty, isValid} } = useForm({
+    mode: "onChange",
+    defaultValues: {
+      categories: [],
+      priority: null,
+      reminder: null,
+    },
+  });
+  const watchImageFile: unknown = watch("screenshot");
   const { categories } = useCategories();
+  const { createBookmark } = useBookmarks();
 
   const [screenshotFile, setScreenshotFile] = useState<string>("");
-
-  useEffect(() => {
-    categories.length > 0 && console.log("categories", categories);
-  }, [categories]);
 
   useEffect(() => {
     if (watchImageFile && watchImageFile.length > 0) {
@@ -70,13 +75,24 @@ const CreateBookmark = () => {
       reader.onloadend = () => {
         setScreenshotFile(reader.result!.toString());
       }
-      console.log("watchImageFile", watchImageFile[0])
       reader.readAsDataURL(watchImageFile[0]);
     }
   }, [watchImageFile]);
 
   const onSubmit = (e: FieldValues) => {
-    console.log("onSubmit ", e);
+    const formData = new FormData();
+    for (const name in e) {
+      if (name === "screenshot" && name.length > 1) {
+        formData.append("screenshot", e[name][0])
+      } else if (name === "categories") {
+        formData.append(name, JSON.stringify(e[name]));
+      } else {
+        formData.append(name, e[name]);
+      }
+    }
+    const entries = formData.entries();
+    const data = Object.fromEntries(entries);
+    createBookmark.mutate(data);
   }
 
   return (
@@ -152,7 +168,7 @@ const CreateBookmark = () => {
         <div className="w-11/12 flex flex-col">
           <Row label="Priority">
             <Controller
-              name="Priority"
+              name="priority"
               control={control}
               render={({ field }) =>
                 <Select
@@ -169,7 +185,7 @@ const CreateBookmark = () => {
         <div className="w-11/12 flex flex-col">
           <Row label="Reminder">
             <Controller
-              name="Reminder"
+              name="reminder"
               control={control}
               render={({ field }) =>
                 <Select

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import {
   useQuery,
-  // useMutation,
-  // useQueryClient
+  useMutation,
+  // useQueryClient,
 } from "@tanstack/react-query";
 import useRequestHelper from "@helpers/useRequestHelper";
 import { useUserStore } from "@auth/store/userStore";
@@ -16,7 +16,6 @@ const useBookmarks = () => {
   const userID = useUserStore((state: UserStore) => state.user!.id);
   const { privateRequest } = useRequestHelper();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-
 
   const getBookmarks = async () => {
     try {
@@ -37,9 +36,30 @@ const useBookmarks = () => {
     }
   }, [data]);
 
+  const createBookmarkService = async (bookmark: Bookmark) => {
+    return privateRequest("/bookmarks/add", {
+      method: "POST",
+      data: bookmark,
+      headers: {"Content-Type": "multipart/form-data"},
+    });
+  };
+
+  const createBookmark = useMutation((bookmark: any) => {
+    console.log("WTF bookmark", bookmark);
+    // return createBookmarkService({
+    //   userID,
+    //   ...bookmark,
+    // });
+    return createBookmarkService(bookmark);
+  }, {
+    onSuccess: () => {console.log("bookmark creation success")},
+    onError: ((e) => {console.log("errot creating bookmark", e)}),
+  });
+
   return {
     bookmarks,
     isLoading,
+    createBookmark,
   };
 }
 

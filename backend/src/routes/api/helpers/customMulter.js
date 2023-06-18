@@ -3,48 +3,26 @@ const {
   access,
   mkdir,
 } = require('fs').promises;
-const { uploadPath } = require('../../controllers/spendings/helpers/constants');
-const { format } = require('date-fns');
-const dateFormat = 'yyyy-MM-dd';
+const { uploadPath } = require('../../controllers/bookmarks/helpers/constants');
 
 
 const stringToHyphen = s => s.replaceAll(' ', '-');
 
 const storage = multer.diskStorage({
+  // req.decode.id from checkToken middlewre for user id
   destination: async function (req, file, cb) {
-    const userDir = uploadPath + req.body.userID;
+    const userDir = uploadPath + req.decoded.id;
 
     try {
       await access(userDir);
     } catch (err) {
-      await mkdir(uploadPath + req.body.userID);
+      await mkdir(uploadPath + req.decoded.id);
     } finally {
       cb(null, userDir);
     }
   },
   filename: function (req, file, cb) {
-    // could have used req.decode.id from checkToken middlewre for user id
-    // but here frontend send userID in req.body
-    const {
-      itemType,
-      date,
-      dateFrom,
-      label,
-    } = req.body;
-
-    let fileName = '';
-
-    switch (itemType) {
-      case 'recurring':
-        fileName = 'recurring-' + stringToHyphen(label) + '-' + format(new Date(dateFrom), dateFormat);
-        break;
-      case 'spending':
-        fileName = 'spending-' + stringToHyphen(label) + '-' + format(new Date(date), dateFormat);
-        break;
-      default:
-        break;
-    }
-
+    const fileName = `screenshot-${stringToHyphen(req.body.title)}`;
     cb(null, fileName + '.' + file.originalname.split('.').pop());
   }
 });

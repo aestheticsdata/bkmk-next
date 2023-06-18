@@ -20,7 +20,10 @@ const useRequestHelper = () => {
     };
 
     const axiosInstance = axios.create({
-      headers: tokenBearer.headers,
+      headers: {
+        ...tokenBearer.headers,
+        ...(options?.headers ?? {}),
+      },
       ...config,
     });
 
