@@ -1,5 +1,8 @@
 const dbConnection = require('../../../db/dbinitmysql');
 const fs = require("fs");
+// const jimp = require('jimp');
+// const { uploadPath } = require('../../controllers/bookmarks/helpers/constants');
+const jimpHelper = require("./helpers/jimpHelper");
 
 module.exports = async (req, res) => {
   const {
@@ -22,6 +25,17 @@ module.exports = async (req, res) => {
   const cat = JSON.parse(categories)
   console.log("cat[0].name", cat[0].name);
   console.log("req.body", req.body);
+  // const screenshotFromDisk = await jimp.read(req.file.buffer);
+  // await screenshotFromDisk.resize(1024, jimp.AUTO);
+  // await screenshotFromDisk.write( uploadPath + req.decoded.id + ".");
+
+  await jimpHelper({
+    file: req.file,
+    title,
+    userID: req.decoded.id,
+  });
+
+
   res.json("new bookmark added");
 
   // fs.writeFile("./galaxie.jpg", req.file.buffer, (err) => {
