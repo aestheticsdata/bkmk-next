@@ -45,7 +45,7 @@ CREATE TABLE bookmark (
     group_id            INT(11),
     alarm_id            INT(11),
     title               VARCHAR(60) NOT NULL,
-    screenshot_path     VARCHAR(512),
+    screenshot          VARCHAR(512),
     priority            ENUM("low", "medium", "high", "highest"),
     notes               TEXT,
     stars               INT(5),

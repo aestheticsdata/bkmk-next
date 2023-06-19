@@ -21,4 +21,6 @@ module.exports = async ({ file, title, userID }) => {
   const screenshotFromDisk = await jimp.read(file.buffer);
   await screenshotFromDisk.resize(1024, jimp.AUTO);
   await screenshotFromDisk.write(userDir + "/" + fileName + "." + extension);
+
+  return `${fileName}.${extension}`;
 }
