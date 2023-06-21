@@ -22,10 +22,10 @@ module.exports = async (req, res) => {
   console.log("title", title);
   console.log("req.file", req.file);
 
-  const cat = JSON.parse(categories)
+  // const cat = JSON.parse(categories)
   const userID = req.decoded.id; // from jwt token middleware
 
-  console.log("cat[0].name", cat[0].name);
+  // console.log("cat[0].name", cat[0].name);
   console.log("req.body", req.body);
 
   const screenshotFilename = await jimpHelper({
@@ -36,14 +36,22 @@ module.exports = async (req, res) => {
 
   console.log("screenshotFilename", screenshotFilename);
 
-  /*
-  * const sqlCreateSpending = `
-      INSERT INTO Spendings (ID, userID, date, label, amount, categoryID, currency, itemType)
-      VALUES ("${uuidv1()}", "${userID}", "${date}", "${label}", "${amount}", "${newCategoryID ?? (existingCategory?.ID ?? category?.ID)}", "${currency}", "spending");
-    `;
-  * */
-
-  let urlID = null;
+  const insertInBookmark = async (urlID = null) => {
+    const sqlBookmark = `
+    INSERT INTO bookmark (url_id, user_id, title, stars, screenshot, date_added)
+    VALUES (${urlID}, ${userID}, "${title}", ${Number(stars)}, "${screenshotFilename}", "${format(new Date(), 'yyyy-MM-dd')}");
+  `;
+    dbConnection.query(
+      sqlBookmark,
+      (err) => {
+        if (err) {
+          return res.status(500).json({ msg: "error creating bookmark : " + err });
+        } else {
+          return res.status(200).json({ msg: "bookmark created" });
+        }
+      }
+    );
+  }
 
   if (url) {
     const sqlUrl = `INSERT INTO url (original) VALUES ("${url}");`;
@@ -51,12 +59,17 @@ module.exports = async (req, res) => {
       sqlUrl,
       (err, result) => {
         if (err) {
-          res.status(500).json({ msg: "error creating url entry" });
+          return res.status(500).json({ msg: "error creating url entry" });
         }
-        urlID = result.insertId;
+        const urlID = result.insertId;
+        insertInBookmark(urlID);
       }
     );
+  } else {
+    insertInBookmark();
   }
+
+
 
   if (reminder) {
 
@@ -66,21 +79,4 @@ module.exports = async (req, res) => {
 
   }
 
-  const sqlBookmark = `
-    INSERT INTO bookmark (url_id, user_id, title, screenshot, date_added)
-    VALUES (${urlID}, ${userID}, "${title}", "${screenshotFilename}", "${format(new Date(), 'yyyy-MM-dd')}");
-  `;
-
-  console.log("sqlBookmark", sqlBookmark);
-
-  dbConnection.query(
-    sqlBookmark,
-    (err) => {
-      if (err) {
-        res.status(500).json({ msg: "error creating bookmark : " + err });
-      } else {
-        res.status(200).json({ msg: "bookmark created" });
-      }
-    }
-  )
 };
