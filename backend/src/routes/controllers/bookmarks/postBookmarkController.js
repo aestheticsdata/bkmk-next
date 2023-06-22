@@ -28,13 +28,14 @@ module.exports = async (req, res) => {
   // console.log("cat[0].name", cat[0].name);
   console.log("req.body", req.body);
 
-  const screenshotFilename = await jimpHelper({
-    file: req.file,
-    title,
-    userID,
-  });
-
-  console.log("screenshotFilename", screenshotFilename);
+  let screenshotFilename = null;
+  if (req.file) {
+    screenshotFilename = await jimpHelper({
+      file: req.file,
+      title,
+      userID,
+    });
+  }
 
   if (reminder) {
 
@@ -63,7 +64,7 @@ module.exports = async (req, res) => {
 
   const sqlBookmark = `
     INSERT INTO bookmark (url_id, user_id, title, stars, screenshot, date_added)
-    VALUES (${urlID}, ${userID}, "${title}", ${Number(stars)}, "${screenshotFilename}", "${format(new Date(), 'yyyy-MM-dd')}");
+    VALUES (${urlID}, ${userID}, "${title}", ${Number(stars)}, ${typeof screenshotFilename !== 'undefined' ? `"${String(screenshotFilename)}"` : null}, "${format(new Date(), 'yyyy-MM-dd')}");
   `;
 
   try {
