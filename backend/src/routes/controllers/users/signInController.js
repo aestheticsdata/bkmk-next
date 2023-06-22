@@ -18,15 +18,15 @@ module.exports = async (req, res, next) => {
     WHERE email="${email}";
   `;
 
-  dbConnection.query(
-    sqlUser,
-    async (err, users) => {
-      if (users.length === 0) return next(createError(500, 'User does not exist'));
+  const conn = await dbConnection();
+  const [users] = await conn.execute(sqlUser);
+  await conn.end();
 
-      // Validate password
-      const isMatchPassword = await bcrypt.compare(password, users[0].password);
-      if (!isMatchPassword) return next(createError(500, 'Invalid credentials'));
-      signIn(res, users[0]);
-    }
-  )
+  if (users.length === 0) return next(createError(500, 'User does not exist'));
+
+  // Validate password
+  const isMatchPassword = await bcrypt.compare(password, users[0].password);
+  if (!isMatchPassword) return next(createError(500, 'Invalid credentials'));
+
+  signIn(res, users[0]);
 };

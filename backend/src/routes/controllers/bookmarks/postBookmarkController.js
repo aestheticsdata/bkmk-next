@@ -36,41 +36,6 @@ module.exports = async (req, res) => {
 
   console.log("screenshotFilename", screenshotFilename);
 
-  const insertInBookmark = async (urlID = null) => {
-    const sqlBookmark = `
-    INSERT INTO bookmark (url_id, user_id, title, stars, screenshot, date_added)
-    VALUES (${urlID}, ${userID}, "${title}", ${Number(stars)}, "${screenshotFilename}", "${format(new Date(), 'yyyy-MM-dd')}");
-  `;
-    dbConnection.query(
-      sqlBookmark,
-      (err) => {
-        if (err) {
-          return res.status(500).json({ msg: "error creating bookmark : " + err });
-        } else {
-          return res.status(200).json({ msg: "bookmark created" });
-        }
-      }
-    );
-  }
-
-  if (url) {
-    const sqlUrl = `INSERT INTO url (original) VALUES ("${url}");`;
-    dbConnection.query(
-      sqlUrl,
-      (err, result) => {
-        if (err) {
-          return res.status(500).json({ msg: "error creating url entry" });
-        }
-        const urlID = result.insertId;
-        insertInBookmark(urlID);
-      }
-    );
-  } else {
-    insertInBookmark();
-  }
-
-
-
   if (reminder) {
 
   }
@@ -79,4 +44,34 @@ module.exports = async (req, res) => {
 
   }
 
+
+
+  const conn = await dbConnection();
+
+  let urlID = null;
+
+  if (url) {
+    const sqlUrl = `INSERT INTO url (original) VALUES ("${url}");`;
+    try {
+      const result = await conn.execute(sqlUrl);
+      urlID = result[0].insertId;
+    } catch (err) {
+      res.status(500).json({msg: "error creating bookmark"})
+      conn.end();
+    }
+  }
+
+  const sqlBookmark = `
+    INSERT INTO bookmark (url_id, user_id, title, stars, screenshot, date_added)
+    VALUES (${urlID}, ${userID}, "${title}", ${Number(stars)}, "${screenshotFilename}", "${format(new Date(), 'yyyy-MM-dd')}");
+  `;
+
+  try {
+    await conn.execute(sqlBookmark);
+    res.status(200).json({ msg: "bookmark created" });
+  } catch (err) {
+    res.status(500).json({ msg: "error creating bookmark : " + err });
+  } finally {
+    conn.end();
+  }
 };

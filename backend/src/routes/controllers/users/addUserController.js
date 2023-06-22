@@ -19,49 +19,57 @@ module.exports = async (req, res, next) => {
     return next(createError(500, 'Please enter all fields'));
   }
 
+  const conn = await dbConnection();
+
   const sqlUser = `
     SELECT * FROM user
     WHERE email="${email}";
   `;
-  dbConnection.query(
-    sqlUser,
-    (err, users) => {
-      if (users?.length > 0) { return next(createError(500, 'Email already exists')); }
+  const [user] = await conn.execute(sqlUser);
+  if (user?.length > 0) { return next(createError(500, 'Email already exists')); }
 
-      const newUser = {
-        name,
-        email,
-        password,
-        baseCurrency,
-        registerDate,
-        language,
-      };
+  const newUser = {
+    name,
+    email,
+    password,
+    baseCurrency,
+    registerDate,
+    language,
+  };
 
-      bcrypt.genSalt(10, (err, salt) => {
-        if (err) console.error('There was an error during salt', err);
-        else {
-          bcrypt.hash(newUser.password, salt, async (err, hash) => {
-            if (err) console.error('There was an error during hash', err);
-            else {
-              newUser.password = hash;
-              const sqlCreateUser = `
-                INSERT INTO user (name, password, email, register_date)
-                VALUES ("${newUser.name}", "${newUser.password}", "${newUser.email}", "${format(new Date(registerDate), 'yyyy-MM-dd')}");`;
-              dbConnection.query(
-                sqlCreateUser,
-                () => {
-                  signIn(res, {
-                    name: newUser.name,
-                    email: newUser.email,
-                  });
-                }
-              );
-            }
-          });
+  bcrypt.genSalt(10, (err, salt) => {
+    if (err) {
+      console.error('There was an error during salt', err);
+      res.status(500).json({msg: "error adding new user : ", err});
+      conn.end();
+    } else {
+      bcrypt.hash(newUser.password, salt, async (err, hash) => {
+        if (err) {
+          console.error('There was an error during hash', err);
+          res.status(500).json({msg: "error adding new user : ", err});
+          conn.end();
+        } else {
+          newUser.password = hash;
+
+          const sqlCreateUser = `
+            INSERT INTO user (name, password, email, register_date)
+            VALUES ("${newUser.name}", "${newUser.password}", "${newUser.email}", "${format(new Date(registerDate), 'yyyy-MM-dd')}");`;
+
+          try {
+            await conn.execute(sqlCreateUser);
+            signIn(res, {
+              name: newUser.name,
+              email: newUser.email,
+            });
+          } catch (err) {
+            res.status(500).json({msg: "error adding new user : ", err});
+          } finally {
+            conn.end();
+          }
         }
       });
     }
-  )
+  });
 };
 
 

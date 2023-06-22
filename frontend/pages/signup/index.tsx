@@ -11,7 +11,9 @@ const SignUp = () => {
 
   const onSubmit = async (values: LoginValues) => {
     const { token, user } = await signupService(values);
-    await setCredentials(token, user);
+    if (token) {
+      await setCredentials(token, user);
+    }
   };
 
   return (

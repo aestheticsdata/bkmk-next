@@ -28,6 +28,10 @@ const useSignupService = () => {
         icon: "warning",
         confirmButtonText: "fermer",
       });
+      return {
+        token: null,
+        user: null,
+      }
     }
   }
 

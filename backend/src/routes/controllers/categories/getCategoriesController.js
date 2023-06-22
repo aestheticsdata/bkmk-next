@@ -6,10 +6,7 @@ module.exports = async (req, res) => {
     WHERE user_id="${req.query.userID}";
   `;
 
-  dbConnection.query(
-    sql,
-    (err, result) => {
-      res.json(result)
-    }
-  );
-}
+  const conn = await dbConnection();
+  const [rows] = conn.execute(sql);
+  res.json(rows);
+};
