@@ -1,18 +1,19 @@
 import { useEffect } from "react";
-import Link from 'next/link';
+import Link from "next/link";
 import fr from "date-fns/locale/fr";
 import format from "date-fns/format";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRightToBracket, faArrowUpLong } from '@fortawesome/free-solid-svg-icons';
+import { faRightToBracket } from "@fortawesome/free-solid-svg-icons";
+import { faImage } from "@fortawesome/free-regular-svg-icons";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import StarsDisplay from "@components/bookmarks/Stars/StarsDisplay";
-import getPriorityNumber from "@helpers/getPriorityNumber";
 
 import type {
   Bookmark,
   Category,
 } from "@components/bookmarks/interfaces/bookmark";
 import getCategoryComponent from "@components/common/category/Category";
+import PriorityDisplay from "@components/bookmarks/priority/PriorityDisplay";
 
 const Bookmarks = () => {
   const { bookmarks, isLoading } = useBookmarks();
@@ -70,21 +71,20 @@ const Bookmarks = () => {
               </div>
               <div className="w-[300px] truncate" title={bookmark.notes}>{bookmark.notes}</div>
               <div className="flex justify-center items-center w-[80px]" title={`priorité: ${bookmark.priority || "N/A"}`}>
-                {
-                  bookmark.priority &&
-                  (new Array(getPriorityNumber(bookmark.priority))
-                    .fill(0))
-                    .map((_, idx) =>
-                      <FontAwesomeIcon
-                        icon={faArrowUpLong}
-                        key={`${bookmark.id}-${bookmark.title}-${bookmark.priority}-${idx}`}
-                      />
-                    )
+                {bookmark.priority &&
+                  <PriorityDisplay priorityLevel={bookmark.priority} />
                 }
               </div>
               <div className="flex w-[240px] text-tiny font-bold">
-                { bookmark.categories.length > 0 &&
+                {bookmark.categories.length > 0 &&
                   bookmark.categories.map((c: Category) => getCategoryComponent(c))
+                }
+              </div>
+              <div className="flex w-[120px] text-xs">
+                {bookmark.screenshot &&
+                  <div>
+                    <FontAwesomeIcon icon={faImage} />
+                  </div>
                 }
               </div>
               <div className="text-xxs flex-shrink-0">

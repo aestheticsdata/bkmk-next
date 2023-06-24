@@ -8,6 +8,8 @@ import Row from "@components/bookmarks/create/Row";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
 
 import type { FieldValues } from "react-hook-form";
+import { constants } from "os";
+import priority = module
 
 const priorityOptions = [
   { value: "low", label: "Low" },
@@ -83,11 +85,11 @@ const CreateBookmark = () => {
     const formData = new FormData();
     for (const name in e) {
       if (name === "screenshot" && name.length > 1) {
-        formData.append("screenshot", e[name][0])
+        formData.append("screenshot", e[name].length > 0 ? e[name][0] : "");
       } else if (name === "categories") {
         formData.append(name, JSON.stringify(e[name]));
       } else if (name === "priority") {
-        formData.append(name, e[name].value);
+        formData.append(name, e[name] ? e[name].value : "");
       } else {
         formData.append(name, e[name]);
       }

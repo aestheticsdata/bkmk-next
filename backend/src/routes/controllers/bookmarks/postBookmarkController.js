@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
     });
   }
 
+
   const conn = await dbConnection();
 
   if (reminder) {
@@ -59,16 +60,16 @@ module.exports = async (req, res) => {
       return res.status(500).json({msg: "error creating url : " + err});
     }
   }
-
+  console.log("screenshotFilename : ", screenshotFilename);
   const sqlBookmark = `
     INSERT INTO bookmark (url_id, user_id, title, priority, stars, screenshot, date_added)
     VALUES (
       ${urlID},
       ${userID},
       "${title}",
-      "${priority}",
+      ${priority !== "" ? `"${priority}"` : null},
       ${Number(stars)},
-      ${typeof screenshotFilename !== 'undefined' ? `"${String(screenshotFilename)}"` : null},
+      ${screenshotFilename !== null ? `"${String(screenshotFilename)}"` : null},
       "${format(new Date(), 'yyyy-MM-dd')}");
   `;
 

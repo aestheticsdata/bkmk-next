@@ -8,8 +8,6 @@ const { uploadPath } = require("../../../controllers/bookmarks/helpers/constants
 const stringToHyphen = s => s.replaceAll(' ', '-');
 
 module.exports = async ({ file, title, userID }) => {
-  console.log("!!!!!!!!! ----- wtf upload path : ", uploadPath);
-  console.log("!!!!!! process.env.NODE_ENV", process.env.NODE_ENV);
   const userDir = uploadPath + userID;
   try {
     await access(userDir);
