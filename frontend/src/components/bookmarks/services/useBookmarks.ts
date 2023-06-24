@@ -21,7 +21,7 @@ const useBookmarks = () => {
     try {
       return privateRequest(`/bookmarks?userID=${userID}`);
     } catch (e) {
-      console.log("get spendings error", e);
+      console.log("get bookmarks error : ", e);
     }
   };
 
@@ -32,7 +32,7 @@ const useBookmarks = () => {
 
   useEffect(() => {
     if (data) {
-      setBookmarks(data.data)
+      setBookmarks(data.data);
     }
   }, [data]);
 
@@ -45,11 +45,6 @@ const useBookmarks = () => {
   };
 
   const createBookmark = useMutation((bookmark: any) => {
-    console.log("WTF bookmark", bookmark);
-    // return createBookmarkService({
-    //   userID,
-    //   ...bookmark,
-    // });
     return createBookmarkService(bookmark);
   }, {
     onSuccess: () => {console.log("bookmark creation success")},

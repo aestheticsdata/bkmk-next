@@ -22,7 +22,7 @@ const Bookmarks = () => {
   }, [bookmarks]);
 
   return (
-    <div className="flex flex-col w-full pt-14 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
+    <div className="flex flex-col w-full pt-20 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
       {isLoading && <div>loading...</div>}
       {bookmarks?.length > 0 &&
         bookmarks.map((bookmark: Bookmark) => (

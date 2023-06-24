@@ -1,4 +1,5 @@
-const dbConnection = require('../../../db/dbinitmysql');
+const dbConnection = require("../../../db/dbinitmysql");
+const marshallCategories = require("./helpers/marshallCategories");
 
 module.exports = async (req, res) => {
   const sql = `
@@ -16,21 +17,7 @@ module.exports = async (req, res) => {
   const [rows] = await conn.execute(sql);
   await conn.end();
 
-  rows.forEach(entry => {
-    entry.categories = [];
-    if (entry.categories_names) {
-      const categories_names = entry.categories_names.split(",");
-      const categories_colors = entry.categories_colors.split(",");
-      entry.categories = categories_names.map((c, i) => {
-        return {
-          name: c,
-          color: categories_colors[i],
-        }
-      })
-    }
-    delete entry.categories_names;
-    delete entry.categories_colors;
-  });
+  const marshalledRows = marshallCategories(rows);
 
-  res.json(rows);
+  res.json(marshalledRows);
 };
