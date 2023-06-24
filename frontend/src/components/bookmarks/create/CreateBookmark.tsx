@@ -86,6 +86,8 @@ const CreateBookmark = () => {
         formData.append("screenshot", e[name][0])
       } else if (name === "categories") {
         formData.append(name, JSON.stringify(e[name]));
+      } else if (name === "priority") {
+        formData.append(name, e[name].value);
       } else {
         formData.append(name, e[name]);
       }

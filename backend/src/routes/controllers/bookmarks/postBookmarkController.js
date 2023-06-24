@@ -38,6 +38,8 @@ module.exports = async (req, res) => {
     });
   }
 
+  const conn = await dbConnection();
+
   if (reminder) {
 
   }
@@ -45,12 +47,6 @@ module.exports = async (req, res) => {
   if (group) {
 
   }
-
-
-
-
-  const conn = await dbConnection();
-
 
   let urlID = null;
   if (url) {
@@ -65,15 +61,21 @@ module.exports = async (req, res) => {
   }
 
   const sqlBookmark = `
-    INSERT INTO bookmark (url_id, user_id, title, stars, screenshot, date_added)
-    VALUES (${urlID}, ${userID}, "${title}", ${Number(stars)}, ${typeof screenshotFilename !== 'undefined' ? `"${String(screenshotFilename)}"` : null}, "${format(new Date(), 'yyyy-MM-dd')}");
+    INSERT INTO bookmark (url_id, user_id, title, priority, stars, screenshot, date_added)
+    VALUES (
+      ${urlID},
+      ${userID},
+      "${title}",
+      "${priority}",
+      ${Number(stars)},
+      ${typeof screenshotFilename !== 'undefined' ? `"${String(screenshotFilename)}"` : null},
+      "${format(new Date(), 'yyyy-MM-dd')}");
   `;
 
   let bookmarkID;
   try {
     const bookmarkResult = await conn.execute(sqlBookmark);
     bookmarkID = bookmarkResult[0].insertId;
-    // res.status(200).json({ msg: "bookmark created" });
   } catch (err) {
     conn.end();
     return res.status(500).json({ msg: "error creating bookmark : " + err });
