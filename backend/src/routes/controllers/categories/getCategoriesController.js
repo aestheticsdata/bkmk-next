@@ -7,6 +7,6 @@ module.exports = async (req, res) => {
   `;
 
   const conn = await dbConnection();
-  const [rows] = conn.execute(sql);
+  const [rows] = await conn.execute(sql);
   res.json(rows);
 };
