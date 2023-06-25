@@ -7,7 +7,7 @@ const getCategoryComponent = (item: Category) => {
   return (
     <div
       key={`${item.name}-${item.color}`}
-      className="flex justify-center rounded uppercase mx-1 px-1"
+      className="flex justify-start rounded uppercase px-1"
       style={{
         color: `${adjustFontColor(item.color)}`,
         backgroundColor: `${item.color}`,

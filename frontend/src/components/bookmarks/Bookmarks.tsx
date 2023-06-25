@@ -20,21 +20,21 @@ const Bookmarks = () => {
   }, [bookmarks]);
 
   return (
-    <div className="flex flex-col w-full pt-20 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
+    <div className="flex flex-col w-full mt-28 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
       {isLoading && <div>loading...</div>}
       {bookmarks?.length > 0 &&
         bookmarks.map((bookmark: Bookmark) => (
           <div
             key={`${bookmark.id}-${bookmark.title}`}
             className={`
-              flex cursor-pointer px-0.5 py-1 text-xs 
+              flex cursor-pointer px-0.5 text-xs 
               ${bookmark.original_url ? "hover:bg-blue-300": "hover:bg-yellow-500"}
               transition-colors ease-linear duration-150
             `}
           >
 
             {bookmark.original_url ?
-              <div className="flex justify-center hover:text-blue-500 w-[20px]">
+              <div className="flex justify-center hover:text-blue-500 w-[20px] py-1">
                 <a
                   href={bookmark.original_url}
                   target="_blank"
@@ -53,6 +53,7 @@ const Bookmarks = () => {
                 query: { id: bookmark.id },
               }}
             >
+              <div className="flex w-full py-1">
               <div
                 title={bookmark.original_url ?? ""}
                 className="w-[400px] truncate font-semibold"
@@ -80,6 +81,7 @@ const Bookmarks = () => {
               </div>
               <div className="text-xxs flex-shrink-0">
                 ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
+              </div>
               </div>
             </Link>
           </div>

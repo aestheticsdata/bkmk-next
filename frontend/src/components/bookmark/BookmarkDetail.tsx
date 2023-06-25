@@ -58,16 +58,16 @@ const BookmarkDetail = ({ id } : { id: string }) => {
           }
 
           {bookmark.priority &&
-            <div className="text-sm">
+            <div className="text-sm py-2">
               Priorité : <PriorityDisplay priorityLevel={bookmark.priority} />
             </div>
           }
 
-          <div className="text-sm">
+          <div className="text-sm py-2">
             <Categories categories={bookmark.categories} />
           </div>
 
-          <div>
+          <div className="text-xs py-2">
             Ajouté le: {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
           </div>
         </>

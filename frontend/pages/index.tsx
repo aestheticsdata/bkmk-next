@@ -5,7 +5,7 @@ const Home = () => {
   const router = useRouter();
 
   useEffect(() => {
-    router.push("/bookmarks");
+    router.push("/bookmarks?page=0");
   }, []);
 };
 
