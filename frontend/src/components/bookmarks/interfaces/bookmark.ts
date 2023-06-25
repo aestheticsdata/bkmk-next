@@ -12,11 +12,11 @@ export interface Bookmark {
   original_url?: string | null;
   group_id?: number;
   alarm_id?: number;
-  screenshot_path?: string;
+  screenshot?: string;
   priority?: Priority;
   categories: Category[];
   notes?: string;
-  stars?: number;
+  stars: number;
   date_added?: Date;
   date_last_modified?: Date;
 }

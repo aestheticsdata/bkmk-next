@@ -1,9 +1,10 @@
 import useBookmark from "@components/bookmark/services/useBookmark";
 import { useEffect } from "react";
-import StarsDisplay from "@components/bookmarks/Stars/StarsDisplay";
-import PriorityDisplay from "@components/bookmarks/priority/PriorityDisplay";
+import StarsDisplay from "@components/common/stars/StarsDisplay";
+import PriorityDisplay from "@components/common/priority/PriorityDisplay";
+import Categories from "@components/common/category/Categories";
 
-const BookMarkDetail = ({ id } : { id: string }) => {
+const BookmarkDetail = ({ id } : { id: string }) => {
   const { isLoading, bookmark } = useBookmark(id);
 
   useEffect(() => {
@@ -18,9 +19,22 @@ const BookMarkDetail = ({ id } : { id: string }) => {
             {bookmark.title}
           </div>
 
-          {
-            bookmark.stars &&
-            <div className="py-2">
+          {bookmark.original_url &&
+            <div className="text-sm">
+              <a
+                href={bookmark.original_url}
+                className="hover:text-grey2"
+                target="_blank"
+                onClick={(e) => {e.stopPropagation()}}
+              >
+
+                {bookmark.original_url}
+              </a>
+            </div>
+          }
+
+          {bookmark.stars > 0 &&
+            <div className="py-2 text-sm">
               <StarsDisplay count={bookmark.stars} />
             </div>
           }
@@ -46,10 +60,14 @@ const BookMarkDetail = ({ id } : { id: string }) => {
               Priorité : <PriorityDisplay priorityLevel={bookmark.priority} />
             </div>
           }
+
+          <div className="text-sm">
+            <Categories categories={bookmark.categories} />
+          </div>
         </>
       }
     </div>
   )
 }
 
-export default BookMarkDetail;
+export default BookmarkDetail;

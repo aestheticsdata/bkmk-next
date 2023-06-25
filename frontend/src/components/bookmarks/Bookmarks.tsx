@@ -6,14 +6,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightToBracket } from "@fortawesome/free-solid-svg-icons";
 import { faImage } from "@fortawesome/free-regular-svg-icons";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
-import StarsDisplay from "@components/bookmarks/Stars/StarsDisplay";
+import StarsDisplay from "@components/common/stars/StarsDisplay";
+import PriorityDisplay from "@components/common/priority/PriorityDisplay";
+import Categories from "@components/common/category/Categories";
 
-import type {
-  Bookmark,
-  Category,
-} from "@components/bookmarks/interfaces/bookmark";
-import getCategoryComponent from "@components/common/category/Category";
-import PriorityDisplay from "@components/bookmarks/priority/PriorityDisplay";
+import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
 const Bookmarks = () => {
   const { bookmarks, isLoading } = useBookmarks();
@@ -75,11 +72,7 @@ const Bookmarks = () => {
                   <PriorityDisplay priorityLevel={bookmark.priority} />
                 }
               </div>
-              <div className="flex w-[240px] text-tiny font-bold">
-                {bookmark.categories.length > 0 &&
-                  bookmark.categories.map((c: Category) => getCategoryComponent(c))
-                }
-              </div>
+              <Categories categories={bookmark.categories} />
               <div className="flex w-[120px] text-xs">
                 {bookmark.screenshot &&
                   <div>

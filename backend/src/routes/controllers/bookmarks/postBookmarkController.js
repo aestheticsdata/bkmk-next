@@ -13,21 +13,16 @@ module.exports = async (req, res) => {
     stars,
     priority,
     reminder,
-    // screenshot,
     group,
   } = req.body;
 
+  console.log("fucking notes : ", notes);
+  console.log("fucking typeof notes : ", typeof notes);
+  console.log("fucking notes === string : ", notes === "");
+
   const categories = JSON.parse(categoriesString);
 
-  console.log("create bookmark");
-  console.log("title", title);
-  console.log("req.file", req.file);
-
-  // const cat = JSON.parse(categories)
   const userID = req.decoded.id; // from jwt token middleware
-
-  // console.log("cat[0].name", cat[0].name);
-  console.log("req.body", req.body);
 
   let screenshotFilename = null;
   if (req.file) {
@@ -60,14 +55,15 @@ module.exports = async (req, res) => {
       return res.status(500).json({msg: "error creating url : " + err});
     }
   }
-  console.log("screenshotFilename : ", screenshotFilename);
+
   const sqlBookmark = `
-    INSERT INTO bookmark (url_id, user_id, title, priority, stars, screenshot, date_added)
+    INSERT INTO bookmark (url_id, user_id, title, priority, notes, stars, screenshot, date_added)
     VALUES (
       ${urlID},
       ${userID},
       "${title}",
       ${priority !== "" ? `"${priority}"` : null},
+      ${notes !== "" ? `"${notes}"` : null},
       ${Number(stars)},
       ${screenshotFilename !== null ? `"${String(screenshotFilename)}"` : null},
       "${format(new Date(), 'yyyy-MM-dd')}");
@@ -82,7 +78,6 @@ module.exports = async (req, res) => {
     return res.status(500).json({ msg: "error creating bookmark : " + err });
   }
 
-  console.log("categories", categories);
   if (categories.length > 0) {
     const sqlCategories = (name, color) => `
       INSERT INTO category (name, color, user_id)
@@ -90,12 +85,9 @@ module.exports = async (req, res) => {
     `;
     const categoriesID = [];
     for (const category of categories) {
-      console.log("category --- : ", category);
       if (!category.id) {
-        console.log("la category n'a pas d'id");
         try {
           const sql = sqlCategories(category.label, generateHexColor());
-          console.log("requete sql", sql);
           const result = await conn.execute(sql);
           categoriesID.push(result[0].insertId);
         } catch (err) {
@@ -103,8 +95,6 @@ module.exports = async (req, res) => {
           return res.status(500).json({ msg: "error creating new category : " + err });
         }
       } else {
-        console.log("la categorie exite deja");
-        console.log("category", category);
         categoriesID.push(category.id);
       }
     }

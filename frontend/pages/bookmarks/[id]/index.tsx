@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import Layout from "@components/shared/Layout";
-import BookMarkDetail from "@components/bookmark";
+import BookMarkDetail from "@components/bookmark/BookmarkDetail";
 
 
 const BookmarkPageDetails = () => {

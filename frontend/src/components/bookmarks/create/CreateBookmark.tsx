@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
 import CreatableSelect from 'react-select/creatable';
-import StarsSelector from "@components/bookmarks/Stars/StarsSelector";
+import StarsSelector from "@components/common/stars/StarsSelector";
 import useCategories from "@components/common/category/services/useCategories";
 import Row from "@components/bookmarks/create/Row";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
