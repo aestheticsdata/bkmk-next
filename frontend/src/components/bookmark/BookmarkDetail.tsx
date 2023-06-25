@@ -1,5 +1,7 @@
-import useBookmark from "@components/bookmark/services/useBookmark";
 import { useEffect } from "react";
+import fr from "date-fns/locale/fr";
+import format from "date-fns/format";
+import useBookmark from "@components/bookmark/services/useBookmark";
 import StarsDisplay from "@components/common/stars/StarsDisplay";
 import PriorityDisplay from "@components/common/priority/PriorityDisplay";
 import Categories from "@components/common/category/Categories";
@@ -63,6 +65,10 @@ const BookmarkDetail = ({ id } : { id: string }) => {
 
           <div className="text-sm">
             <Categories categories={bookmark.categories} />
+          </div>
+
+          <div>
+            Ajouté le: {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
           </div>
         </>
       }

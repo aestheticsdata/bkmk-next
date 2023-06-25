@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import {
   useQuery,
   useMutation,
-  // useQueryClient,
+  useQueryClient,
 } from "@tanstack/react-query";
 import useRequestHelper from "@helpers/useRequestHelper";
 import { useUserStore } from "@auth/store/userStore";
@@ -12,7 +13,8 @@ import type { UserStore } from "@auth/store/userStore";
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
 const useBookmarks = () => {
-  // const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
+  const router = useRouter();
   const userID = useUserStore((state: UserStore) => state.user!.id);
   const { privateRequest } = useRequestHelper();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -47,7 +49,10 @@ const useBookmarks = () => {
   const createBookmark = useMutation((bookmark: any) => {
     return createBookmarkService(bookmark);
   }, {
-    onSuccess: () => {console.log("bookmark creation success")},
+    onSuccess: async () => {
+      await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+      router.push("/bookmarks");
+    },
     onError: ((e) => {console.log("errot creating bookmark", e)}),
   });
 

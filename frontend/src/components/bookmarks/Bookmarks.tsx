@@ -60,11 +60,7 @@ const Bookmarks = () => {
                   {bookmark.title}
               </div>
               <div className="flex justify-start mx-1 w-[70px]">
-                {bookmark.stars ?
-                  <StarsDisplay count={bookmark.stars} />
-                  :
-                  "N/A"
-                }
+                {bookmark.stars > 0 && <StarsDisplay count={bookmark.stars} />}
               </div>
               <div className="w-[300px] truncate" title={bookmark.notes && decodeURIComponent(bookmark.notes)}>
                 {bookmark.notes && decodeURIComponent(bookmark.notes)}
