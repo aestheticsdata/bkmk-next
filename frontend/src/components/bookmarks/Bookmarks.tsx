@@ -66,7 +66,9 @@ const Bookmarks = () => {
                   "N/A"
                 }
               </div>
-              <div className="w-[300px] truncate" title={bookmark.notes}>{bookmark.notes}</div>
+              <div className="w-[300px] truncate" title={bookmark.notes && decodeURIComponent(bookmark.notes)}>
+                {bookmark.notes && decodeURIComponent(bookmark.notes)}
+              </div>
               <div className="flex justify-center items-center w-[80px]" title={`priorité: ${bookmark.priority || "N/A"}`}>
                 {bookmark.priority &&
                   <PriorityDisplay priorityLevel={bookmark.priority} />

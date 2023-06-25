@@ -50,8 +50,8 @@ const BookmarkDetail = ({ id } : { id: string }) => {
           }
 
           {bookmark.notes &&
-            <div className="text-sm py-2">
-              {bookmark.notes}
+            <div className="text-sm py-2 w-[450px] whitespace-pre-wrap">
+              {decodeURIComponent(bookmark.notes)}
             </div>
           }
 

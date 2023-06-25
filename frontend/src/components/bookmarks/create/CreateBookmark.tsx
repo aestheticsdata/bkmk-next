@@ -90,6 +90,8 @@ const CreateBookmark = () => {
         formData.append(name, JSON.stringify(e[name]));
       } else if (name === "priority") {
         formData.append(name, e[name] ? e[name].value : "");
+      } else if (name === "notes") {
+        formData.append(name, encodeURIComponent(e[name]));
       } else {
         formData.append(name, e[name]);
       }
