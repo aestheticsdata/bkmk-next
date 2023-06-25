@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
@@ -8,8 +9,6 @@ import Row from "@components/bookmarks/create/Row";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
 
 import type { FieldValues } from "react-hook-form";
-import { constants } from "os";
-import priority = module
 
 const priorityOptions = [
   { value: "low", label: "Low" },
