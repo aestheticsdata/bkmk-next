@@ -6,6 +6,7 @@ export interface Category {
 }
 
 export interface Bookmark {
+  total_count: number;
   title: string;
   id: number;
   user_id: number;

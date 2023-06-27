@@ -34,7 +34,6 @@ const useCategories = () => {
         category.label = category.name;
         category.value = category.id;
       });
-      console.log("data.data après le foreach", data.data);
       setCategories(data.data);
     }
   }, [data]);

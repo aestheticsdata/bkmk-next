@@ -25,6 +25,10 @@ const useBookmarks = () => {
     setPage(Number(queryString.parse(window.location.search).page));
   }, []);
 
+  useEffect(() => {
+    setPage(Number(queryString.parse(window.location.search).page));
+  }, [router.query.page]);
+
   const getBookmarks = async () => {
     try {
       return privateRequest(`/bookmarks?userID=${userID}&page=${page}`);

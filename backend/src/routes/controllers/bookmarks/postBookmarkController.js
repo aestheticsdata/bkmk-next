@@ -16,10 +16,6 @@ module.exports = async (req, res) => {
     group,
   } = req.body;
 
-  console.log("fucking notes : ", notes);
-  console.log("fucking typeof notes : ", typeof notes);
-  console.log("fucking notes === string : ", notes === "");
-
   const categories = JSON.parse(categoriesString);
 
   const userID = req.decoded.id; // from jwt token middleware
@@ -32,7 +28,6 @@ module.exports = async (req, res) => {
       userID,
     });
   }
-
 
   const conn = await dbConnection();
 
