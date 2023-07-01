@@ -3,7 +3,7 @@ import CreateBookmark from "@components/bookmarks/create/CreateBookmark";
 
 const BookmarksCreate = () => {
   return (
-    <Layout>
+    <Layout displayTools={false}>
       <CreateBookmark />
     </Layout>
   );

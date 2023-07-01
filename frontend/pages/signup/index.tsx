@@ -17,7 +17,7 @@ const SignUp = () => {
   };
 
   return (
-    <Layout isLogin>
+    <Layout isLogin displayTools={false}>
       <div className="flex flex-col items-center w-96 space-y-8 mt-28 rounded bg-gradient-to-br from-lime-300 to-emerald-500 py-3 font-smooch shadow-lg">
         <SharedLoginForm
           onSubmit={onSubmit}
