@@ -16,7 +16,7 @@ import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 const useBookmarks = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const userID = useUserStore((state: UserStore) => state.user!.id);
+  const userID = useUserStore((state: UserStore) => state.user?.id);
   const { privateRequest } = useRequestHelper();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [page, setPage] = useState(-1);
