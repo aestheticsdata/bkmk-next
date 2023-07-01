@@ -22,6 +22,7 @@ const Bookmarks = () => {
   return (
     <div className="flex flex-col w-full mt-28 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
       {isLoading && <div>loading...</div>}
+      {bookmarks?.length === 0 && !isLoading && <div>Pas de bookmarks</div>}
       {bookmarks?.length > 0 && !isLoading &&
         bookmarks.map((bookmark: Bookmark) => (
           <div

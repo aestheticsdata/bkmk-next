@@ -210,7 +210,7 @@ const CreateBookmark = () => {
               <input
                 type="file"
                 id="screnshotFileInputID"
-                accept="image/jpeg"
+                accept="image/jpeg, image/png"
                 {...register("screenshot")}
               />
               {screenshotFile && <img src={screenshotFile} width="320" />}
