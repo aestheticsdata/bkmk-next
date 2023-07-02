@@ -32,8 +32,17 @@ const Pagination = () => {
       >
         <FontAwesomeIcon icon={faLeftLong} />
       </button>
-      <div className="flex text-sm w-[40px] justify-center select-none">
-        {page}/{lastPage}
+      <div className="flex text-sm w-[50px] justify-center select-none space-x-0.5 px-0.5">
+        <div>{page}</div>
+        <div>/</div>
+        <div
+          className="hover:text-white cursor-pointer rounded hover:bg-grey1 px-0.5 rounded-2xl"
+          onClick={() => {
+            router.push({ query: { page: lastPage } });
+          }}
+        >
+          {lastPage}
+        </div>
       </div>
       <button
         className="cursor-pointer hover:text-grey2 transition-colors ease-linear duration-150 disabled:text-grey1"

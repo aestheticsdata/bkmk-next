@@ -33,8 +33,7 @@ module.exports = async (req, res) => {
 
   let alarmID = null;
   if (reminder) {
-    console.log("oh yeah reminder : ", reminder);
-    const sqlAlarm = `
+    const sqlAlarm = ` 
       INSERT INTO alarm (frequency, date_added) VALUES (${reminder}, "${format(new Date(), 'yyyy-MM-dd')}");
     `;
 
