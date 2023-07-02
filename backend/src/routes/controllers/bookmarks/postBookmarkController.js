@@ -31,8 +31,19 @@ module.exports = async (req, res) => {
 
   const conn = await dbConnection();
 
+  let alarmID = null;
   if (reminder) {
+    console.log("oh yeah reminder : ", reminder);
+    const sqlAlarm = `
+      INSERT INTO alarm (frequency, date_added) VALUES (${reminder}, "${format(new Date(), 'yyyy-MM-dd')}");
+    `;
 
+    try {
+      const result = await conn.execute(sqlAlarm);
+      alarmID = result[0].insertId;
+    } catch (err) {
+      return res.status(500).json({ msg: "error creating alarm : " + err });
+    }
   }
 
   if (group) {
@@ -52,10 +63,11 @@ module.exports = async (req, res) => {
   }
 
   const sqlBookmark = `
-    INSERT INTO bookmark (url_id, user_id, title, priority, notes, stars, screenshot, date_added)
+    INSERT INTO bookmark (url_id, user_id, alarm_id, title, priority, notes, stars, screenshot, date_added)
     VALUES (
       ${urlID},
       ${userID},
+      ${alarmID},
       "${title}",
       ${priority !== "" ? `"${priority}"` : null},
       ${notes !== "" ? `"${notes}"` : null},

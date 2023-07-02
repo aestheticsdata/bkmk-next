@@ -91,6 +91,8 @@ const CreateBookmark = () => {
         formData.append(name, e[name] ? e[name].value : "");
       } else if (name === "notes") {
         formData.append(name, encodeURIComponent(e[name]));
+      } else if (name === "reminder") {
+        e[name] && formData.append(name, e[name].value)
       } else {
         formData.append(name, e[name]);
       }

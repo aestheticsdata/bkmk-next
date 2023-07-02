@@ -5,6 +5,7 @@ import format from "date-fns/format";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightToBracket } from "@fortawesome/free-solid-svg-icons";
 import { faImage } from "@fortawesome/free-regular-svg-icons";
+import { faBell } from "@fortawesome/free-regular-svg-icons";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import StarsDisplay from "@components/common/stars/StarsDisplay";
 import PriorityDisplay from "@components/common/priority/PriorityDisplay";
@@ -77,6 +78,13 @@ const Bookmarks = () => {
                 {bookmark.screenshot &&
                   <div>
                     <FontAwesomeIcon icon={faImage} />
+                  </div>
+                }
+              </div>
+              <div className="flex w-[120px] text-xs">
+                {bookmark.alarm_id &&
+                  <div>
+                    <FontAwesomeIcon icon={faBell} />
                   </div>
                 }
               </div>

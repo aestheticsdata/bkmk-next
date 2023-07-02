@@ -32,7 +32,9 @@ const Pagination = () => {
       >
         <FontAwesomeIcon icon={faLeftLong} />
       </button>
-      <div className="flex text-sm w-[40px] justify-center">{page}/{lastPage}</div>
+      <div className="flex text-sm w-[40px] justify-center select-none">
+        {page}/{lastPage}
+      </div>
       <button
         className="cursor-pointer hover:text-grey2 transition-colors ease-linear duration-150 disabled:text-grey1"
         onClick={() => {
