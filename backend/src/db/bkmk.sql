@@ -51,6 +51,7 @@ CREATE TABLE bookmark (
     stars               INT(5),
     date_added          DATE NOT NULL,
     date_last_modified  DATE,
+    active              TINYINT DEFAULT 1,
     FOREIGN KEY (group_id)  REFERENCES bookmark_group(id),
     FOREIGN KEY (url_id)    REFERENCES url(id),
     FOREIGN KEY (user_id)   REFERENCES user(id),
