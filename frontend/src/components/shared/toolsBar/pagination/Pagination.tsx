@@ -21,7 +21,7 @@ const Pagination = () => {
   }, [bookmarks]);
 
   return (
-    <div className="flex w-[100px] space-x-2 items-center">
+    <div className="flex w-[100px] space-x-2 items-center px-4">
       <button
         className="cursor-pointer hover:text-grey2 transition-colors ease-linear duration-150 disabled:text-grey1"
         onClick={() => {

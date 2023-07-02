@@ -14,7 +14,7 @@ const BookmarkDetail = ({ id } : { id: string }) => {
   }, [bookmark]);
 
   return (
-    <div className="flex flex-col pt-16 pl-2">
+    <div className="flex flex-col pt-24 pl-2">
       {bookmark &&
         <>
           <div className="font-semibold py-2">
@@ -25,7 +25,7 @@ const BookmarkDetail = ({ id } : { id: string }) => {
             <div className="text-sm">
               <a
                 href={bookmark.original_url}
-                className="hover:text-grey2"
+                className="hover:text-white hover:underline transition-colors ease-linear duration-50"
                 target="_blank"
                 onClick={(e) => {e.stopPropagation()}}
               >
