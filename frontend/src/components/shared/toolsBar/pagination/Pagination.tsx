@@ -39,6 +39,7 @@ const Pagination = () => {
           className="hover:text-white cursor-pointer rounded hover:bg-grey1 px-0.5 rounded-2xl"
           onClick={() => {
             router.push({ query: { page: lastPage } });
+            setPage(lastPage);
           }}
         >
           {lastPage}
