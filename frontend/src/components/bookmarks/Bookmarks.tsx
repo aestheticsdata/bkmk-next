@@ -4,8 +4,7 @@ import fr from "date-fns/locale/fr";
 import format from "date-fns/format";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightToBracket } from "@fortawesome/free-solid-svg-icons";
-import { faImage } from "@fortawesome/free-regular-svg-icons";
-import { faBell } from "@fortawesome/free-regular-svg-icons";
+import { faImage, faBell, faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import StarsDisplay from "@components/common/stars/StarsDisplay";
 import PriorityDisplay from "@components/common/priority/PriorityDisplay";
@@ -14,7 +13,7 @@ import Categories from "@components/common/category/Categories";
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
 const Bookmarks = () => {
-  const { bookmarks, isLoading } = useBookmarks();
+  const { bookmarks, deleteBookmark, isLoading } = useBookmarks();
 
   useEffect(() => {
     console.log("bookmarks", bookmarks);
@@ -56,41 +55,51 @@ const Bookmarks = () => {
               }}
             >
               <div className="flex w-full py-1">
-              <div
-                title={bookmark.original_url ?? ""}
-                className="w-[400px] truncate font-semibold"
-              >
-                  {bookmark.title}
-              </div>
-              <div className="flex justify-start mx-1 w-[70px]">
-                {bookmark.stars > 0 && <StarsDisplay count={bookmark.stars} />}
-              </div>
-              <div className="w-[300px] truncate" title={bookmark.notes && decodeURIComponent(bookmark.notes)}>
-                {bookmark.notes && decodeURIComponent(bookmark.notes)}
-              </div>
-              <div className="flex justify-center items-center w-[80px]" title={`priorité: ${bookmark.priority || "N/A"}`}>
-                {bookmark.priority &&
-                  <PriorityDisplay priorityLevel={bookmark.priority} />
-                }
-              </div>
-              <Categories categories={bookmark.categories} />
-              <div className="flex w-[120px] text-xs">
-                {bookmark.screenshot &&
-                  <div>
-                    <FontAwesomeIcon icon={faImage} />
-                  </div>
-                }
-              </div>
-              <div className="flex w-[120px] text-xs">
-                {bookmark.alarm_id &&
-                  <div>
-                    <FontAwesomeIcon icon={faBell} />
-                  </div>
-                }
-              </div>
-              <div className="text-xxs flex-shrink-0">
-                ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
-              </div>
+                <div
+                  title={bookmark.original_url ?? ""}
+                  className="w-[400px] truncate font-semibold"
+                >
+                    {bookmark.title}
+                </div>
+                <div className="flex justify-start mx-1 w-[70px]">
+                  {bookmark.stars > 0 && <StarsDisplay count={bookmark.stars} />}
+                </div>
+                <div className="w-[300px] truncate" title={bookmark.notes && decodeURIComponent(bookmark.notes)}>
+                  {bookmark.notes && decodeURIComponent(bookmark.notes)}
+                </div>
+                <div className="flex justify-center items-center w-[80px]" title={`priorité: ${bookmark.priority || "N/A"}`}>
+                  {bookmark.priority &&
+                    <PriorityDisplay priorityLevel={bookmark.priority} />
+                  }
+                </div>
+                <Categories categories={bookmark.categories} />
+                <div className="flex w-[120px] text-xs">
+                  {bookmark.screenshot &&
+                    <div>
+                      <FontAwesomeIcon icon={faImage} />
+                    </div>
+                  }
+                </div>
+                <div className="flex w-[120px] text-xs">
+                  {bookmark.alarm_id &&
+                    <div>
+                      <FontAwesomeIcon icon={faBell} />
+                    </div>
+                  }
+                </div>
+                <div className="flex justify-center text-xxs w-[160px]">
+                  ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
+                </div>
+                <div
+                  className="flex w-[30px] mx-1 text-grey1"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    deleteBookmark.mutate(bookmark.id);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faTrashAlt} className="hover:text-black" />
+                </div>
               </div>
             </Link>
           </div>

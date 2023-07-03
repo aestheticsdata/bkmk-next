@@ -66,13 +66,29 @@ const useBookmarks = () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
       router.push("/bookmarks?page=0");
     },
-    onError: ((e) => {console.log("errot creating bookmark", e)}),
+    onError: ((e) => {console.log("error creating bookmark", e)}),
   });
+
+  const deleteBookmarkService = async (id: number ) => {
+    return privateRequest(`/bookmarks/${id}`, {
+      method: "DELETE",
+    });
+  };
+
+  const deleteBookmark = useMutation((id: number) => {
+    return deleteBookmarkService(id);
+  }, {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+    },
+    onError: ((e) => {console.log("error deleting bookmark", e)}),
+  })
 
   return {
     bookmarks,
     isLoading,
     createBookmark,
+    deleteBookmark,
   };
 }
 
