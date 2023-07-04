@@ -52,11 +52,11 @@ CREATE TABLE bookmark (
     date_added          DATE NOT NULL,
     date_last_modified  DATE,
     active              TINYINT DEFAULT 1,
+    date_inactive       DATE,
     FOREIGN KEY (group_id)  REFERENCES bookmark_group(id),
     FOREIGN KEY (url_id)    REFERENCES url(id),
     FOREIGN KEY (user_id)   REFERENCES user(id),
     FOREIGN KEY (alarm_id)  REFERENCES alarm(id)
-
 );
 
 # CREATE TABLE bookmark_category (
