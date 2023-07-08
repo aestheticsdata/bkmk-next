@@ -4,13 +4,20 @@ import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { UseFormSetValue, FieldValues } from "react-hook-form";
 
-const StarsSelector = ({ setValue }: { setValue: UseFormSetValue<FieldValues> }) => {
+const StarsSelector = ({ setValue, watch }: { setValue: UseFormSetValue<FieldValues>, watch: any }) => {
   const [starsNumberHover, setStarsNumberHover] = useState<number>(0);
   const [starsNumberClicked, setStarsNumberClicked] = useState<number>(0);
+  const [mouseOut, setMouseOut] = useState<boolean>(true);
+  const watchStarsChange = watch("stars");
 
   useEffect(() => {
     setValue("stars", 0);
   }, []);
+
+  useEffect(() => {
+    console.log("stars change : ", watchStarsChange);
+    watchStarsChange && setStarsNumberClicked(watchStarsChange);
+  }, [watchStarsChange]);
 
   return (
     <div
@@ -23,18 +30,17 @@ const StarsSelector = ({ setValue }: { setValue: UseFormSetValue<FieldValues> })
             <div
               key={`star-${i}`}
               className="hover:cursor-pointer mx-0.5 text-pink-600"
-              onMouseOver={() => !starsNumberClicked && setStarsNumberHover(i)}
+              onMouseOver={() => {setMouseOut(false); setStarsNumberHover(i)}}
+              onMouseOut={() => {setMouseOut(true)}}
               onClick={() => {
-                if (!starsNumberClicked) {
-                  setStarsNumberClicked(i);
-                  setValue("stars", i);
-                }}
-              }
+                setStarsNumberClicked(i);
+                setValue("stars", i);
+              }}
             >
               {starsNumberClicked >= i ?
                 <FontAwesomeIcon icon={faStar} />
                 :
-                starsNumberHover >= i ?
+                !mouseOut && starsNumberHover >= i ?
                   <FontAwesomeIcon icon={faStar} />
                   :
                   <FontAwesomeIcon icon={faStarRegular} />

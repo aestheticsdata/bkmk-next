@@ -7,6 +7,7 @@ import StarsSelector from "@components/common/stars/StarsSelector";
 import useCategories from "@components/common/category/services/useCategories";
 import Row from "@components/bookmarks/create/Row";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
+import useBookmark from "@components/bookmark/services/useBookmark";
 
 import type { FieldValues } from "react-hook-form";
 
@@ -55,8 +56,8 @@ const selectOptionsCSS = (width) => ({
 });
 
 
-const CreateBookmark = () => {
-  const { register, handleSubmit, control, setValue, watch, formState: { errors, isDirty, isValid} } = useForm({
+const CreateBookmark = ({ id }) => {
+  const { register, handleSubmit, control, setValue,reset, watch, formState: { errors, isDirty, isValid} } = useForm({
     mode: "onChange",
     defaultValues: {
       categories: [],
@@ -67,8 +68,21 @@ const CreateBookmark = () => {
   const watchImageFile: unknown = watch("screenshot");
   const { categories } = useCategories();
   const { createBookmark } = useBookmarks();
+  const { bookmark } = useBookmark(id);
 
   const [screenshotFile, setScreenshotFile] = useState<string>("");
+
+  useEffect(() => {
+    console.log("oh yeah bookmark !!!", bookmark);
+    if (bookmark) {
+      reset({
+        title: bookmark.title,
+        url: bookmark.original_url,
+        notes: decodeURIComponent(bookmark.notes ?? ""),
+      });
+      setValue("stars", bookmark.stars);
+    }
+  }, [bookmark, setValue]);
 
   useEffect(() => {
     if (watchImageFile && watchImageFile.length > 0) {
@@ -168,7 +182,7 @@ const CreateBookmark = () => {
 
         <div className="w-11/12 flex flex-col">
           <Row label="Stars">
-            <StarsSelector setValue={setValue} />
+            <StarsSelector setValue={setValue} watch={watch} />
           </Row>
         </div>
 

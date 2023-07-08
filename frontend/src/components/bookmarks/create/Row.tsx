@@ -8,7 +8,7 @@ const Row = ({ label, children }: RowProps) =>
     <div className="w-[100px]">
       {label}
     </div>
-    <div className="w-[500px]">
+    <div className="w-[900px]">
       {children}
     </div>
   </div>

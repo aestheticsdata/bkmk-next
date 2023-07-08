@@ -1,19 +1,27 @@
 import { useEffect } from "react";
+import { useRouter } from "next/router";
 import Link from "next/link";
 import fr from "date-fns/locale/fr";
 import format from "date-fns/format";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightToBracket } from "@fortawesome/free-solid-svg-icons";
-import { faImage, faBell, faTrashAlt } from "@fortawesome/free-regular-svg-icons";
+import {
+  faImage,
+  faBell,
+  faTrashAlt,
+} from "@fortawesome/free-regular-svg-icons";
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import StarsDisplay from "@components/common/stars/StarsDisplay";
 import PriorityDisplay from "@components/common/priority/PriorityDisplay";
 import Categories from "@components/common/category/Categories";
 
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
+import { ROUTES } from "@components/shared/config/constants";
 
 const Bookmarks = () => {
   const { bookmarks, deleteBookmark, isLoading } = useBookmarks();
+  const router = useRouter();
 
   useEffect(() => {
     console.log("bookmarks", bookmarks);
@@ -91,7 +99,7 @@ const Bookmarks = () => {
                   ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
                 </div>
                 <div
-                  className="flex w-[30px] mx-1 text-grey1"
+                  className="flex w-[20px] mx-1 text-grey1"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -99,6 +107,16 @@ const Bookmarks = () => {
                   }}
                 >
                   <FontAwesomeIcon icon={faTrashAlt} className="hover:text-black" />
+                </div>
+                <div
+                  className="flex w-[20px] mx-1 text-grey1"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(`${ROUTES.bookmarksEdition.path}/${bookmark.id}`);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faPencilAlt} className="hover:text-black" />
                 </div>
               </div>
             </Link>

@@ -52,7 +52,7 @@ const BookmarkDetail = ({ id } : { id: string }) => {
           }
 
           {bookmark.notes &&
-            <div className="text-sm py-2 w-[450px] whitespace-pre-wrap italic">
+            <div className="text-sm py-2 w-[550px] whitespace-pre-wrap italic">
               {decodeURIComponent(bookmark.notes)}
             </div>
           }
