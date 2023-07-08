@@ -52,14 +52,14 @@ const useBookmarks = () => {
   }, [data]);
 
   const createBookmarkService = async (bookmark: Bookmark) => {
-    return privateRequest("/bookmarks/add", {
+    return privateRequest("/bookmarks", {
       method: "POST",
       data: bookmark,
       headers: {"Content-Type": "multipart/form-data"},
     });
   };
 
-  const createBookmark = useMutation((bookmark: any) => {
+  const createBookmark = useMutation((bookmark: Bookmark) => {
     return createBookmarkService(bookmark);
   }, {
     onSuccess: async () => {
@@ -82,13 +82,31 @@ const useBookmarks = () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
     },
     onError: ((e) => {console.log("error deleting bookmark", e)}),
-  })
+  });
+
+  const editBookmarkService = async (bookmark: Bookmark) => {
+    return privateRequest(`/bookmarks`, {
+      method: "PUT",
+      data: bookmark,
+      headers: {"Content-Type": "multipart/form-data"},
+    })
+  }
+  const editBookmark = useMutation((bookmark: Bookmark) => {
+    return editBookmarkService(bookmark);
+  }, {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+      router.push("/bookmarks?page=0");
+    },
+    onError: ((e) => {console.log("error editing bookmark", e)}),
+  });
 
   return {
     bookmarks,
     isLoading,
     createBookmark,
     deleteBookmark,
+    editBookmark,
   };
 }
 

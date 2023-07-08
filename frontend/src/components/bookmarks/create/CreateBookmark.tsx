@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
-import CreatableSelect from 'react-select/creatable';
+import CreatableSelect from "react-select/creatable";
 import StarsSelector from "@components/common/stars/StarsSelector";
 import useCategories from "@components/common/category/services/useCategories";
 import Row from "@components/bookmarks/create/Row";
@@ -67,8 +67,9 @@ const CreateBookmark = ({ id }) => {
   });
   const watchImageFile: unknown = watch("screenshot");
   const { categories } = useCategories();
-  const { createBookmark } = useBookmarks();
+  const { createBookmark, editBookmark } = useBookmarks();
   const { bookmark } = useBookmark(id);
+  const [initialCategories, setinitialCategories] = useState();
 
   const [screenshotFile, setScreenshotFile] = useState<string>("");
 
@@ -81,6 +82,16 @@ const CreateBookmark = ({ id }) => {
         notes: decodeURIComponent(bookmark.notes ?? ""),
       });
       setValue("stars", bookmark.stars);
+      let tempCategories = [];
+      if (bookmark.categories.length > 0) {
+        bookmark.categories.forEach((category) => {
+          tempCategories.push({
+            label: category.name,
+            value: category.id,
+          });
+        })
+        setinitialCategories(tempCategories);
+      }
     }
   }, [bookmark, setValue]);
 
@@ -110,10 +121,14 @@ const CreateBookmark = ({ id }) => {
       } else {
         formData.append(name, e[name]);
       }
+
+      if (id) {
+        formData.append("id", id);
+      }
     }
     const entries = formData.entries();
     const data = Object.fromEntries(entries);
-    createBookmark.mutate(data);
+    id ? editBookmark.mutate(data) : createBookmark.mutate(data);
   }
 
   return (
@@ -161,6 +176,7 @@ const CreateBookmark = ({ id }) => {
                   styles={selectOptionsCSS("500px")}
                   {...field}
                   options={categories}
+                  value={id && initialCategories}
                 />
             }
             />

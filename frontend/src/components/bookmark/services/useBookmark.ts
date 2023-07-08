@@ -22,6 +22,7 @@ const useBookmark = (bookmarkID: string) => {
 
   const { data, isLoading } = useQuery([QUERY_KEYS.BOOKMARK, bookmarkID], getBookmark, {
     retry: false,
+    enabled: !!bookmarkID,
     ...QUERY_OPTIONS,
   });
 

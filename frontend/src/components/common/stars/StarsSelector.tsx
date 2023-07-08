@@ -15,7 +15,6 @@ const StarsSelector = ({ setValue, watch }: { setValue: UseFormSetValue<FieldVal
   }, []);
 
   useEffect(() => {
-    console.log("stars change : ", watchStarsChange);
     watchStarsChange && setStarsNumberClicked(watchStarsChange);
   }, [watchStarsChange]);
 
