@@ -70,7 +70,7 @@ const CreateBookmark = ({ id }) => {
   const { createBookmark, editBookmark } = useBookmarks();
   const { bookmark } = useBookmark(id);
   const [initialCategories, setinitialCategories] = useState();
-
+  const [initialPriority, setInitialPriority] = useState();
   const [screenshotFile, setScreenshotFile] = useState<string>("");
 
   useEffect(() => {
@@ -82,6 +82,7 @@ const CreateBookmark = ({ id }) => {
         notes: decodeURIComponent(bookmark.notes ?? ""),
       });
       setValue("stars", bookmark.stars);
+
       let tempCategories = [];
       if (bookmark.categories.length > 0) {
         bookmark.categories.forEach((category) => {
@@ -91,9 +92,21 @@ const CreateBookmark = ({ id }) => {
           });
         })
         setinitialCategories(tempCategories);
+
+      }
+      if (bookmark.priority) {
+        const tempPriority = {
+          value: bookmark.priority,
+          label: `${bookmark.priority[0].toUpperCase()}${bookmark.priority.slice(1)}`
+        };
+        setInitialPriority(tempPriority);
       }
     }
   }, [bookmark, setValue]);
+
+  useEffect(() => {
+    console.log("initialPriority : ", initialPriority);
+  }, [initialPriority]);
 
   useEffect(() => {
     if (watchImageFile && watchImageFile.length > 0) {
@@ -213,6 +226,11 @@ const CreateBookmark = ({ id }) => {
                   styles={selectOptionsCSS("170px")}
                   {...field}
                   options={priorityOptions}
+                  value={id && initialPriority}
+                  onChange={(selectedOption) => {
+                    setInitialPriority(selectedOption);
+                    field.onChange(selectedOption);
+                  }}
                 />
               }
             />
