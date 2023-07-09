@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
@@ -8,6 +9,7 @@ import useCategories from "@components/common/category/services/useCategories";
 import Row from "@components/bookmarks/create/Row";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import useBookmark from "@components/bookmark/services/useBookmark";
+import { ROUTES } from "@components/shared/config/constants";
 
 import type { FieldValues } from "react-hook-form";
 
@@ -57,6 +59,7 @@ const selectOptionsCSS = (width) => ({
 
 
 const CreateBookmark = ({ id }) => {
+  const router = useRouter();
   const { register, handleSubmit, control, setValue,reset, watch, formState: { errors, isDirty, isValid} } = useForm({
     mode: "onChange",
     defaultValues: {
@@ -276,17 +279,29 @@ const CreateBookmark = ({ id }) => {
 
         <div className="w-11/12 flex flex-col">
           <Row label="">
-            <div className="w-[120px]">
+            <div className="flex w-[240px] space-x-4 mb-2">
               <button
-                disabled={!isDirty || !isValid}
+                disabled={!id && (!isDirty || !isValid)}
                 className={`h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                   font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
                   hover:shadow-login focus:outline-none p-1
-                  ${(!isDirty || !isValid) && "pointer-events-none text-grey01 border-grey01"}`
+                  ${!id && (!isDirty || !isValid) && "pointer-events-none text-grey01 border-grey01"}`
                 }
               >
                 Submit
               </button>
+              {id &&
+                <button
+                  className="h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
+                    font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
+                    hover:shadow-login focus:outline-none p-1"
+                  onClick={() => {
+                    router.push(`${ROUTES.bookmarks.path}?page=0`);
+                  }}
+                >
+                  Cancel
+                </button>
+              }
             </div>
           </Row>
         </div>
