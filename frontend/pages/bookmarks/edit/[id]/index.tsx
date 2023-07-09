@@ -6,7 +6,10 @@ const BookmarkPageEdit = () => {
   const router = useRouter();
 
   return (
-    <Layout displayTools={false} backButton={true}>
+    <Layout
+      displayTools={false}
+      backButton={true}
+    >
       <BookmarksCreate id={router.query.id as string} />
     </Layout>
   )

@@ -7,7 +7,7 @@ const BookmarkPageDetails = () => {
   const router = useRouter();
 
   return (
-    <Layout displayTools={true} backButton={true}>
+    <Layout displayTools={true} backButton={true} editButton={true}>
       <BookMarkDetail id={router.query.id as string} />
     </Layout>
   );
