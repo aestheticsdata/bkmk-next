@@ -45,7 +45,7 @@ const BookmarkDetail = ({ id } : { id: string }) => {
             <div className="py-2">
               <img
                 className="border-8 rounded border-grey2"
-                src={`/screenshotsUpload/5/${bookmark.screenshot}`}
+                src={`/screenshotsUpload/${bookmark.user_id}/${bookmark.screenshot}`}
                 width="50%"
               />
             </div>

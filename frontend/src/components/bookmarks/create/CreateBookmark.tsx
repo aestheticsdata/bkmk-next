@@ -281,6 +281,16 @@ const CreateBookmark = ({ id }) => {
                 accept="image/jpeg, image/png"
                 {...register("screenshot")}
               />
+              {!screenshotFile &&
+                id &&
+                bookmark &&
+                bookmark.screenshot &&
+                  <img
+                    className="border-8 rounded border-grey2"
+                    src={`/screenshotsUpload/${bookmark.user_id}/${bookmark.screenshot}`}
+                    width="50%"
+                  />
+              }
               {screenshotFile && <img src={screenshotFile} width="320" />}
             </>
           </Row>
