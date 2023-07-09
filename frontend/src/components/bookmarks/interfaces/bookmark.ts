@@ -20,4 +20,5 @@ export interface Bookmark {
   stars: number;
   date_added?: Date;
   date_last_modified?: Date;
+  alarm_frequency?: number;
 }

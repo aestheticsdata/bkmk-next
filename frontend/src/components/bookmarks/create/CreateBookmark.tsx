@@ -27,7 +27,7 @@ const alarmOptions = [
   { value: 10, label: "10 jours"},
   { value: 15, label: "2 semaines"},
   { value: 30, label: "1 mois"},
-]
+];
 
 const selectOptionsCSS = (width) => ({
   // voir https://react-select.com/styles#inner-components
@@ -74,6 +74,7 @@ const CreateBookmark = ({ id }) => {
   const { bookmark } = useBookmark(id);
   const [initialCategories, setinitialCategories] = useState();
   const [initialPriority, setInitialPriority] = useState();
+  const [initialReminder, setInitialReminder] = useState();
   const [screenshotFile, setScreenshotFile] = useState<string>("");
 
   useEffect(() => {
@@ -97,12 +98,21 @@ const CreateBookmark = ({ id }) => {
         setinitialCategories(tempCategories);
 
       }
+
       if (bookmark.priority) {
         const tempPriority = {
           value: bookmark.priority,
           label: `${bookmark.priority[0].toUpperCase()}${bookmark.priority.slice(1)}`
         };
         setInitialPriority(tempPriority);
+      }
+
+      if (bookmark.alarm_frequency) {
+        const tempAlarmFrequency = {
+          value: bookmark.alarm_frequency,
+          label: alarmOptions.find((o)=> o.value === bookmark.alarm_frequency).label,
+        }
+        setInitialReminder(tempAlarmFrequency);
       }
     }
   }, [bookmark, setValue]);
@@ -251,6 +261,11 @@ const CreateBookmark = ({ id }) => {
                   styles={selectOptionsCSS("170px")}
                   {...field}
                   options={alarmOptions}
+                  value={id && initialReminder}
+                  onChange={(selectedOption) => {
+                    setInitialReminder(selectedOption);
+                    field.onChange(selectedOption);
+                  }}
                 />
               }
             />
@@ -281,6 +296,7 @@ const CreateBookmark = ({ id }) => {
           <Row label="">
             <div className="flex w-[240px] space-x-4 mb-2">
               <button
+                type="submit"
                 disabled={!id && (!isDirty || !isValid)}
                 className={`h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                   font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
@@ -295,8 +311,10 @@ const CreateBookmark = ({ id }) => {
                   className="h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                     font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
                     hover:shadow-login focus:outline-none p-1"
-                  onClick={() => {
-                    router.push(`${ROUTES.bookmarks.path}?page=0`);
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(ROUTES.bookmarks.path);
                   }}
                 >
                   Cancel
