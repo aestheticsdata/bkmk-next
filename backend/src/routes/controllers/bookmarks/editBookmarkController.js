@@ -42,6 +42,13 @@ module.exports = async (req, res) => {
     }
   }
 
+  // notes
+  try {
+    await conn.execute(`UPDATE bookmark SET notes="${req.body.notes}" WHERE id="${originalBookmark.id}"`);
+  } catch (e) {
+    return res.status(500).json({ msg: "error updating notes : ", e });
+  }
+
   conn.end();
   return res.status(200).json({ msg: "bookmark edited" });
 }
