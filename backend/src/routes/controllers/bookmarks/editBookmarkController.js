@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
 
   const conn = await dbConnection();
 
-  const sqlBookmark = `SELECT * FROM bookmark WHERE id="${req.body.id}"`;
+  const sqlBookmark = `SELECT * FROM bookmark WHERE id=${req.body.id}`;
   let originalBookmark = null;
   try {
     const result = await conn.execute(sqlBookmark);
@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
   // title
   if (req.body.title !== originalBookmark.title) {
     try {
-      await conn.execute(`UPDATE bookmark SET title="${req.body.title}" WHERE id="${originalBookmark.id}"`);
+      await conn.execute(`UPDATE bookmark SET title="${req.body.title}" WHERE id=${originalBookmark.id}`);
     } catch (e) {
       return res.status(500).json({ msg: "error updating title : ", e });
     }
@@ -73,9 +73,17 @@ module.exports = async (req, res) => {
 
   // notes
   try {
-    await conn.execute(`UPDATE bookmark SET notes="${req.body.notes}" WHERE id="${originalBookmark.id}"`);
+    await conn.execute(`UPDATE bookmark SET notes="${req.body.notes}" WHERE id=${originalBookmark.id}`);
   } catch (e) {
     return res.status(500).json({ msg: "error updating notes : ", e });
+  }
+
+  // stars
+  console.log("stars : ", req.body.stars);
+  try {
+    await conn.execute(`UPDATE bookmark SET stars=${req.body.stars} WHERE id=${originalBookmark.id}`);
+  } catch (e) {
+    return res.status(500).json({ msg: "error updating stars : ", e });
   }
 
   conn.end();

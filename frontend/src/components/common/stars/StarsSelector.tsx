@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import type { UseFormSetValue, FieldValues } from "react-hook-form";
 
@@ -8,6 +9,7 @@ const StarsSelector = ({ setValue, watch }: { setValue: UseFormSetValue<FieldVal
   const [starsNumberHover, setStarsNumberHover] = useState<number>(0);
   const [starsNumberClicked, setStarsNumberClicked] = useState<number>(0);
   const [mouseOut, setMouseOut] = useState<boolean>(true);
+  const [isClearVisible, setIsClearVisible] = useState<boolean>(false);
   const watchStarsChange = watch("stars");
 
   useEffect(() => {
@@ -20,8 +22,12 @@ const StarsSelector = ({ setValue, watch }: { setValue: UseFormSetValue<FieldVal
 
   return (
     <div
-      className="flex h-6"
-      onMouseLeave={() => !starsNumberClicked && setStarsNumberHover(0)}
+      className="flex h-6 items-center"
+      onMouseLeave={() => {
+        !starsNumberClicked && setStarsNumberHover(0);
+        setIsClearVisible(false);
+      }}
+      onMouseOver={() => {setIsClearVisible(true)}}
     >
       {
         [1,2,3,4,5].map(i => {
@@ -47,6 +53,18 @@ const StarsSelector = ({ setValue, watch }: { setValue: UseFormSetValue<FieldVal
             </div>
           )
         })
+      }
+      {
+        isClearVisible &&
+          <div
+            className="ml-2 cursor-pointer hover:text-grey2"
+            onClick={() => {
+              setStarsNumberClicked(0);
+              setValue("stars", 0);
+            }}
+          >
+            <FontAwesomeIcon icon={faXmark} />
+          </div>
       }
     </div>
   );
