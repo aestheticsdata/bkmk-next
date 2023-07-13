@@ -79,11 +79,19 @@ module.exports = async (req, res) => {
   }
 
   // stars
-  console.log("stars : ", req.body.stars);
   try {
     await conn.execute(`UPDATE bookmark SET stars=${req.body.stars} WHERE id=${originalBookmark.id}`);
   } catch (e) {
     return res.status(500).json({ msg: "error updating stars : ", e });
+  }
+
+  // priority
+  try {
+    await conn.execute(`
+      UPDATE bookmark SET priority=${req.body.priority === '' ? null : `"${req.body.priority}"`} WHERE id=${originalBookmark.id}`
+    );
+  } catch (e) {
+    return res.status(500).json({ msg: "error updating priority : ", e });
   }
 
   conn.end();
