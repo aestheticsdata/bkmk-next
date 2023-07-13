@@ -144,6 +144,8 @@ const CreateBookmark = ({ id }) => {
         formData.append(name, encodeURIComponent(e[name]));
       } else if (name === "reminder") {
         e[name] && formData.append(name, e[name].value)
+      } else if (name === "url") {
+        e[name] && formData.append(name, e[name]);
       } else {
         formData.append(name, e[name]);
       }

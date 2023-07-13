@@ -96,6 +96,7 @@ const useBookmarks = () => {
   }, {
     onSuccess: async () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+      await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARK, router.query.id]);
       router.push("/bookmarks?page=0");
     },
     onError: ((e) => {console.log("error editing bookmark", e)}),
