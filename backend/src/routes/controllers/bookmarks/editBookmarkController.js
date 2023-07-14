@@ -47,8 +47,8 @@ module.exports = async (req, res) => {
     // sinon supprimer l'url et mettre à null url_id dans bookmark
     } else {
       try {
-        await conn.execute(`DELETE FROM url WHERE id=${originalURL.id}`);
         await conn.execute(`UPDATE bookmark SET url_id=NULL WHERE id=${originalBookmark.id}`);
+        await conn.execute(`DELETE FROM url WHERE id=${originalURL.id}`);
       } catch (e) {
         return res.status(500).json({ msg: "error deleting url : ", e });
       }
