@@ -94,6 +94,56 @@ module.exports = async (req, res) => {
     return res.status(500).json({ msg: "error updating priority : ", e });
   }
 
+  // alarm
+  // si il y a deja une alarm
+  if (originalBookmark.alarm_id) {
+    try {
+      const [[frequency]] = await conn.execute(`SELECT frequency FROM alarm WHERE id=${originalBookmark.alarm_id};`);
+      // si il y a une alarm dans la requete
+      if (req.body.reminder) {
+        // si il n'y pas de changement, ne rien faire pour ne pas modifier la date_added de l'alarm
+        // sinon modifier la frequence et la date_added
+        if (frequency !== req.body.reminder) {
+          try {
+            await conn.execute(`UPDATE bookmark SET alarm_id=NULL WHERE id=${originalBookmark.id};`);
+            await conn.execute(`DELETE FROM alarm WHERE id=${originalBookmark.alarm_id};`);
+            const result = await conn.execute(`INSERT INTO alarm (frequency, date_added) VALUES (${req.body.reminder}, "${format(new Date(), 'yyyy-MM-dd')}");`);
+            const newAlarmID = result[0].insertId;
+            await conn.execute(`UPDATE bookmark SET alarm_id=${newAlarmID} WHERE id=${originalBookmark.id};`);
+          } catch (e) {
+            return res.status(500).json({ msg: "error creating new alarm and/or updating bookmark.alarm_id : ", e });
+          }
+        }
+      // si il n'y a pas d'alarm dans la requete, alors supprimer l'alarm existante et mettre à null alarm_id dans bookmark
+      } else {
+        try {
+          await conn.execute(`UPDATE bookmark SET alarm_id=NULL WHERE id=${originalBookmark.id};`);
+          await conn.execute(`DELETE FROM alarm WHERE id=${originalBookmark.alarm_id};`);
+        } catch (e) {
+          return res.status(500).json({ msg: "error deleting and/or updating to NULL bookmark alarm_id : ", e });
+        }
+      }
+    } catch (e) {
+      return res.status(500).json({ msg: "error getting alarm : ", e });
+    }
+  // il n'y pas encore d'alarm existante
+  } else {
+    // il a une alarm à créer
+    if (req.body.reminder) {
+      try {
+        const result = await conn.execute(`INSERT INTO alarm (frequency, date_added) VALUES (${req.body.reminder}, "${format(new Date(), 'yyyy-MM-dd')}");`);
+        const newAlarmID = result[0].insertId;
+        try {
+          await conn.execute(`UPDATE bookmark SET alarm_id=${newAlarmID} WHERE id=${originalBookmark.id};`);
+        } catch (e) {
+          return res.status(500).json({ msg: "error updating bookmark.alarm_id : ", e });
+        }
+      } catch (e) {
+        return res.status(500).json({ msg: "error creating new alarm and/or updating bookmark.alarm_id : ", e });
+      }
+    }
+  }
+
   conn.end();
   return res.status(200).json({ msg: "bookmark edited" });
 }

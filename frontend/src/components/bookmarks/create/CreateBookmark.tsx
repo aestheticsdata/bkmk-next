@@ -10,6 +10,7 @@ import Row from "@components/bookmarks/create/Row";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import useBookmark from "@components/bookmark/services/useBookmark";
 import { ROUTES } from "@components/shared/config/constants";
+import { alarmOptions } from "@components/common/alarm/constants";
 
 import type { FieldValues } from "react-hook-form";
 
@@ -18,15 +19,6 @@ const priorityOptions = [
   { value: "medium", label: "Medium" },
   { value: "high", label: "High" },
   { value: "highest", label: "Highest" },
-];
-
-const alarmOptions = [
-  { value: 1, label: "1 jour"},
-  { value: 2, label: "2 jours"},
-  { value: 5, label: "5 jours"},
-  { value: 10, label: "10 jours"},
-  { value: 15, label: "2 semaines"},
-  { value: 30, label: "1 mois"},
 ];
 
 const selectOptionsCSS = (width) => ({

@@ -20,12 +20,12 @@ const Pagination = () => {
     bookmarks?.length > 0 && setLasPage(Math.floor((bookmarks[0].total_count-1)/10));
   }, [bookmarks]);
 
-  useEffect(() => {
-    if (!router.query.page) {
-      router.push("/bookmarks?page=0");
-      setPage(0);
-    }
-  }, [router]);
+  // useEffect(() => {
+  //   if (!router.query.page) {
+  //     router.push("/bookmarks?page=0");
+  //     setPage(0);
+  //   }
+  // }, [router]);
 
   return (
     <div className="flex w-[100px] space-x-2 items-center px-4">

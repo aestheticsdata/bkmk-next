@@ -5,6 +5,7 @@ import useBookmark from "@components/bookmark/services/useBookmark";
 import StarsDisplay from "@components/common/stars/StarsDisplay";
 import PriorityDisplay from "@components/common/priority/PriorityDisplay";
 import Categories from "@components/common/category/Categories";
+import { alarmOptions } from "@components/common/alarm/constants";
 
 const BookmarkDetail = ({ id } : { id: string }) => {
   const { isLoading, bookmark } = useBookmark(id);
@@ -63,9 +64,17 @@ const BookmarkDetail = ({ id } : { id: string }) => {
             </div>
           }
 
-          <div className="text-sm py-2">
-            <Categories categories={bookmark.categories} />
-          </div>
+          {bookmark.categories.length > 0 &&
+            <div className="text-sm py-2">
+              <Categories categories={bookmark.categories} />
+            </div>
+          }
+
+          {!!bookmark.alarm_frequency &&
+            <div className="text-sm py-2">
+              Reminder: { (alarmOptions.find(o => o.value === bookmark.alarm_frequency))!.label }
+            </div>
+          }
 
           <div className="text-xs py-2">
             Ajouté le: {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
