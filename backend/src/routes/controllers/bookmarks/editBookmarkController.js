@@ -4,7 +4,6 @@ const jimpHelper = require("./helpers/jimpHelper");
 
 module.exports = async (req, res) => {
   console.log("bookmark edit", req.body);
-  console.log("bookmark edit title", req.body.title);
 
   const conn = await dbConnection();
 
@@ -25,6 +24,42 @@ module.exports = async (req, res) => {
       return res.status(500).json({ msg: "error updating title : ", e });
     }
   }
+
+  // categories
+  // il y a une ou plusieurs catégories dans la requete
+  const incomingCategories = JSON.parse(req.body.categories);
+  console.log("incomingCategories : ", incomingCategories);
+  if (incomingCategories.length > 0) {
+    console.log("incomingCategories.length > 0");
+    try {
+      const [existingCategories] = await conn.execute(`SELECT * FROM bookmark_category WHERE bookmark_id=${originalBookmark.id};`);
+      // il n'y a pas encore de catégories associées au bookmark
+      if (existingCategories.length === 0) {
+        // pour chaque catégorie de la requete
+        for (const category of incomingCategories) {
+          try {
+            const [tmpCategoryID] = await conn.execute(`SELECT id FROM category WHERE id=${category.id};`);
+            // c'est une catégorie qui existe deja dans la table catégorie
+            console.log("ICI +++++++ tmpCategoryID : ", tmpCategoryID);
+            // c'est une nouvelle catégorie à créer dans la table catégorie
+          } catch (e) {
+
+          }
+        }
+
+
+      // il y des catégories associées au bookmark
+      } else {
+
+      }
+    } catch (e) {
+
+    }
+  // il n'y pas de catégories dans la requete
+  } else {
+
+  }
+
 
   // url
   let originalURL = null;
@@ -73,10 +108,15 @@ module.exports = async (req, res) => {
 
   // notes
   try {
-    await conn.execute(`UPDATE bookmark SET notes="${req.body.notes}" WHERE id=${originalBookmark.id}`);
+    if (req.body.notes) {
+      await conn.execute(`UPDATE bookmark SET notes="${req.body.notes}" WHERE id=${originalBookmark.id};`);
+    } else {
+      await conn.execute(`UPDATE bookmark SET notes=NULL WHERE id=${originalBookmark.id};`);
+    }
   } catch (e) {
     return res.status(500).json({ msg: "error updating notes : ", e });
   }
+
 
   // stars
   try {
@@ -143,6 +183,12 @@ module.exports = async (req, res) => {
       }
     }
   }
+
+
+  // screenshot
+
+
+  conn.execute(`UPDATE bookmark SET date_last_modified= "${format(new Date(), 'yyyy-MM-dd')}" WHERE id=${originalBookmark.id}`)
 
   conn.end();
   return res.status(200).json({ msg: "bookmark edited" });

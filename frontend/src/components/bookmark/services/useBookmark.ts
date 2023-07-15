@@ -28,6 +28,7 @@ const useBookmark = (bookmarkID: string) => {
 
   useEffect(() => {
     if (data) {
+      console.log("data dans useBookmark : ", data);
       setBookmark(data.data[0]);
     }
   }, [data]);

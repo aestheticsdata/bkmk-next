@@ -5,7 +5,11 @@ const ROWS_BY_PAGE = 10;
 
 module.exports = async (req, res) => {
   const sql = `
-    SELECT b.*, u.original AS original_url, GROUP_CONCAT(c.name) AS categories_names, GROUP_CONCAT(c.color) AS categories_colors,
+    SELECT b.*,
+           u.original AS original_url,
+           GROUP_CONCAT(c.name) AS categories_names,
+           GROUP_CONCAT(c.color) AS categories_colors,
+           GROUP_CONCAT(c.id) AS categories_id,
     (SELECT COUNT(*) FROM bookmark b WHERE b.user_id = '${req.query.userID}' AND b.active = 1) AS total_count
     FROM bookmark b
     LEFT JOIN url u ON b.url_id = u.id

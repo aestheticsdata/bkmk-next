@@ -88,7 +88,7 @@ const CreateBookmark = ({ id }) => {
           });
         })
         setinitialCategories(tempCategories);
-
+        setValue("categories", tempCategories);
       }
 
       if (bookmark.priority) {
@@ -97,6 +97,7 @@ const CreateBookmark = ({ id }) => {
           label: `${bookmark.priority[0].toUpperCase()}${bookmark.priority.slice(1)}`
         };
         setInitialPriority(tempPriority);
+        setValue("priority", tempPriority);
       }
 
       if (bookmark.alarm_frequency) {
@@ -105,13 +106,10 @@ const CreateBookmark = ({ id }) => {
           label: alarmOptions.find((o)=> o.value === bookmark.alarm_frequency).label,
         }
         setInitialReminder(tempAlarmFrequency);
+        setValue("reminder", tempAlarmFrequency);
       }
     }
   }, [bookmark, setValue]);
-
-  useEffect(() => {
-    console.log("initialPriority : ", initialPriority);
-  }, [initialPriority]);
 
   useEffect(() => {
     if (watchImageFile && watchImageFile.length > 0) {
@@ -133,7 +131,7 @@ const CreateBookmark = ({ id }) => {
       } else if (name === "priority") {
         formData.append(name, e[name] ? e[name].value : "");
       } else if (name === "notes") {
-        formData.append(name, encodeURIComponent(e[name]));
+        e[name] && formData.append(name, encodeURIComponent(e[name]));
       } else if (name === "reminder") {
         e[name] && formData.append(name, e[name].value)
       } else if (name === "url") {
@@ -142,6 +140,7 @@ const CreateBookmark = ({ id }) => {
         formData.append(name, e[name]);
       }
 
+      // edit mode -> an existing bookmark id is present
       if (id) {
         formData.append("id", id);
       }
@@ -197,6 +196,11 @@ const CreateBookmark = ({ id }) => {
                   {...field}
                   options={categories}
                   value={id && initialCategories}
+                  onChange={(selectedOptions) => {
+                    console.log("mais que se passe t il avec les categories : ", selectedOptions);
+                    setinitialCategories(selectedOptions);
+                    field.onChange(selectedOptions);
+                  }}
                 />
             }
             />
