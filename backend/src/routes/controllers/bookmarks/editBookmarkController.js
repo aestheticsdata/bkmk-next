@@ -29,9 +29,7 @@ module.exports = async (req, res) => {
   // categories
   // il y a une ou plusieurs catégories dans la requete
   const incomingCategories = JSON.parse(req.body.categories);
-  console.log("incomingCategories : ", incomingCategories);
   if (incomingCategories.length > 0) {
-    console.log("incomingCategories.length > 0");
     try {
       const [existingCategories] = await conn.execute(`
         SELECT * FROM bookmark_category WHERE bookmark_id=${originalBookmark.id};
@@ -55,7 +53,6 @@ module.exports = async (req, res) => {
 
             // c'est une nouvelle catégorie à créer dans la table catégorie
           } else {
-            console.log("new category : ", category);
             try {
               const result = await conn.execute(`
                 INSERT INTO category (name, color, user_id)
@@ -120,7 +117,25 @@ module.exports = async (req, res) => {
     }
   // il n'y pas de catégories dans la requete
   } else {
-
+    try {
+      const [existingCategories] = await conn.execute(`
+        SELECT * FROM bookmark_category WHERE bookmark_id=${originalBookmark.id};
+      `);
+      if (existingCategories.length > 0) {
+        for (const existingCategory of existingCategories) {
+          try {
+            await conn.execute(`
+              DELETE FROM bookmark_category
+              WHERE bookmark_id=${existingCategory.bookmark_id} AND category_id=${existingCategory.category_id};
+            `);
+          } catch (e) {
+            return res.status(500).json({ msg: "error deleting bookmark_category : " + e });
+          }
+        }
+      }
+    } catch (e) {
+      return res.status(500).json({ msg: "error getting bookmark_category : " + e });
+    }
   }
 
 
