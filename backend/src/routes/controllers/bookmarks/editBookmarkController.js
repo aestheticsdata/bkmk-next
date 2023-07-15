@@ -1,6 +1,7 @@
 const { format } = require('date-fns');
 const dbConnection = require('../../../db/dbinitmysql');
 const jimpHelper = require("./helpers/jimpHelper");
+const generateHexColor = require("./helpers/generateHexColor");
 
 module.exports = async (req, res) => {
   console.log("bookmark edit", req.body);
@@ -32,18 +33,42 @@ module.exports = async (req, res) => {
   if (incomingCategories.length > 0) {
     console.log("incomingCategories.length > 0");
     try {
-      const [existingCategories] = await conn.execute(`SELECT * FROM bookmark_category WHERE bookmark_id=${originalBookmark.id};`);
+      const [existingCategories] = await conn.execute(`
+        SELECT * FROM bookmark_category WHERE bookmark_id=${originalBookmark.id};
+      `);
       // il n'y a pas encore de catégories associées au bookmark
       if (existingCategories.length === 0) {
         // pour chaque catégorie de la requete
         for (const category of incomingCategories) {
-          try {
-            const [tmpCategoryID] = await conn.execute(`SELECT id FROM category WHERE id=${category.id};`);
-            // c'est une catégorie qui existe deja dans la table catégorie
-            console.log("ICI +++++++ tmpCategoryID : ", tmpCategoryID);
-            // c'est une nouvelle catégorie à créer dans la table catégorie
-          } catch (e) {
+          // c'est une catégorie qui existe deja dans la table catégorie
+          if (category.id) {
+            console.log("kmkmkmkmkmkmkmkmkkm");
+            try {
+              await conn.execute(`
+                INSERT INTO bookmark_category (bookmark_id, category_id)
+                VALUES ("${originalBookmark.id}", "${category.id}");
+              `);
+            } catch (e) {
+              return res.status(500).json({
+                msg: "error inserting existing categories to bookmark_category table : " + e
+              });
+            }
 
+            // c'est une nouvelle catégorie à créer dans la table catégorie
+          } else {
+            console.log("new category : ", category);
+            try {
+              const result = await conn.execute(`
+                INSERT INTO category (name, color, user_id)
+                VALUES ("${category.label}", "${generateHexColor()}", ${originalBookmark.user_id});
+              `);
+              await conn.execute(`
+                INSERT INTO bookmark_category (bookmark_id, category_id)
+                VALUES ("${originalBookmark.id}", "${result[0].insertId}");
+              `);
+            } catch (e) {
+              return res.status(500).json({ msg: "error inserting new category " + e });
+            }
           }
         }
 
