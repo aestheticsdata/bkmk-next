@@ -42,7 +42,6 @@ module.exports = async (req, res) => {
         for (const category of incomingCategories) {
           // c'est une catégorie qui existe deja dans la table catégorie
           if (category.id) {
-            console.log("kmkmkmkmkmkmkmkmkkm");
             try {
               await conn.execute(`
                 INSERT INTO bookmark_category (bookmark_id, category_id)
@@ -72,13 +71,52 @@ module.exports = async (req, res) => {
           }
         }
 
-
-      // il y des catégories associées au bookmark
+      // il y des catégories associées au bookmark et il y une ou plusieurs catégories dans la requete
       } else {
+        const incomingCategoryIds = incomingCategories.map(category => {
+          return {
+            label: category.label,
+            id: !isNaN(Number(category.value)) ? Number(category.value) : null,
+          }
+        });
+        const existingCategoryIds = existingCategories.map(category => category.category_id);
 
+        const categoriesToDelete = existingCategories.filter(category =>
+          !incomingCategories.some(incomingCategory => incomingCategory.value === category.category_id.toString())
+        );
+        if (categoriesToDelete.length > 0) {
+          for (const categoryToDelete of categoriesToDelete) {
+            try {
+              await conn.execute(`
+                DELETE FROM bookmark_category
+                WHERE bookmark_id=${categoryToDelete.bookmark_id} AND category_id=${categoryToDelete.category_id};
+              `);
+            } catch (e) {
+              return res.status(500).json({ msg: "error deleting category in bookmark_category : " + e });
+            }
+          }
+        }
+
+        const categoriesToAdd = incomingCategoryIds.filter((category) => !existingCategoryIds.includes(category.id));
+        if (categoriesToAdd.length > 0) {
+          for (const categoryToAdd of categoriesToAdd) {
+            try {
+              const result = await conn.execute(`
+                INSERT INTO category (name, color, user_id)
+                VALUES ("${categoryToAdd.label}", "${generateHexColor()}", ${originalBookmark.user_id});
+              `);
+              await conn.execute(`
+                INSERT INTO bookmark_category (bookmark_id, category_id)
+                VALUES ("${originalBookmark.id}", "${result[0].insertId}");
+              `);
+            } catch (e) {
+              return res.status(500).json({ msg: "error creating category and/or bookmark_category : " + e });
+            }
+          }
+        }
       }
     } catch (e) {
-
+      return res.status(500).json({ msg: "error getting bookmark_category entries : " + e });
     }
   // il n'y pas de catégories dans la requete
   } else {
