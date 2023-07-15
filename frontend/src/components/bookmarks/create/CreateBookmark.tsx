@@ -197,7 +197,6 @@ const CreateBookmark = ({ id }) => {
                   options={categories}
                   value={id && initialCategories}
                   onChange={(selectedOptions) => {
-                    console.log("mais que se passe t il avec les categories : ", selectedOptions);
                     setinitialCategories(selectedOptions);
                     field.onChange(selectedOptions);
                   }}

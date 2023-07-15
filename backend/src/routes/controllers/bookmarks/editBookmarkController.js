@@ -174,7 +174,7 @@ module.exports = async (req, res) => {
         const result = await conn.execute(`INSERT INTO url (original) VALUES ("${req.body.url}")`);
         const newURL_ID = result[0].insertId;
         try {
-          await conn.execute(`UPDATE bookmark SET url_id=${newURL_ID}`);
+          await conn.execute(`UPDATE bookmark SET url_id=${newURL_ID} WHERE id=${originalBookmark.id};`);
         } catch (e) {
           return res.status(500).json({ msg: "error updating bookmark url : ", e });
         }
