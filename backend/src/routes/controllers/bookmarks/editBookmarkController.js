@@ -262,11 +262,30 @@ module.exports = async (req, res) => {
     }
   }
 
-
   // screenshot
+  if (req.body.deleteScreenshot) {
+    console.log("req.body.deleteScreenshot", req.body.deleteScreenshot);
+    console.log("req.file", req.file);
+    const [[result]] = await conn.execute(`SELECT screenshot FROM bookmark WHERE id=${originalBookmark.id} and user_id=${originalBookmark.user_id};`);
+    const filename = result.screenshot;
+    try {
+      await jimpHelper.deleteScreenshot({ filename, userID: originalBookmark.user_id });
+      try {
+        await conn.execute(`
+          UPDATE bookmark
+          SET screenshot=NULL
+          WHERE id=${originalBookmark.id} AND user_id=${originalBookmark.user_id};
+        `);
+      } catch (e) {
+        return res.status(500).json({ msg: "error removing screenshot from bookmark entry : " + e });
+      }
+    } catch (e) {
+      return res.status(500).json({ msg: "error unlink file : " + e });
+    }
+  }
 
 
-  conn.execute(`UPDATE bookmark SET date_last_modified= "${format(new Date(), 'yyyy-MM-dd')}" WHERE id=${originalBookmark.id}`)
+  conn.execute(`UPDATE bookmark SET date_last_modified="${format(new Date(), 'yyyy-MM-dd')}" WHERE id=${originalBookmark.id}`)
 
   conn.end();
   return res.status(200).json({ msg: "bookmark edited" });

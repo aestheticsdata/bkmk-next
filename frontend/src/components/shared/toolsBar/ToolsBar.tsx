@@ -11,7 +11,6 @@ interface ToolBarProps {
 
 const ToolsBar = ({ backButton, editButton = false }: ToolBarProps) => {
   const router = useRouter();
-  console.log(router.query.id);
   return (
     <div className="fixed flex w-full py-2 mt-14 bg-grey01 h-[40px]">
       {backButton ? (

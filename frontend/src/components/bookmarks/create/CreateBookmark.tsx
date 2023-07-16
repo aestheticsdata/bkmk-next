@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
+import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import StarsSelector from "@components/common/stars/StarsSelector";
 import useCategories from "@components/common/category/services/useCategories";
 import Row from "@components/bookmarks/create/Row";
@@ -13,6 +14,7 @@ import { ROUTES } from "@components/shared/config/constants";
 import { alarmOptions } from "@components/common/alarm/constants";
 
 import type { FieldValues } from "react-hook-form";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const priorityOptions = [
   { value: "low", label: "Low" },
@@ -68,6 +70,8 @@ const CreateBookmark = ({ id }) => {
   const [initialPriority, setInitialPriority] = useState();
   const [initialReminder, setInitialReminder] = useState();
   const [screenshotFile, setScreenshotFile] = useState<string>("");
+  const [deleteScreenshot, setDeleteScreeshot] = useState(false);
+  const [isHoverScreenshot, setIsHoverScreenshot] = useState(false);
 
   useEffect(() => {
     console.log("oh yeah bookmark !!!", bookmark);
@@ -143,6 +147,9 @@ const CreateBookmark = ({ id }) => {
       // edit mode -> an existing bookmark id is present
       if (id) {
         formData.append("id", id);
+        if (deleteScreenshot) {
+          formData.append("deleteScreenshot", "delete");
+        }
       }
     }
     const entries = formData.entries();
@@ -282,13 +289,44 @@ const CreateBookmark = ({ id }) => {
                 id &&
                 bookmark &&
                 bookmark.screenshot &&
-                  <img
-                    className="border-8 rounded border-grey2"
-                    src={`/screenshotsUpload/${bookmark.user_id}/${bookmark.screenshot}`}
-                    width="50%"
-                  />
+                  <div className="flex relative" >
+                    <div
+                      className="w-1/2 absolute h-full"
+                      onMouseEnter={() => {setIsHoverScreenshot(true)}}
+                      onMouseLeave={() => {setIsHoverScreenshot(false)}}
+                    >
+                    { isHoverScreenshot &&
+                      <div
+                        className="flex justify-center items-center h-full bg-white text-3xl opacity-70"
+                        onClick={() => {
+                          bookmark.screenshot = null;
+                          setDeleteScreeshot(true);
+                          setIsHoverScreenshot(false);
+                        }}
+                      >
+                        <FontAwesomeIcon className="cursor-pointer hover:text-blue-600 p-2" icon={faTrashAlt} />
+                      </div>
+                    }
+                    </div>
+                    <div>
+                      <img
+                        className="border-8 rounded border-grey2"
+                        src={`/screenshotsUpload/${bookmark.user_id}/${bookmark.screenshot}`}
+                        width="50%"
+                      />
+                    </div>
+                  </div>
               }
-              {screenshotFile && <img src={screenshotFile} width="320" />}
+              {screenshotFile &&
+                <div className="flex relative">
+                  {
+                    id && <div className="w-[320px] h-[240px] absolute">blabla</div>
+                  }
+                  <div>
+                    <img src={screenshotFile} width="320" />
+                  </div>
+                </div>
+              }
             </>
           </Row>
         </div>

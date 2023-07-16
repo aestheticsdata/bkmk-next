@@ -1,13 +1,14 @@
 const {
   access,
   mkdir,
+  unlink,
 } = require('fs').promises;
 const jimp = require('jimp');
 const { uploadPath } = require("../../../controllers/bookmarks/helpers/constants");
 
 const stringToHyphen = s => s.replaceAll(' ', '-');
 
-module.exports = async ({ file, title, userID }) => {
+const createScreenshot = async ({ file, title, userID }) => {
   const userDir = uploadPath + userID;
   try {
     await access(userDir);
@@ -24,3 +25,19 @@ module.exports = async ({ file, title, userID }) => {
 
   return `${fileName}.${extension}`;
 }
+
+const deleteScreenshot = async ({ filename, userID }) => {
+  const userDir = uploadPath + userID;
+  try {
+    await unlink(userDir + "/" + filename);
+  } catch (e) {
+    throw e;
+  }
+}
+
+module.exports = {
+  createScreenshot,
+  deleteScreenshot,
+}
+
+

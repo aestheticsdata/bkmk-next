@@ -12,7 +12,7 @@ const catchAsync = require('../../../../frontend/src/utils/catchAsync');
 router.get("/", checkToken, catchAsync(getBookmarksController));
 router.get("/:id", checkToken, catchAsync(getBookmarkController));
 router.post("/", [checkToken, upload.single('screenshot')], catchAsync(postBookmarkController));
-router.delete("/:id", checkToken, catchAsync(deleteBookmarkController));
 router.put("/", [checkToken, upload.single('screenshot')], catchAsync(editBookmarkController));
+router.delete("/:id", checkToken, catchAsync(deleteBookmarkController));
 
 module.exports = router;
