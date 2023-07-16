@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
       ${alarmID},
       "${title}",
       ${priority !== "" ? `"${priority}"` : null},
-      ${notes !== "" ? `"${notes}"` : null},
+      ${notes !== undefined ? `"${notes}"` : null},
       ${Number(stars)},
       ${screenshotFilename !== null ? `"${String(screenshotFilename)}"` : null},
       "${format(new Date(), 'yyyy-MM-dd')}");
