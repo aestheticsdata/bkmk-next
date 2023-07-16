@@ -138,7 +138,6 @@ module.exports = async (req, res) => {
     }
   }
 
-
   // url
   let originalURL = null;
   // si il y a deja une url
@@ -263,9 +262,7 @@ module.exports = async (req, res) => {
   }
 
   // screenshot
-  if (req.body.deleteScreenshot) {
-    console.log("req.body.deleteScreenshot", req.body.deleteScreenshot);
-    console.log("req.file", req.file);
+  const deleteScreenshot = async () => {
     const [[result]] = await conn.execute(`SELECT screenshot FROM bookmark WHERE id=${originalBookmark.id} and user_id=${originalBookmark.user_id};`);
     const filename = result.screenshot;
     try {
@@ -284,6 +281,41 @@ module.exports = async (req, res) => {
     }
   }
 
+  // nouveau screenshot
+  if (req.file) {
+    const userID = req.decoded.id; // from jwt token middleware
+    const [[existingScreenshot]] = await conn.execute(`
+      SELECT screenshot FROM bookmark WHERE id=${originalBookmark.id} AND user_id=${userID};
+    `);
+    if (existingScreenshot.screenshot) {
+      try {
+        await deleteScreenshot();
+      } catch (e) {
+        return res.status(500).json({ msg: "error deleting screenshot : " + e });
+      }
+    }
+
+    try {
+      const screenshotFilename = await jimpHelper.createScreenshot({
+        file: req.file,
+        title: req.body.title,
+        userID,
+      });
+      await conn.execute(`
+        UPDATE bookmark
+        SET screenshot="${screenshotFilename}"
+        WHERE id=${originalBookmark.id} AND user_id=${userID};
+      `);
+    } catch (e) {
+      return res.status(500).json({ msg: "error creating new screenshot : " + e });
+    }
+
+  }
+
+  // plus de screenshot
+  if (req.body.deleteScreenshot) {
+    await deleteScreenshot();
+  }
 
   conn.execute(`UPDATE bookmark SET date_last_modified="${format(new Date(), 'yyyy-MM-dd')}" WHERE id=${originalBookmark.id}`)
 

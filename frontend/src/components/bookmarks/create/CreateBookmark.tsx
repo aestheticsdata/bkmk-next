@@ -319,9 +319,6 @@ const CreateBookmark = ({ id }) => {
               }
               {screenshotFile &&
                 <div className="flex relative">
-                  {
-                    id && <div className="w-[320px] h-[240px] absolute">blabla</div>
-                  }
                   <div>
                     <img src={screenshotFile} width="320" />
                   </div>
