@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
     try {
       await conn.execute(`
         INSERT INTO bookmark (title, user_id, url_id, date_added)
-        VALUES ("${bookmarkTitle}", ${userID}, ${urlID}, "${format(new Date(), 'yyyy-MM-dd')}"); 
+        VALUES ("${encodeURIComponent(bookmarkTitle)}", ${userID}, ${urlID}, "${format(new Date(), 'yyyy-MM-dd')}"); 
       `);
     } catch (e) {
       return res.status(500).json({ msg: "error creating bookmark : " + e });

@@ -34,7 +34,7 @@ const Bookmarks = () => {
       {bookmarks?.length > 0 && !isLoading &&
         bookmarks.map((bookmark: Bookmark) => (
           <div
-            key={`${bookmark.id}-${bookmark.title}`}
+            key={`${bookmark.id}-${decodeURIComponent(bookmark.title)}`}
             className={`
               flex cursor-pointer px-0.5 text-xs 
               ${bookmark.original_url ? "hover:bg-blue-300": "hover:bg-yellow-500"}
@@ -67,7 +67,7 @@ const Bookmarks = () => {
                   title={bookmark.original_url ?? ""}
                   className="w-[400px] truncate font-semibold"
                 >
-                    {bookmark.title}
+                    {decodeURIComponent(bookmark.title)}
                 </div>
                 <div className="flex justify-start mx-1 w-[70px]">
                   {bookmark.stars > 0 && <StarsDisplay count={bookmark.stars} />}

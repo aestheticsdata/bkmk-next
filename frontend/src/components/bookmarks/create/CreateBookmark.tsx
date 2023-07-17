@@ -77,7 +77,7 @@ const CreateBookmark = ({ id }) => {
     console.log("oh yeah bookmark !!!", bookmark);
     if (bookmark) {
       reset({
-        title: bookmark.title,
+        title: decodeURIComponent(bookmark.title),
         url: bookmark.original_url,
         notes: decodeURIComponent(bookmark.notes ?? ""),
       });

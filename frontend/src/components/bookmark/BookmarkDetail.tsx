@@ -19,7 +19,7 @@ const BookmarkDetail = ({ id } : { id: string }) => {
       {bookmark &&
         <>
           <div className="font-semibold py-2">
-            {bookmark.title}
+            {decodeURIComponent(bookmark.title)}
           </div>
 
           {bookmark.original_url &&
