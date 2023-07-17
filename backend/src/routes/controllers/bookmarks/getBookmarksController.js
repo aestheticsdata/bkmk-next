@@ -1,7 +1,7 @@
 const dbConnection = require("../../../db/dbinitmysql");
 const marshallCategories = require("./helpers/marshallCategories");
 
-const ROWS_BY_PAGE = 10;
+const ROWS_BY_PAGE = 20;
 
 module.exports = async (req, res) => {
   const sql = `

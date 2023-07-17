@@ -12,6 +12,7 @@ import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constant
 
 import type { UserStore } from "@auth/store/userStore";
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
+import { lazyLightningCss } from "tailwindcss/src/oxide/cli/build/deps";
 
 const useBookmarks = () => {
   const queryClient = useQueryClient();
@@ -52,6 +53,7 @@ const useBookmarks = () => {
   }, [data]);
 
   const createBookmarkService = async (bookmark: Bookmark) => {
+    console.log("bookmark in service : ", bookmark);
     return privateRequest("/bookmarks", {
       method: "POST",
       data: bookmark,
@@ -85,7 +87,7 @@ const useBookmarks = () => {
   });
 
   const editBookmarkService = async (bookmark: Bookmark) => {
-    return privateRequest(`/bookmarks`, {
+    return privateRequest("/bookmarks", {
       method: "PUT",
       data: bookmark,
       headers: {"Content-Type": "multipart/form-data"},
@@ -99,8 +101,27 @@ const useBookmarks = () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARK, router.query.id]);
       router.push("/bookmarks?page=0");
     },
-    onError: ((e) => {console.log("error editing bookmark", e)}),
+    onError: ((e) => {console.log("error editing bookmark : ", e)}),
   });
+
+
+  const uploadBookmarksService = async (f: any) => {
+    console.log("bookmark file in service : ", f);
+    return privateRequest("/bookmarks/upload",  {
+      method: "POST",
+      data: f,
+      headers: {"Content-Type": "multipart/form-data"},
+    })
+  }
+  const uploadBookmarks = useMutation((bookmarkFile: any) => {
+    console.log("bookmarkFile : ", bookmarkFile);
+    return uploadBookmarksService(bookmarkFile);
+  }, {
+    onSuccess: async () => {
+
+    },
+    onError: ((e) => {console.log("error uploading bookmark file : ", e)}),
+  })
 
   return {
     bookmarks,
@@ -108,6 +129,7 @@ const useBookmarks = () => {
     createBookmark,
     deleteBookmark,
     editBookmark,
+    uploadBookmarks,
   };
 }
 

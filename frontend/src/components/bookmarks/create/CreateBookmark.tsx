@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import StarsSelector from "@components/common/stars/StarsSelector";
 import useCategories from "@components/common/category/services/useCategories";
@@ -14,7 +15,6 @@ import { ROUTES } from "@components/shared/config/constants";
 import { alarmOptions } from "@components/common/alarm/constants";
 
 import type { FieldValues } from "react-hook-form";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const priorityOptions = [
   { value: "low", label: "Low" },
