@@ -75,6 +75,9 @@ const UploadBookmarks = () => {
           Send
         </button>
       </form>
+      {isSubmitted &&
+        <div>uploading...</div>
+      }
     </div>
   );
 };
