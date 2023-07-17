@@ -118,7 +118,8 @@ const useBookmarks = () => {
     return uploadBookmarksService(bookmarkFile);
   }, {
     onSuccess: async () => {
-
+      await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+      router.push("/bookmarks?page=0");
     },
     onError: ((e) => {console.log("error uploading bookmark file : ", e)}),
   })
