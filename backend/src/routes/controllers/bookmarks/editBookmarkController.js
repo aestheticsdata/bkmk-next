@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
           }
         }
 
-      // il y des catégories associées au bookmark et il y une ou plusieurs catégories dans la requete
+        // il y des catégories associées au bookmark et il y une ou plusieurs catégories dans la requete
       } else {
         const incomingCategoryIds = incomingCategories.map(category => {
           return {
@@ -98,13 +98,17 @@ module.exports = async (req, res) => {
         if (categoriesToAdd.length > 0) {
           for (const categoryToAdd of categoriesToAdd) {
             try {
-              const result = await conn.execute(`
-                INSERT INTO category (name, color, user_id)
-                VALUES ("${categoryToAdd.label}", "${generateHexColor()}", ${originalBookmark.user_id});
-              `);
+              const [categories] = await conn.execute(`SELECT id FROM category WHERE user_id="${originalBookmark.user_id}";`);
+              let result = null;
+              if (!categories.some(category => category.id === categoryToAdd.id)) {
+                result = await conn.execute(`
+                  INSERT INTO category (name, color, user_id)
+                  VALUES ("${categoryToAdd.label}", "${generateHexColor()}", ${originalBookmark.user_id});
+                `);
+              }
               await conn.execute(`
                 INSERT INTO bookmark_category (bookmark_id, category_id)
-                VALUES ("${originalBookmark.id}", "${result[0].insertId}");
+                VALUES ("${originalBookmark.id}", ${result ? result[0].insertId : categoryToAdd.id});
               `);
             } catch (e) {
               return res.status(500).json({ msg: "error creating category and/or bookmark_category : " + e });
@@ -115,7 +119,7 @@ module.exports = async (req, res) => {
     } catch (e) {
       return res.status(500).json({ msg: "error getting bookmark_category entries : " + e });
     }
-  // il n'y pas de catégories dans la requete
+    // il n'y pas de catégories dans la requete
   } else {
     try {
       const [existingCategories] = await conn.execute(`
@@ -156,7 +160,7 @@ module.exports = async (req, res) => {
       } catch (e) {
         return res.status(500).json({ msg: "error updating url : ", e });
       }
-    // sinon supprimer l'url et mettre à null url_id dans bookmark
+      // sinon supprimer l'url et mettre à null url_id dans bookmark
     } else {
       try {
         await conn.execute(`UPDATE bookmark SET url_id=NULL WHERE id=${originalBookmark.id}`);
@@ -165,7 +169,7 @@ module.exports = async (req, res) => {
         return res.status(500).json({ msg: "error deleting url : ", e });
       }
     }
-  // il n'y pas encore d'url existante
+    // il n'y pas encore d'url existante
   } else {
     // il y a une url à créer
     if (req.body.url) {
@@ -231,7 +235,7 @@ module.exports = async (req, res) => {
             return res.status(500).json({ msg: "error creating new alarm and/or updating bookmark.alarm_id : ", e });
           }
         }
-      // si il n'y a pas d'alarm dans la requete, alors supprimer l'alarm existante et mettre à null alarm_id dans bookmark
+        // si il n'y a pas d'alarm dans la requete, alors supprimer l'alarm existante et mettre à null alarm_id dans bookmark
       } else {
         try {
           await conn.execute(`UPDATE bookmark SET alarm_id=NULL WHERE id=${originalBookmark.id};`);
@@ -243,7 +247,7 @@ module.exports = async (req, res) => {
     } catch (e) {
       return res.status(500).json({ msg: "error getting alarm : ", e });
     }
-  // il n'y pas encore d'alarm existante
+    // il n'y pas encore d'alarm existante
   } else {
     // il a une alarm à créer
     if (req.body.reminder) {
