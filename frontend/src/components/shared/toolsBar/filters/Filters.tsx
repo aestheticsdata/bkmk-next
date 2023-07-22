@@ -9,6 +9,14 @@ import { alarmOptions } from "@components/common/alarm/constants";
 
 import type { FieldValues } from "react-hook-form";
 
+const starsOptions = [
+  { value: 1, label: "1 étoile"},
+  { value: 2, label: "2 étoiles"},
+  { value: 3, label: "3 étoiles"},
+  { value: 4, label: "4 étoiles"},
+  { value: 5, label: "5 étoiles"},
+];
+
 const Filters = () => {
   const { control, register, handleSubmit } = useForm();
   const { categories } = useCategories();
@@ -23,11 +31,11 @@ const Filters = () => {
 
       <div
         className="
-          flex justify-center items-center w-[50px] bg-grey1 rounded p-1 hover:bg-grey0 hover:text-grey3 text-sm font-bold
+          flex justify-center items-center w-[55px] bg-grey1 rounded p-1 hover:bg-grey0 hover:text-grey3 text-xxs font-semibold
           transition-colors ease-linear duration-50"
         onClick={() => {setIsOpen(!isOpen)}}
       >
-        Filters
+        FILTERS
       </div>
 
       {isOpen &&
@@ -38,7 +46,7 @@ const Filters = () => {
           >
             <div className="flex flex-col space-y-4">
 
-              <div className="w-11/12 flex flex-col">
+              <div className="w-11/12">
                 <Row label="Categories">
                   <Controller
                     name="categories"
@@ -60,31 +68,41 @@ const Filters = () => {
                 </Row>
               </div>
 
-              <div className="w-11/12 flex flex-col">
+              <div className="w-11/12">
                 <Row label="Title">
                   <input
                     type="text"
                     placeholder="title contains"
                     className="w-full border-b border-b-formsGlobalColor bg-transparent pl-0.5 text-xs placeholder-grey2
                       outline-none focus:border-b-2"
-                    {...register("title", { required: true })}
+                    {...register("title")}
                   />
                 </Row>
               </div>
 
-              <div className="w-11/12 flex flex-col">
+              <div className="w-11/12">
                 <Row label="Stars">
-                  <input
-                    type="text"
-                    placeholder="stars"
-                    className="w-full border-b border-b-formsGlobalColor bg-transparent pl-0.5 text-xs placeholder-grey2
-                      outline-none focus:border-b-2"
-                    {...register("stars", { required: true })}
+                  <Controller
+                    name="stars"
+                    control={control}
+                    render={({ field }) =>
+                      <Select
+                        isClearable={true}
+                        styles={selectOptionsCSS("170px")}
+                        {...field}
+                        options={starsOptions}
+                        // value={initialReminder}
+                        onChange={(selectedOption) => {
+                          // setInitialReminder(selectedOption);
+                          field.onChange(selectedOption);
+                        }}
+                      />
+                    }
                   />
                 </Row>
               </div>
 
-              <div className="w-11/12 flex flex-col">
+              <div className="w-11/12">
                 <Row label="Reminder">
                   <Controller
                     name="reminder"
@@ -105,6 +123,54 @@ const Filters = () => {
                   />
                 </Row>
               </div>
+
+              <div className="w-11/12 flex flex-col">
+                <Row label="Contains">
+                  <div className="flex space-x-2">
+
+                    <div className="flex space-x-1">
+                      <label htmlFor="image">Screenshot</label>
+                      <input
+                        id="image"
+                        type="checkbox"
+                        {...register("screenshot")}
+                      />
+                    </div>
+
+                    <div className="flex space-x-1">
+                      <label htmlFor="notes">Notes</label>
+                      <input
+                        id="notes"
+                        type="checkbox"
+                        {...register("notes")}
+                      />
+                    </div>
+
+                    <div className="flex space-x-1">
+                      <label htmlFor="url">Url</label>
+                      <input
+                        id="url"
+                        type="checkbox"
+                        {...register("url")}
+                      />
+                    </div>
+
+                  </div>
+                </Row>
+              </div>
+
+              <div className="w-11/12">
+                <Row label="">
+                  <div className="flex w-[240px]">
+                    <button className="h-6 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
+                            font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
+                            hover:shadow-login focus:outline-none px-1">
+                      Filtrer
+                    </button>
+                  </div>
+                </Row>
+              </div>
+
 
             </div>
           </form>

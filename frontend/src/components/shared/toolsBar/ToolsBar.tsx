@@ -33,9 +33,6 @@ const ToolsBar = ({ backButton, editButton = false, filters = false }: ToolBarPr
               <div>Edit</div>
             </div>
           }
-          {filters &&
-            <div>filters</div>
-          }
         </>
       )
       :

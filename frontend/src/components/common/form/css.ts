@@ -24,5 +24,5 @@ export const selectOptionsCSS = (width) => ({
     ...baseStyles,
     backgroundColor: "grey",
     color: "#333",
-  })
+  }),
 });
