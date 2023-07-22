@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { useForm, Controller } from "react-hook-form";
+import queryString from "query-string";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
 import useCategories from "@components/common/category/services/useCategories";
@@ -19,11 +21,26 @@ const starsOptions = [
 
 const Filters = () => {
   const { control, register, handleSubmit } = useForm();
+  const router = useRouter();
   const { categories } = useCategories();
   const [isOpen, setIsOpen] = useState(false);
 
   const onSubmit = (e: FieldValues) => {
     console.log("field values : ", e);
+    // let savedQuery = queryString.stringify(queryString.parse(window.location.search));
+    // console.log("query : ", savedQuery);
+    let filters: any = {};
+    filters["page"] = Number(queryString.parse(window.location.search).page);
+    e.title.length > 0 && (filters["title"] = e.title.split(" ").join(","));
+    e.screenshot && (filters["screenshot"] = 1);
+    e.url && (filters["url"] = 1);
+    e.notes && (filters["notes"] = 1);
+    e.categories.length > 0 && (filters["categories_id"] = e.categories.map((category: any) => category.id).join(","));
+    e.reminder && (filters["reminder"] = e.reminder.value);
+    e.stars && (filters["stars"] = e.stars.value);
+    console.log("filters : ", filters);
+    router.push({ query: filters});
+    setIsOpen(false);
   }
 
   return (
@@ -147,7 +164,7 @@ const Filters = () => {
                     </div>
 
                     <div className="flex space-x-1">
-                      <label htmlFor="url">Url</label>
+                      <label htmlFor="url">URL</label>
                       <input
                         id="url"
                         type="checkbox"
@@ -165,7 +182,7 @@ const Filters = () => {
                     <button className="h-6 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                             font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
                             hover:shadow-login focus:outline-none px-1">
-                      Filtrer
+                      Filter
                     </button>
                   </div>
                 </Row>

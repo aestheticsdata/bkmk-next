@@ -12,7 +12,6 @@ import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constant
 
 import type { UserStore } from "@auth/store/userStore";
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
-import { lazyLightningCss } from "tailwindcss/src/oxide/cli/build/deps";
 
 const useBookmarks = () => {
   const queryClient = useQueryClient();
