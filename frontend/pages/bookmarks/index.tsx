@@ -3,7 +3,7 @@ import Bookmarks from "@components/bookmarks/Bookmarks";
 
 const BookmarksPageList = () => {
   return (
-    <Layout>
+    <Layout filters={true}>
       <Bookmarks />
     </Layout>
   )

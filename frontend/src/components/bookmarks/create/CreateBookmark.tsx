@@ -13,6 +13,7 @@ import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import useBookmark from "@components/bookmark/services/useBookmark";
 import { ROUTES } from "@components/shared/config/constants";
 import { alarmOptions } from "@components/common/alarm/constants";
+import { selectOptionsCSS } from "@components/common/form/css";
 
 import type { FieldValues } from "react-hook-form";
 
@@ -22,34 +23,6 @@ const priorityOptions = [
   { value: "high", label: "High" },
   { value: "highest", label: "Highest" },
 ];
-
-const selectOptionsCSS = (width) => ({
-  // voir https://react-select.com/styles#inner-components
-  option: (baseStyles) => ({
-    ...baseStyles,
-    cursor: "pointer",
-  }),
-    control: (baseStyles, state) => ({
-    ...baseStyles,
-    cursor: "pointer",
-    width,
-    backgroundColor: "transparent",
-    borderColor: "rgb(73,73,73)",
-    boxShadow: "none",
-    ":hover": {
-      borderColor: "rgb(5, 5, 5)",
-    },
-  }),
-    indicatorSeparator: (baseStyles) => ({
-    ...baseStyles,
-    color: "red",
-  }),
-    menuList: (baseStyles) => ({
-    ...baseStyles,
-    backgroundColor: "grey",
-    color: "#333",
-  })
-});
 
 
 const CreateBookmark = ({ id }) => {

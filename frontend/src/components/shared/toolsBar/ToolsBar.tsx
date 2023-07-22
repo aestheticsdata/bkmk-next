@@ -3,13 +3,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleLeft, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 import Pagination from "@components/shared/toolsBar/pagination/Pagination";
 import { ROUTES } from "@components/shared/config/constants";
+import Filters from "@components/shared/toolsBar/filters/Filters";
 
 interface ToolBarProps {
   backButton: boolean;
-  editButton?: boolean
+  editButton?: boolean;
+  filters?: boolean;
 }
 
-const ToolsBar = ({ backButton, editButton = false }: ToolBarProps) => {
+const ToolsBar = ({ backButton, editButton = false, filters = false }: ToolBarProps) => {
   const router = useRouter();
   return (
     <div className="fixed flex w-full py-2 mt-14 bg-grey01 h-[40px]">
@@ -31,10 +33,18 @@ const ToolsBar = ({ backButton, editButton = false }: ToolBarProps) => {
               <div>Edit</div>
             </div>
           }
+          {filters &&
+            <div>filters</div>
+          }
         </>
       )
       :
-        <Pagination />
+        <div className="flex">
+          <Pagination />
+          {filters &&
+           <Filters />
+          }
+        </div>
       }
     </div>
   )

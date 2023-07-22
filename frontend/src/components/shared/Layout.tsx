@@ -6,6 +6,7 @@ interface LayoutProps {
   displayTools?: boolean;
   backButton?: boolean;
   editButton?: boolean;
+  filters?: boolean;
   children: React.ReactNode;
 }
 
@@ -14,6 +15,7 @@ const Layout = ({
   displayTools = true,
   backButton = false,
   editButton = false,
+  filters = false,
   children,
 }: LayoutProps) => {
   return (
@@ -23,6 +25,7 @@ const Layout = ({
         <ToolsBar
           backButton={backButton}
           editButton={editButton}
+          filters={filters}
         />
       }
       {children}
