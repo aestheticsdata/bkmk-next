@@ -22,6 +22,11 @@ const useBookmarks = () => {
   const [page, setPage] = useState(-1);
 
   useEffect(() => {
+    console.log("query change : ", router.query);
+    Object.keys(router.query).filter(k => k !== "page").length > 0 && queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+  }, [router.query]);
+
+  useEffect(() => {
     setPage(Number(queryString.parse(window.location.search).page));
   }, []);
 
@@ -30,8 +35,10 @@ const useBookmarks = () => {
   }, [router.query.page]);
 
   const getBookmarks = async () => {
+    const parsed = queryString.parse(location.search);
+    const stringified = queryString.stringify(parsed);
     try {
-      return privateRequest(`/bookmarks?userID=${userID}&page=${page}`);
+      return privateRequest(`/bookmarks?userID=${userID}&${stringified}`);
     } catch (e) {
       console.log("get bookmarks error : ", e);
     }
