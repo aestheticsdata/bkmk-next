@@ -41,8 +41,7 @@ module.exports = async (req, res) => {
            u.original AS original_url,
            GROUP_CONCAT(c.name) AS categories_names,
            GROUP_CONCAT(c.color) AS categories_colors,
-           GROUP_CONCAT(c.id) AS categories_id,
-           (SELECT COUNT(*) FROM bookmark b WHERE b.user_id = '${req.query.userID}' AND b.active = 1) AS total_count
+           GROUP_CONCAT(c.id) AS categories_id
     ${commonSQLParts}`;
 
   if (categories_id) {
@@ -55,13 +54,18 @@ module.exports = async (req, res) => {
   `;
 
   const conn = await dbConnection();
-  const [[totalCount]] = await conn.execute(countSql);
+  const [[{total_count}]] = await conn.execute(countSql);
   const [rows] = await conn.execute(sql);
 
   await conn.end();
 
   const marshalledRows = marshallCategories(rows);
 
+  const rowsWithCount = {
+    rows: marshalledRows,
+    total_count,
+  };
 
-  res.json(marshalledRows);
+
+  res.json(rowsWithCount);
 };

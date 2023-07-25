@@ -24,15 +24,15 @@ const Bookmarks = () => {
   const router = useRouter();
 
   useEffect(() => {
-    console.log("bookmarks", bookmarks);
+    bookmarks?.rows && console.log("bookmarks.rows", bookmarks.rows);
   }, [bookmarks]);
 
   return (
     <div className="flex flex-col w-full mt-28 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
       {isLoading && <div>loading...</div>}
-      {bookmarks?.length === 0 && !isLoading && <div>Pas de bookmarks</div>}
-      {bookmarks?.length > 0 && !isLoading &&
-        bookmarks.map((bookmark: Bookmark) => (
+      {bookmarks?.rows.length === 0 && !isLoading && <div>Pas de bookmarks</div>}
+      {bookmarks?.rows.length > 0 && !isLoading &&
+        bookmarks.rows.map((bookmark: Bookmark) => (
           <div
             key={`${bookmark.id}-${decodeURIComponent(bookmark.title)}`}
             className={`

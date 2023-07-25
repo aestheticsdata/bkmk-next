@@ -17,7 +17,7 @@ const Pagination = () => {
   }, []);
 
   useEffect(() => {
-    bookmarks?.length > 0 && setLasPage(Math.floor((bookmarks[0].total_count-1)/20));
+    bookmarks?.rows.length > 0 && setLasPage(Math.floor((bookmarks.total_count-1)/20));
   }, [bookmarks]);
 
   // useEffect(() => {

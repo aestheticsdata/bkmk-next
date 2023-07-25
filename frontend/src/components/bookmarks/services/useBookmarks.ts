@@ -13,12 +13,17 @@ import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constant
 import type { UserStore } from "@auth/store/userStore";
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
+interface BookmarkResponse {
+  rows: Bookmark[];
+  total_count: number;
+}
+
 const useBookmarks = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const userID = useUserStore((state: UserStore) => state.user?.id);
   const { privateRequest } = useRequestHelper();
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [bookmarks, setBookmarks] = useState<BookmarkResponse>();
   const [page, setPage] = useState(-1);
 
   useEffect(() => {
