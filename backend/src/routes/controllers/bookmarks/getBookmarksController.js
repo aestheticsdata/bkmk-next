@@ -26,6 +26,7 @@ module.exports = async (req, res) => {
     for (const categoryId of decodedCategories) {
       sql += ` AND EXISTS (SELECT 1 FROM bookmark_category bc WHERE b.id = bc.bookmark_id AND bc.category_id = ${categoryId})`;
     }
+    return sql;
   }
 
   let countSql = `
@@ -33,7 +34,7 @@ module.exports = async (req, res) => {
       ${commonSQLParts}`;
 
   if (categories_id) {
-    sqlCategoriesHelper(countSql);
+    countSql = sqlCategoriesHelper(countSql);
   }
 
   let sql = `
@@ -45,10 +46,10 @@ module.exports = async (req, res) => {
     ${commonSQLParts}`;
 
   if (categories_id) {
-    sqlCategoriesHelper(sql);
+    sql = sqlCategoriesHelper(sql);
   }
   sql += `
-    GROUP BY b.id, b.user_id, b.url_id, u.original
+    GROUP BY b.id, b.user_id, b.url_id, u.original, b.date_added
     ORDER BY b.date_added ASC
     LIMIT ${page * ROWS_BY_PAGE}, ${ROWS_BY_PAGE};
   `;
