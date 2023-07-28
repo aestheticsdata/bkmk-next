@@ -32,7 +32,9 @@ const Pagination = () => {
       <button
         className="cursor-pointer hover:text-grey2 transition-colors ease-linear duration-150 disabled:text-grey1"
         onClick={() => {
-          router.push({ query: { page: page - 1 } });
+          const parsed: any = queryString.parse(location.search);
+          parsed["page"] = (page-1).toString();
+          router.push({ query: parsed });
           setPage(page - 1);
         }}
         disabled={page === 0}
@@ -55,7 +57,9 @@ const Pagination = () => {
       <button
         className="cursor-pointer hover:text-grey2 transition-colors ease-linear duration-150 disabled:text-grey1"
         onClick={() => {
-          router.push({ query: { page: page + 1 } });
+          const parsed: any = queryString.parse(location.search);
+          parsed["page"] = (page+1).toString();
+          router.push({ query: parsed });
           setPage(page + 1);
         }}
         disabled={page === lastPage}

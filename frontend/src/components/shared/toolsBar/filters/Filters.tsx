@@ -20,7 +20,12 @@ const starsOptions = [
 ];
 
 const Filters = () => {
-  const { control, register, handleSubmit } = useForm();
+  const {
+    control,
+    register,
+    handleSubmit,
+    // reset,
+  } = useForm();
   const router = useRouter();
   const { categories } = useCategories();
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +35,8 @@ const Filters = () => {
     // let savedQuery = queryString.stringify(queryString.parse(window.location.search));
     // console.log("query : ", savedQuery);
     let filters: any = {};
-    filters["page"] = Number(queryString.parse(window.location.search).page);
+    // filters["page"] = Number(queryString.parse(window.location.search).page);
+    filters["page"] = 0;
     e.title?.length > 0 && (filters["title"] = e.title.split(" ").join(","));
     e.screenshot && (filters["screenshot"] = 1);
     e.url && (filters["url"] = 1);
@@ -38,8 +44,9 @@ const Filters = () => {
     e.categories?.length > 0 && (filters["categories_id"] = e.categories.map((category: any) => category.id).join(","));
     e.reminder && (filters["reminder"] = e.reminder.value);
     e.stars && (filters["stars"] = e.stars.value);
-    console.log("filters : ", filters);
+    console.log("filters : ", queryString.stringify(filters));
     router.push({ query: filters});
+    // location.search = "?"+queryString.stringify(filters);
     setIsOpen(false);
   }
 
@@ -56,7 +63,7 @@ const Filters = () => {
       </div>
 
       {isOpen &&
-        <div className="absolute w-[800px] top-[30px] p-4 bg-grey01 rounded shadow-dashboard text-xs">
+        <div className="absolute w-[800px] top-[30px] p-4 bg-grey01 rounded shadow-dashboard text-xs space-y-2">
           <form
             className="flex flex-col"
             onSubmit={handleSubmit(onSubmit)}
@@ -86,7 +93,7 @@ const Filters = () => {
               </div>
 
               <div className="w-11/12">
-                <Row label="Title">
+                <Row label="Title"  childrenWidth="sm">
                   <input
                     type="text"
                     placeholder="title contains"
@@ -178,11 +185,33 @@ const Filters = () => {
 
               <div className="w-11/12">
                 <Row label="">
-                  <div className="flex w-[240px]">
-                    <button className="h-6 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
+                  <div className="flex w-[240px] space-x-4">
+                    <button type="submit" className="h-6 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                             font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
                             hover:shadow-login focus:outline-none px-1">
                       Filter
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // reset({
+                        //   categories: [],
+                        //   title: "",
+                        //   stars: null,
+                        //   reminder: null,
+                        //   screenshot: false,
+                        //   notes: false,
+                        //   url: false,
+                        // });
+                        location.href = "/bookmarks?page=0";
+                      }}
+                      className="
+                        h-6 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
+                        font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
+                        hover:shadow-login focus:outline-none px-1"
+                    >
+                      Reset
                     </button>
                   </div>
                 </Row>
@@ -191,6 +220,8 @@ const Filters = () => {
 
             </div>
           </form>
+
+
         </div>
       }
 
