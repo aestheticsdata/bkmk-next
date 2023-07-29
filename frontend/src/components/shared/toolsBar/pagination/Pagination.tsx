@@ -27,6 +27,12 @@ const Pagination = () => {
   //   }
   // }, [router]);
 
+  useEffect(() => {
+    if (router.query.page) {
+      setPage(Number(queryString.parse(window.location.search).page));
+    }
+  }, [router]);
+
   return (
     <div className="flex w-[100px] space-x-2 items-center px-4">
       <button

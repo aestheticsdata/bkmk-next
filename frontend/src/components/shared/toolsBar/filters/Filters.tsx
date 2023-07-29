@@ -32,10 +32,7 @@ const Filters = () => {
 
   const onSubmit = (e: FieldValues) => {
     console.log("field values : ", e);
-    // let savedQuery = queryString.stringify(queryString.parse(window.location.search));
-    // console.log("query : ", savedQuery);
     let filters: any = {};
-    // filters["page"] = Number(queryString.parse(window.location.search).page);
     filters["page"] = 0;
     e.title?.length > 0 && (filters["title"] = e.title.split(" ").join(","));
     e.screenshot && (filters["screenshot"] = 1);
@@ -45,8 +42,15 @@ const Filters = () => {
     e.reminder && (filters["reminder"] = e.reminder.value);
     e.stars && (filters["stars"] = e.stars.value);
     console.log("filters : ", queryString.stringify(filters));
+
+    // go to /?page=0 before applying filters //////
+    const search = queryString.parse(window.location.search);
+    if (Object.keys(search).length === 1 && Number(search.page) > 0) {
+      router.push({ query: { page: 0 } });
+    }
+    // //////////////////////////////////////////////
+
     router.push({ query: filters});
-    // location.search = "?"+queryString.stringify(filters);
     setIsOpen(false);
   }
 
@@ -57,7 +61,7 @@ const Filters = () => {
         className="
           flex justify-center items-center w-[55px] bg-grey1 rounded p-1 hover:bg-grey0 hover:text-grey3 text-xxs font-semibold
           transition-colors ease-linear duration-50"
-        onClick={() => {setIsOpen(!isOpen)}}
+        onClick={() => { setIsOpen(!isOpen) }}
       >
         FILTERS
       </div>
@@ -76,7 +80,7 @@ const Filters = () => {
                     name="categories"
                     control={control}
                     render={({ field }) =>
-                      <CreatableSelect
+                      <Select
                         isMulti
                         styles={selectOptionsCSS("630px")}
                         {...field}
@@ -195,6 +199,7 @@ const Filters = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+
                         // reset({
                         //   categories: [],
                         //   title: "",
@@ -204,6 +209,7 @@ const Filters = () => {
                         //   notes: false,
                         //   url: false,
                         // });
+
                         location.href = "/bookmarks?page=0";
                       }}
                       className="
