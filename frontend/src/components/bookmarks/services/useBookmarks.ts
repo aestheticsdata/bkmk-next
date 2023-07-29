@@ -9,10 +9,10 @@ import queryString from "query-string";
 import useRequestHelper from "@helpers/useRequestHelper";
 import { useUserStore } from "@auth/store/userStore";
 import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
+import { usePageStore } from "@components/shared/pageStore";
 
 import type { UserStore } from "@auth/store/userStore";
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
-import { usePageStore } from "@components/shared/pageStore";
 
 interface BookmarkResponse {
   rows: Bookmark[];
@@ -27,9 +27,8 @@ const useBookmarks = () => {
   const [bookmarks, setBookmarks] = useState<BookmarkResponse>();
   const [page, setPage] = useState(-1);
 
-  const { pageNumberSaved, setPageNumberSaved } = usePageStore((state: any) => ({
+  const { pageNumberSaved } = usePageStore((state: any) => ({
     pageNumberSaved: state.pageNumberSaved,
-    setPageNumberSaved: state.setPageNumberSaved,
   }));
 
   useEffect(() => {

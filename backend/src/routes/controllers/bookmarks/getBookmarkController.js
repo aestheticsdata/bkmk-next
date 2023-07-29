@@ -4,7 +4,7 @@ const marshallCategories = require("./helpers/marshallCategories");
 module.exports = async (req, res) => {
   const getSingleBookmarkSQL = `
       SELECT b.*,
-             a.frequency as alarm_frequency,
+             a.frequency AS alarm_frequency,
              u.original AS original_url,
              GROUP_CONCAT(c.name) AS categories_names,
              GROUP_CONCAT(c.color) AS categories_colors,

@@ -97,7 +97,7 @@ const Filters = () => {
               </div>
 
               <div className="w-11/12">
-                <Row label="Title"  childrenWidth="sm">
+                <Row label="Title"  childrenWidth="xl">
                   <input
                     type="text"
                     placeholder="title contains"

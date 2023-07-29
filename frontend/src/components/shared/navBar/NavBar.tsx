@@ -39,7 +39,8 @@ const NavBar = () => {
           <div className="flex space-x-4">
             {isWindowResponsive && getLinkItem(ROUTES.bookmarks)}
             {isWindowResponsive && getLinkItem(ROUTES.bookmarksCreation)}
-            {isWindowResponsive && getLinkItem(ROUTES.bookmarksBtachUpload)}
+            {isWindowResponsive && getLinkItem(ROUTES.bookmarksBatchUpload)}
+            {isWindowResponsive && getLinkItem(ROUTES.bookmarksReminders)}
             {/*{isCalendarVisible && <DatePickerWrapper />}*/}
           </div>
           <div className="flex">
