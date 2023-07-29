@@ -12,6 +12,7 @@ import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constant
 
 import type { UserStore } from "@auth/store/userStore";
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
+import { usePageStore } from "@components/shared/pageStore";
 
 interface BookmarkResponse {
   rows: Bookmark[];
@@ -26,13 +27,22 @@ const useBookmarks = () => {
   const [bookmarks, setBookmarks] = useState<BookmarkResponse>();
   const [page, setPage] = useState(-1);
 
+  const { pageNumberSaved, setPageNumberSaved } = usePageStore((state: any) => ({
+    pageNumberSaved: state.pageNumberSaved,
+    setPageNumberSaved: state.setPageNumberSaved,
+  }));
+
   useEffect(() => {
     console.log("query change : ", router.query);
     Object.keys(router.query).filter(k => k !== "page").length > 0 && queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
   }, [router.query]);
 
   useEffect(() => {
-    setPage(Number(queryString.parse(window.location.search).page));
+    if (pageNumberSaved) {
+      setPage(Number(pageNumberSaved));
+    } else {
+      setPage(Number(queryString.parse(window.location.search).page));
+    }
   }, []);
 
   useEffect(() => {
@@ -77,7 +87,7 @@ const useBookmarks = () => {
   }, {
     onSuccess: async () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
-      router.push("/bookmarks?page=0");
+      router.push(`/bookmarks?page=${pageNumberSaved}`);
     },
     onError: ((e) => {console.log("error creating bookmark", e)}),
   });
@@ -110,7 +120,7 @@ const useBookmarks = () => {
     onSuccess: async () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARK, router.query.id]);
-      router.push("/bookmarks?page=0");
+      router.push(`/bookmarks?page=${pageNumberSaved}`);
     },
     onError: ((e) => {console.log("error editing bookmark : ", e)}),
   });

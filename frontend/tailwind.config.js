@@ -10,6 +10,7 @@ module.exports = {
         charttooltip: "0 1px 10px 1px rgba(100, 100, 100, 0.6)",
       },
       fontSize: {
+        "xxxs": ".6rem",
         "xxs": ".7rem",
         "tiny": ".5rem",
       },

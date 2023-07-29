@@ -5,6 +5,7 @@ import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLeftLong } from "@fortawesome/free-solid-svg-icons";
 import { faRightLong } from "@fortawesome/free-solid-svg-icons";
+import { usePageStore } from "@components/shared/pageStore";
 
 const Pagination = () => {
   const router = useRouter();
@@ -12,8 +13,14 @@ const Pagination = () => {
   const [page, setPage] = useState(0);
   const [lastPage, setLasPage] = useState(0);
 
+  const { setPageNumberSaved } = usePageStore((state: any) => ({
+    setPageNumberSaved: state.setPageNumberSaved,
+  }));
+
   useEffect(() => {
-    setPage(Number(queryString.parse(window.location.search).page));
+    const page = Number(queryString.parse(window.location.search).page);
+    setPage(page);
+    setPageNumberSaved(page);
   }, []);
 
   useEffect(() => {
@@ -42,6 +49,7 @@ const Pagination = () => {
           parsed["page"] = (page-1).toString();
           router.push({ query: parsed });
           setPage(page - 1);
+          setPageNumberSaved(page - 1);
         }}
         disabled={page === 0}
       >
@@ -67,6 +75,7 @@ const Pagination = () => {
           parsed["page"] = (page+1).toString();
           router.push({ query: parsed });
           setPage(page + 1);
+          setPageNumberSaved(page + 1);
         }}
         disabled={page === lastPage}
       >
