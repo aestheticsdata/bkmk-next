@@ -86,6 +86,7 @@ const useBookmarks = () => {
   }, {
     onSuccess: async () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+      await queryClient.invalidateQueries([QUERY_KEYS.REMINDERS]);
       router.push(`/bookmarks?page=${pageNumberSaved}`);
     },
     onError: ((e) => {console.log("error creating bookmark", e)}),
@@ -102,6 +103,7 @@ const useBookmarks = () => {
   }, {
     onSuccess: async () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+      await queryClient.invalidateQueries([QUERY_KEYS.REMINDERS]);
     },
     onError: ((e) => {console.log("error deleting bookmark", e)}),
   });
@@ -119,6 +121,7 @@ const useBookmarks = () => {
     onSuccess: async () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARK, router.query.id]);
+      await queryClient.invalidateQueries([QUERY_KEYS.REMINDERS]);
       router.push(`/bookmarks?page=${pageNumberSaved}`);
     },
     onError: ((e) => {console.log("error editing bookmark : ", e)}),

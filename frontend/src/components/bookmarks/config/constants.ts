@@ -7,4 +7,5 @@ export const QUERY_KEYS = {
   BOOKMARKS: "bookmarks",
   BOOKMARK: "bookmark",
   CATEGORIES: "categories",
+  REMINDERS: "reminders",
 };

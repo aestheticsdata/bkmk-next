@@ -15,7 +15,7 @@ const BookmarkDetail = ({ id } : { id: string }) => {
   }, [bookmark]);
 
   return (
-    <div className="flex flex-col pt-24 pl-2">
+    <div className="flex flex-col pl-2">
       {bookmark &&
         <>
           <div className="font-semibold py-2">

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import useRequestHelper from "@helpers/useRequestHelper";
 import { useUserStore } from "@auth/store/userStore";
+import { QUERY_KEYS } from "@components/bookmarks/config/constants";
 
 import type {UserStore}  from "@auth/store/userStore";
 
@@ -17,7 +18,7 @@ const useReminders = () => {
   }
 
   const {data, isLoading} = useQuery({
-    queryKey: ["reminders"],
+    queryKey: [QUERY_KEYS.REMINDERS],
     queryFn: () => getReminders(),
   });
 
