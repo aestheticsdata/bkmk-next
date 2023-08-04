@@ -16,9 +16,12 @@ module.exports = async (req, res) => {
   try {
     const [result] = await conn.execute(sql);
     for (const bookmark of result) {
-      let difference = differenceInDays(new Date(), add(new Date(bookmark.alarm_added), {days: bookmark.alarm_frequency}));
-      console.log("différence : ", difference);
-      if (difference === 0) {
+      // let difference = differenceInDays(new Date(), add(new Date(bookmark.alarm_added), {days: bookmark.alarm_frequency}));
+      const difference = differenceInDays(new Date(), new Date(bookmark.alarm_added));
+      const reminderHasOccurred = difference % bookmark.alarm_frequency === 0;
+      // console.log("différence : ", difference);
+      // if (difference === 0) {
+      if (reminderHasOccurred) {
         bookmarksToNotify.push(bookmark);
       }
     }

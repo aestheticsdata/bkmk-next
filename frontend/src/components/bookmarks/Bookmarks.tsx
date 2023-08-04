@@ -29,7 +29,7 @@ const Bookmarks = () => {
   }, [bookmarks]);
 
   return (
-    <div className="flex flex-col w-full mt-28 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
+    <div className="flex flex-col w-full mt-2 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
       {isLoading && <div>loading...</div>}
       {bookmarks?.rows.length === 0 && !isLoading && <div>Pas de bookmarks</div>}
       {bookmarks?.rows.length > 0 && !isLoading &&

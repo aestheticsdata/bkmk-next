@@ -1,5 +1,6 @@
 import NavBar from "@src/components/shared/navBar/NavBar";
 import ToolsBar from "@components/shared/toolsBar/ToolsBar";
+import SortBar from "@components/shared/sortBar/SortBar";
 
 interface LayoutProps {
   isLogin?: boolean;
@@ -22,11 +23,16 @@ const Layout = ({
     <div className={`flex flex-col ${isLogin ? "items-center" : "items-start"} bg-grey1`}>
       <NavBar />
       {displayTools &&
-        <ToolsBar
-          backButton={backButton}
-          editButton={editButton}
-          filters={filters}
-        />
+        <>
+          <div className="">
+            <ToolsBar
+              backButton={backButton}
+              editButton={editButton}
+              filters={filters}
+            />
+          </div>
+          <SortBar />
+        </>
       }
       {children}
     </div>

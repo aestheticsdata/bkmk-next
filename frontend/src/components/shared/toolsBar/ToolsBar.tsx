@@ -15,7 +15,7 @@ const ToolsBar = ({ backButton, editButton = false, filters = false }: ToolBarPr
   const router = useRouter();
 
   return (
-    <div className="fixed flex w-full py-2 mt-14 bg-grey01 h-[40px]">
+    <div className="fixed flex w-full py-2 mt-14 bg-grey01">
       {backButton ? (
         <>
           <div
