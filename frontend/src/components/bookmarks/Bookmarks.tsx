@@ -15,7 +15,10 @@ import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import StarsDisplay from "@components/common/stars/StarsDisplay";
 import PriorityDisplay from "@components/common/priority/PriorityDisplay";
 import Categories from "@components/common/category/Categories";
-import { ROUTES } from "@components/shared/config/constants";
+import {
+  ROUTES,
+  COLUMN_WIDTH,
+} from "@components/shared/config/constants";
 
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
@@ -44,7 +47,7 @@ const Bookmarks = () => {
           >
 
             {bookmark.original_url ?
-              <div className="flex justify-center hover:text-blue-500 w-[20px] py-1">
+              <div className={`flex justify-center hover:text-blue-500 ${COLUMN_WIDTH.linkIcon} py-1`}>
                 <a
                   href={bookmark.original_url}
                   target="_blank"
@@ -54,7 +57,7 @@ const Bookmarks = () => {
                 </a>
               </div>
               :
-              <div className="pl-[20px]" />
+              <div className={`${COLUMN_WIDTH.linkIcon}`} />
             }
             <Link
               className="flex"
@@ -70,33 +73,33 @@ const Bookmarks = () => {
                 >
                     {decodeURIComponent(bookmark.title)}
                 </div>
-                <div className="flex justify-start mx-1 w-[70px]">
+                <div className={`flex justify-start ${COLUMN_WIDTH.stars}`}>
                   {bookmark.stars > 0 && <StarsDisplay count={bookmark.stars} />}
                 </div>
-                <div className="w-[300px] truncate" title={bookmark.notes && decodeURIComponent(bookmark.notes)}>
+                <div className={`${COLUMN_WIDTH.notes} truncate`} title={bookmark.notes && decodeURIComponent(bookmark.notes)}>
                   {bookmark.notes && decodeURIComponent(bookmark.notes)}
                 </div>
-                <div className="flex justify-center items-center w-[80px]" title={`priorité: ${bookmark.priority || "N/A"}`}>
+                <div className={`flex justify-center items-center ${COLUMN_WIDTH.priority}`} title={`priority: ${bookmark.priority || "N/A"}`}>
                   {bookmark.priority &&
                     <PriorityDisplay priorityLevel={bookmark.priority} />
                   }
                 </div>
                 <Categories categories={bookmark.categories} />
-                <div className="flex w-[120px] text-xs">
+                <div className={`flex ${COLUMN_WIDTH.screenshot} text-xs`}>
                   {bookmark.screenshot &&
                     <div>
                       <FontAwesomeIcon icon={faImage} />
                     </div>
                   }
                 </div>
-                <div className="flex w-[120px] text-xs">
+                <div className={`flex ${COLUMN_WIDTH.alarm} text-xs`}>
                   {bookmark.alarm_id &&
                     <div>
                       <FontAwesomeIcon icon={faBell} />
                     </div>
                   }
                 </div>
-                <div className="flex justify-center text-xxs w-[160px]">
+                <div className={`flex justify-center text-xxs ${COLUMN_WIDTH.dateAdded}`}>
                   ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
                 </div>
                 {displayDeleteConfirm === bookmark.id ?
