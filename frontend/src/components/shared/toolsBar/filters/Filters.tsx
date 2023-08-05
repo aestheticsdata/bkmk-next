@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import { useForm, Controller } from "react-hook-form";
 import queryString from "query-string";
 import Select from "react-select";
-import CreatableSelect from "react-select/creatable";
 import useCategories from "@components/common/category/services/useCategories";
 import Row from "@components/bookmarks/create/Row";
 import { selectOptionsCSS } from "@components/common/form/css";
@@ -97,7 +96,7 @@ const Filters = () => {
               </div>
 
               <div className="w-11/12">
-                <Row label="Title"  childrenWidth="xl">
+                <Row label="Title" childrenWidth="xl">
                   <input
                     type="text"
                     placeholder="title contains"

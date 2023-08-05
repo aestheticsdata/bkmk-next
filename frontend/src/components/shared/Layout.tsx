@@ -8,6 +8,7 @@ interface LayoutProps {
   backButton?: boolean;
   editButton?: boolean;
   filters?: boolean;
+  sortbar?: boolean;
   children: React.ReactNode;
 }
 
@@ -17,6 +18,7 @@ const Layout = ({
   backButton = false,
   editButton = false,
   filters = false,
+  sortbar = false,
   children,
 }: LayoutProps) => {
   return (
@@ -31,7 +33,7 @@ const Layout = ({
               filters={filters}
             />
           </div>
-          <SortBar />
+          {sortbar && <SortBar />}
         </>
       }
       {children}
