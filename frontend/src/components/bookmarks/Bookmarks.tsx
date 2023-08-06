@@ -19,11 +19,12 @@ import {
   ROUTES,
   COLUMN_WIDTH,
 } from "@components/shared/config/constants";
+import { PAGES } from "@components/shared/config/constants";
 
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
 const Bookmarks = () => {
-  const { bookmarks, deleteBookmark, isLoading } = useBookmarks();
+  const { bookmarks, deleteBookmark, isLoading } = useBookmarks(PAGES.BOOKMARKS);
   const router = useRouter();
   const [displayDeleteConfirm, setDisplayDeleteConfirm] = useState<number>(-1);
 

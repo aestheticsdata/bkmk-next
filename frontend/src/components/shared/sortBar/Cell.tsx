@@ -5,15 +5,16 @@ interface Cell {
   width: string;
   onClick: (property: string) => void;
   label: string;
+  value: string;
   justify?: string;
   displayLabel?: boolean;
 }
 
-const Cell = ({ width, label, onClick, justify="justify-center", displayLabel=true }: Cell) => {
+const Cell = ({ width, label, value, onClick, justify="justify-center", displayLabel=true }: Cell) => {
   return (
     <div
       className={`flex ${justify} items-center space-x-2 ${width} hover:bg-white py-1 cursor-pointer active:bg-grey0`}
-      onClick={() => {onClick(label)}}
+      onClick={() => {onClick(value)}}
     >
       {displayLabel &&
         <div className="uppercase">{label}</div>

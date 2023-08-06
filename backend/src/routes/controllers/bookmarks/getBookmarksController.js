@@ -4,8 +4,68 @@ const marshallCategories = require("./helpers/marshallCategories");
 const ROWS_BY_PAGE = 20;
 
 module.exports = async (req, res) => {
-  const { page, title, screenshot, url, notes, categories_id, stars, reminder } = req.query;
+  const { page, title, screenshot, url, notes, categories_id, stars, reminder, sort } = req.query;
 
+  let sortPart = "";
+  if (sort) {
+    sortPart += "ORDER BY ";
+    for (const sortProperty of sort.split(",")) {
+      switch (sortProperty) {
+        case "link":
+          sortPart += "b.url_id ASC, ";
+          break;
+        case "-link":
+          sortPart += "b.url_id DESC, ";
+          break;
+        case "title":
+          sortPart += "b.title ASC, ";
+          break;
+        case "-title":
+          sortPart += "b.title DESC, ";
+          break;
+        case "stars":
+          sortPart += "b.stars ASC, ";
+          break;
+        case "-stars":
+          sortPart += "b.stars DESC, ";
+          break;
+        case "notes":
+          sortPart += "b.notes ASC, ";
+          break;
+        case "-notes":
+          sortPart += "b.notes DESC, ";
+          break;
+        case "priority":
+          sortPart += "b.priority ASC, ";
+          break;
+        case "-priority":
+          sortPart += "b.priority DESC, ";
+          break;
+        case "screenshot":
+          sortPart += "b.screenshot ASC, ";
+          break;
+        case "-screenshot":
+          sortPart += "b.screenshot DESC, ";
+          break;
+        case "alarm":
+          sortPart += "b.alarm_id ASC, ";
+          break;
+        case "-alarm":
+          sortPart += "b.alarm_id DESC, ";
+          break;
+        case "date":
+          sortPart += "b.date_added ASC, ";
+          break;
+        case "-date":
+          sortPart += "b.date_added DESC, ";
+          break;
+        default:
+          break;
+      }
+    }
+    sortPart = sortPart.slice(0, sortPart.length-2);
+  }
+  console.log("WTF sortPart : ", sortPart);
   const commonSQLParts = `
     FROM bookmark b
         LEFT JOIN url u ON b.url_id = u.id
@@ -50,10 +110,10 @@ module.exports = async (req, res) => {
   }
   sql += `
     GROUP BY b.id, b.user_id, b.url_id, u.original, b.date_added
-    ORDER BY b.date_added ASC
+    ${sortPart}
     LIMIT ${page * ROWS_BY_PAGE}, ${ROWS_BY_PAGE};
   `;
-
+  console.log("sql : ", sql);
   const conn = await dbConnection();
   const [[{total_count}]] = await conn.execute(countSql);
   const [rows] = await conn.execute(sql);

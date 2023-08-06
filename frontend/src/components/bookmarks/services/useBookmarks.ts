@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import {
   useQuery,
@@ -9,6 +9,7 @@ import queryString from "query-string";
 import useRequestHelper from "@helpers/useRequestHelper";
 import { useUserStore } from "@auth/store/userStore";
 import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
+import { PAGES } from "@components/shared/config/constants";
 import { usePageStore } from "@components/shared/pageStore";
 
 import type { UserStore } from "@auth/store/userStore";
@@ -19,7 +20,7 @@ interface BookmarkResponse {
   total_count: number;
 }
 
-const useBookmarks = () => {
+const useBookmarks = (from: string) => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const userID = useUserStore((state: UserStore) => state.user?.id);
@@ -31,9 +32,28 @@ const useBookmarks = () => {
     pageNumberSaved: state.pageNumberSaved,
   }));
 
+  const routerqueryRef = useRef(router.query);
   useEffect(() => {
-    console.log("query change : ", router.query);
-    Object.keys(router.query).filter(k => k !== "page").length > 0 && queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+    // ce hook est appelé depuis la page bookmark et la page pagination
+    // il y a 4 cas:
+    // une url sans query string
+    // une url avec sort
+    // une url avec des filtres
+    // une url avec sort et des filtres
+    if (from === PAGES.BOOKMARKS) {
+      console.log("routerqueryRef.current : ", routerqueryRef.current);
+      const hasSortChanged = router.query.sort !== routerqueryRef.current.sort;
+      let invalidated = false;
+
+      if ((Object.keys(router.query).filter(k => k !== "page").length > 0)) {
+        queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+        invalidated = true;
+      }
+      if (hasSortChanged && !invalidated) {
+        queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
+      }
+      routerqueryRef.current = router.query;
+    }
   }, [router.query]);
 
   useEffect(() => {

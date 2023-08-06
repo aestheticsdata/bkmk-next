@@ -20,3 +20,8 @@ export const COLUMN_WIDTH = {
   alarm: "w-[120px]",
   dateAdded: "w-[160px]",
 };
+
+export const PAGES = {
+  BOOKMARKS: "bookmarks",
+  PAGINATION: "pagination",
+};

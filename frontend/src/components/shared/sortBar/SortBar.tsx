@@ -13,11 +13,16 @@ const SortBar = () => {
     if (!search.sort) {
       qs = queryString.stringify({ ...search, sort: property });
     } else {
-      const sortProperties = (search.sort as String).split(',');
-      const propertyIndex = sortProperties.indexOf(property);
+      const sortProperties = (search.sort as string).split(',');
+      const propertyIndex = sortProperties.findIndex(item => item === property || item === "-" + property);
 
       if (propertyIndex !== -1) {
-        sortProperties.splice(propertyIndex, 1);
+        if (!sortProperties[propertyIndex].startsWith("-")) {
+          sortProperties.splice(propertyIndex, 1);
+          sortProperties.push("-"+property);
+        } else {
+          sortProperties.splice(propertyIndex, 1);
+        }
       } else {
         sortProperties.push(property);
       }
@@ -33,18 +38,17 @@ const SortBar = () => {
     router.push({ query: qs });
   };
 
-
   return (
     <div className="flex w-full mt-24 bg-grey0 text-xxs select-none">
-      <Cell width={COLUMN_WIDTH.linkIcon} label="link" onClick={onClick} displayLabel={false} />
-      <Cell width={COLUMN_WIDTH.title} label="title" onClick={onClick} />
-      <Cell width={COLUMN_WIDTH.stars} label="stars" onClick={onClick} />
-      <Cell width={COLUMN_WIDTH.notes} label="notes" onClick={onClick} />
-      <Cell width={COLUMN_WIDTH.priority} label="priority" onClick={onClick} />
+      <Cell width={COLUMN_WIDTH.linkIcon} label="link" value="link" onClick={onClick} displayLabel={false} />
+      <Cell width={COLUMN_WIDTH.title} label="title" value="title" onClick={onClick} />
+      <Cell width={COLUMN_WIDTH.stars} label="stars" value="stars" onClick={onClick} />
+      <Cell width={COLUMN_WIDTH.notes} label="notes" value="notes" onClick={onClick} />
+      <Cell width={COLUMN_WIDTH.priority} label="priority" value="priority" onClick={onClick} />
       <div className={`flex ${COLUMN_WIDTH.categories}`} />
-      <Cell width={COLUMN_WIDTH.screenshot} label="screenshot" justify="justify-start" onClick={onClick} />
-      <Cell width={COLUMN_WIDTH.alarm} label="alarm" justify="justify-start" onClick={onClick} />
-      <Cell width={COLUMN_WIDTH.dateAdded} label="date added" onClick={onClick} />
+      <Cell width={COLUMN_WIDTH.screenshot} label="screenshot" value="screenshot" justify="justify-start" onClick={onClick} />
+      <Cell width={COLUMN_WIDTH.alarm} label="alarm" value="alarm" justify="justify-start" onClick={onClick} />
+      <Cell width={COLUMN_WIDTH.dateAdded} label="date added" value="date" onClick={onClick} />
     </div>
   )
 }

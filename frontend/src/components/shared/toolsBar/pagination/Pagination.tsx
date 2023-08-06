@@ -6,10 +6,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLeftLong } from "@fortawesome/free-solid-svg-icons";
 import { faRightLong } from "@fortawesome/free-solid-svg-icons";
 import { usePageStore } from "@components/shared/pageStore";
+import { PAGES } from "@components/shared/config/constants";
 
 const Pagination = () => {
   const router = useRouter();
-  const { bookmarks } = useBookmarks();
+  const { bookmarks } = useBookmarks(PAGES.PAGINATION);
   const [page, setPage] = useState(0);
   const [lastPage, setLasPage] = useState(0);
 
@@ -59,7 +60,7 @@ const Pagination = () => {
         <div>{page}</div>
         <div>/</div>
         <div
-          className="hover:text-white cursor-pointer rounded hover:bg-grey1 px-0.5 rounded-2xl"
+          className="hover:text-white cursor-pointer rounded hover:bg-grey1 px-0.5"
           onClick={() => {
             router.push({ query: { page: lastPage } });
             setPage(lastPage);
