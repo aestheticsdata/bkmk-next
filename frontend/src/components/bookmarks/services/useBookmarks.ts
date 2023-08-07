@@ -41,7 +41,6 @@ const useBookmarks = (from: string) => {
     // une url avec des filtres
     // une url avec sort et des filtres
     if (from === PAGES.BOOKMARKS) {
-      console.log("routerqueryRef.current : ", routerqueryRef.current);
       const hasSortChanged = router.query.sort !== routerqueryRef.current.sort;
       let invalidated = false;
 
