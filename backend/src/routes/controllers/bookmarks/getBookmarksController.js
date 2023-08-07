@@ -9,8 +9,7 @@ module.exports = async (req, res) => {
   let sortPart = "";
   if (sort) {
     sortPart += "ORDER BY ";
-    for (const sortProperty of sort.split(",")) {
-      switch (sortProperty) {
+    switch (sort) {
         case "link":
           sortPart += "b.url_id ASC, ";
           break;
@@ -62,7 +61,6 @@ module.exports = async (req, res) => {
         default:
           break;
       }
-    }
     sortPart = sortPart.slice(0, sortPart.length-2);
   }
   console.log("WTF sortPart : ", sortPart);

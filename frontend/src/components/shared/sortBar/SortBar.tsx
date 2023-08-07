@@ -13,30 +13,30 @@ const SortBar = () => {
     if (!search.sort) {
       qs = queryString.stringify({ ...search, sort: property });
     } else {
-      const sortProperties = (search.sort as string).split(',');
-      const propertyIndex = sortProperties.findIndex(item => item === property || item === "-" + property);
+      const currentSort = search.sort as string;
+      const currentSortProperty = currentSort.startsWith("-") ? currentSort.substring(1) : currentSort;
 
-      if (propertyIndex !== -1) {
-        if (!sortProperties[propertyIndex].startsWith("-")) {
-          sortProperties.splice(propertyIndex, 1);
-          sortProperties.push("-"+property);
+      if (currentSortProperty === property) {
+        if (currentSort.startsWith("-")) {
+          // Remove sort property from URL
+          delete search.sort;
+          qs = queryString.stringify(search);
         } else {
-          sortProperties.splice(propertyIndex, 1);
+          // Change to descending sort
+          qs = queryString.stringify({ ...search, sort: `-${property}` });
         }
       } else {
-        sortProperties.push(property);
-      }
-
-      if (sortProperties.length > 0) {
-        qs = queryString.stringify({ ...search, sort: sortProperties.join(',') });
-      } else {
-        delete search.sort;
-        qs = queryString.stringify(search);
+        // Change to a different sort property
+        qs = queryString.stringify({ ...search, sort: property });
       }
     }
 
     router.push({ query: qs });
   };
+
+
+
+
 
   return (
     <div className="flex w-full mt-24 bg-grey0 text-xxs select-none">
