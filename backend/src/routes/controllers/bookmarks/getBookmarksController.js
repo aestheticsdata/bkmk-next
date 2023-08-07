@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
       }
     sortPart = sortPart.slice(0, sortPart.length-2);
   }
-  console.log("WTF sortPart : ", sortPart);
+
   const commonSQLParts = `
     FROM bookmark b
         LEFT JOIN url u ON b.url_id = u.id
