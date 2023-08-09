@@ -192,7 +192,7 @@ const CreateBookmark = ({ id }) => {
               cols={80}
               rows={10}
               className="bg-transparent border rounded border-formsGlobalColor
-                outline-gray-600 focus:border-none focus:outline-none focus:outline-formsGlobalColorHover
+                outline-gray-600 focus:outline-none focus:outline-formsGlobalColorHover
                 focus:border-none"
               {...register("notes")}
             />

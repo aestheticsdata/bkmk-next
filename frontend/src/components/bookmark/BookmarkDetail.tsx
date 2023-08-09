@@ -14,6 +14,29 @@ const BookmarkDetail = ({ id } : { id: string }) => {
     bookmark && console.log("bookmark detail", bookmark);
   }, [bookmark]);
 
+  const getHTML = (notes: string) => {
+    let decodedNotes = decodeURIComponent(notes);
+    const regex = /https?:\/\/[^\s/$.?#].\S*/g;
+    const matches = decodedNotes.match(regex);
+    if (matches) {
+      for (const link of matches) {
+        decodedNotes = decodedNotes.replace(
+          link,
+          `<a
+              href="${link}"
+              target='_blank'
+              class="cursor-pointer hover:bg-lime-300 underline hover:no-underline text-xs whitespace-nowrap"
+            >
+            ${link}
+          </a>`
+        );
+      }
+    }
+
+    console.log(decodedNotes);
+    return decodedNotes;
+  }
+
   return (
     <div className="flex flex-col pl-2">
       {bookmark &&
@@ -48,13 +71,15 @@ const BookmarkDetail = ({ id } : { id: string }) => {
                 className="border-8 rounded border-grey2"
                 src={`/screenshotsUpload/${bookmark.user_id}/${bookmark.screenshot}`}
                 width="50%"
+                alt="screenshot"
               />
             </div>
           }
 
           {bookmark.notes &&
             <div className="text-sm py-2 w-[550px] whitespace-pre-wrap italic">
-              {decodeURIComponent(bookmark.notes)}
+              <div dangerouslySetInnerHTML={{__html: getHTML(bookmark.notes) }} />
+
             </div>
           }
 
