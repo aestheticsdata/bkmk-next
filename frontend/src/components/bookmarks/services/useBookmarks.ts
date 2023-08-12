@@ -20,7 +20,7 @@ interface BookmarkResponse {
   total_count: number;
 }
 
-const useBookmarks = (from: string) => {
+const useBookmarks = (from: string = "") => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const userID = useUserStore((state: UserStore) => state.user?.id);

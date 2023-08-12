@@ -5,3 +5,6 @@ ecosystem.config.js
 ecosystem.config.prod.js
 frontend/public/screenshotsUpload/*
 notes/*
+/.next/
+/out/
+/build

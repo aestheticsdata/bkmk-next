@@ -41,7 +41,7 @@ const useResetPasswordService = () => {
       // @ts-ignore
       await Swal.fire({
         title: "le mot de passe n'a pas pu être ré-initialisé",
-        text: (err as AxiosError).response?.data.error ?? "",
+        text: (err as any).response?.data.error ?? "",
         type: "error",
         icon: "warning",
         toast: true,

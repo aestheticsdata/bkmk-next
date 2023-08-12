@@ -10,7 +10,7 @@ const BookmarkPageEdit = () => {
       displayTools={false}
       backButton={true}
     >
-      <BookmarksCreate id={router.query.id as string} />
+      {router.query.id && <BookmarksCreate id={Number(router.query.id)} />}
     </Layout>
   )
 }
