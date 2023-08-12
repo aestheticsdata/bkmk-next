@@ -10,9 +10,7 @@ module.exports = async (req, res, next) => {
     name,
     email,
     password,
-    baseCurrency,
     registerDate,
-    language,
   } = req.body;
 
   if (!name || !email || !password) {
@@ -32,9 +30,7 @@ module.exports = async (req, res, next) => {
     name,
     email,
     password,
-    baseCurrency,
     registerDate,
-    language,
   };
 
   bcrypt.genSalt(10, (err, salt) => {
@@ -56,8 +52,9 @@ module.exports = async (req, res, next) => {
             VALUES ("${newUser.name}", "${newUser.password}", "${newUser.email}", "${format(new Date(registerDate), 'yyyy-MM-dd')}");`;
 
           try {
-            await conn.execute(sqlCreateUser);
+            const createdUser = await conn.execute(sqlCreateUser);
             signIn(res, {
+              id: createdUser[0].insertId,
               name: newUser.name,
               email: newUser.email,
             });

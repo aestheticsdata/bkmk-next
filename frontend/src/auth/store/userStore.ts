@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface User {
-  baseCurrency: string;
   email: string;
   id: string;
   language: string;
