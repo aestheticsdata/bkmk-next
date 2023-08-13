@@ -4,6 +4,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const OS = require("os");
 const cronMysql = require('./cron/cron-mysql');
+const screenshotsImagesBackup = require("./screenshotsBackup/screenshotsBackup");
 
 process.env.UV_THREADPOOL_SIZE = OS.cpus().length;
 

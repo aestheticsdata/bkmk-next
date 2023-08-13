@@ -8,7 +8,7 @@ const postBookmarkController = require("../controllers/bookmarks/postBookmarkCon
 const deleteBookmarkController = require("../controllers/bookmarks/deleteBookmarkController");
 const editBookmarkController = require("../controllers/bookmarks/editBookmarkController");
 const uploadBookmarksControoler = require("../controllers/bookmarks/uploadBookmarksController");
-const catchAsync = require('../../../../frontend/src/utils/catchAsync');
+const catchAsync = require('../../utils/catchAsync');
 
 router.get("/", checkToken, catchAsync(getBookmarksController));
 router.get("/:id", checkToken, catchAsync(getBookmarkController));

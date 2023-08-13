@@ -47,7 +47,6 @@ const CreateBookmark = ({ id }) => {
   const [isHoverScreenshot, setIsHoverScreenshot] = useState(false);
 
   useEffect(() => {
-    console.log("oh yeah bookmark !!!", bookmark);
     if (bookmark) {
       reset({
         title: decodeURIComponent(bookmark.title),

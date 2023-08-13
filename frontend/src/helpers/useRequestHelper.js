@@ -2,15 +2,19 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { useAuthStore } from "@auth/store/authStore";
 
+axios.defaults.baseURL = (typeof window !== "undefined") &&
+  window.location.host.search("bkmk") !== -1
+    ? "http://bkmk.1991computer.com/api/"
+    : `${process.env.NEXT_PUBLIC_REMOTE_HOST_FROM_LOCALHOST}`;
 
 const useRequestHelper = () => {
   const router = useRouter();
   const token = useAuthStore((state) => state.token);
 
-  const getRequestURL = (url) =>
-    window.location.host.search("bkmk") !== -1
-      ? `api${url}`
-      : `${process.env.NEXT_PUBLIC_REMOTE_HOST_FROM_LOCALHOST}${url}`;
+  // const getRequestURL = (url) =>
+  //   window.location.host.search("bkmk") !== -1
+  //     ? `api${url}`
+  //     : `${process.env.NEXT_PUBLIC_REMOTE_HOST_FROM_LOCALHOST}${url}`;
 
   const privateRequest = (url, options, config) => {
     const tokenBearer = {
@@ -39,13 +43,17 @@ const useRequestHelper = () => {
       }
     );
 
-    const requestURL = getRequestURL(url);
-    return axiosInstance(requestURL, {...options, tokenBearer});
+    // const requestURL = getRequestURL(url);
+    console.log("privateRequest :: url : ", url);
+    // console.log("privateRequest :: requestURL : ", requestURL);
+    // return axiosInstance(requestURL, {...options, tokenBearer});
+    return axiosInstance(url, {...options, tokenBearer});
   };
 
   const request = (url, options) => {
-    const requestURL = getRequestURL(url);
-    return axios(requestURL, options);
+    // const requestURL = getRequestURL(url);
+    // return axios(requestURL, options);
+    return axios(url, options);
   };
 
   return {
