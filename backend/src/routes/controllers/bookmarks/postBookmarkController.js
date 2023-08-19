@@ -24,7 +24,6 @@ module.exports = async (req, res) => {
   if (req.file) {
     screenshotFilename = await jimpHelper.createScreenshot({
       file: req.file,
-      title,
       userID,
     });
   }

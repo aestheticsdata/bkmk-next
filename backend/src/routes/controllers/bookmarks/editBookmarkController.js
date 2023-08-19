@@ -302,7 +302,6 @@ module.exports = async (req, res) => {
     try {
       const screenshotFilename = await jimpHelper.createScreenshot({
         file: req.file,
-        title: req.body.title,
         userID,
       });
       await conn.execute(`

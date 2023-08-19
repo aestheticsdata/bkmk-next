@@ -4,7 +4,6 @@ const cors = require("cors");
 const helmet = require("helmet");
 const OS = require("os");
 const cronMysql = require('./cron/cron-mysql');
-const screenshotsImagesBackup = require("./screenshotsBackup/screenshotsBackup");
 
 process.env.UV_THREADPOOL_SIZE = OS.cpus().length;
 
@@ -17,8 +16,7 @@ app.use("/bookmarks", require("./routes/api/bookmarks"));
 app.use("/categories", require("./routes/api/categories"));
 app.use("/reminders", require("./routes/api/reminders"));
 
-if (process.env.PROD) {
-  screenshotsImagesBackup();
+if (process.env.NODE_ENV === "production") {
   cronMysql();
 }
 
