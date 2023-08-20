@@ -1,17 +1,29 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import fr from "date-fns/locale/fr";
 import format from "date-fns/format";
 import useBookmark from "@components/bookmark/services/useBookmark";
 import StarsDisplay from "@components/common/stars/StarsDisplay";
 import PriorityDisplay from "@components/common/priority/PriorityDisplay";
 import Categories from "@components/common/category/Categories";
+import useRequestHelper from "@helpers/useRequestHelper";
 import { alarmOptions } from "@components/common/alarm/constants";
 
 const BookmarkDetail = ({ id } : { id: string }) => {
+  const { privateRequest } = useRequestHelper();
   const { isLoading, bookmark } = useBookmark(id);
+  const [imageUrl, setImageUrl] = useState('');
+
+  const getScreenshot = async (bookmark) => {
+    // setIsLoading(true);
+    const res = await privateRequest(`/bookmarks/upload/${bookmark.id}?screenshotFilename=${bookmark.screenshot}&userID=${bookmark.user_id}`);
+    setImageUrl(res.data);
+    // setIsLoading(false);
+  }
 
   useEffect(() => {
-    bookmark && console.log("bookmark detail", bookmark);
+    if (bookmark) {
+      getScreenshot(bookmark);
+    }
   }, [bookmark]);
 
   const getHTML = (notes: string) => {
@@ -69,7 +81,7 @@ const BookmarkDetail = ({ id } : { id: string }) => {
             <div className="py-2">
               <img
                 className="border-8 rounded border-grey2"
-                src={`/screenshotsUpload/${bookmark.user_id}/${bookmark.screenshot}`}
+                src={imageUrl}
                 width="50%"
                 alt="screenshot"
               />
