@@ -4,11 +4,11 @@ import {
 } from "react";
 import useRequestHelper from "@helpers/useRequestHelper";
 
-const useGetScreenshot = (bookmark) => {
+const useGetScreenshot = (bookmark: any) => {
   const { privateRequest } = useRequestHelper();
   const [imageUrl, setImageUrl] = useState('');
 
-  const getScreenshot = async (bookmark) => {
+  const getScreenshot = async (bookmark: any) => {
     // setIsLoading(true);
     const res = await privateRequest(`/bookmarks/upload/${bookmark.id}?screenshotFilename=${bookmark.screenshot}&userID=${bookmark.user_id}`);
     setImageUrl(res.data);
