@@ -1,30 +1,15 @@
-import { useEffect, useState } from "react";
 import fr from "date-fns/locale/fr";
 import format from "date-fns/format";
 import useBookmark from "@components/bookmark/services/useBookmark";
 import StarsDisplay from "@components/common/stars/StarsDisplay";
 import PriorityDisplay from "@components/common/priority/PriorityDisplay";
 import Categories from "@components/common/category/Categories";
-import useRequestHelper from "@helpers/useRequestHelper";
+import useGetScreenshot from "@helpers/getScreenshot";
 import { alarmOptions } from "@components/common/alarm/constants";
 
 const BookmarkDetail = ({ id } : { id: string }) => {
-  const { privateRequest } = useRequestHelper();
   const { isLoading, bookmark } = useBookmark(id);
-  const [imageUrl, setImageUrl] = useState('');
-
-  const getScreenshot = async (bookmark) => {
-    // setIsLoading(true);
-    const res = await privateRequest(`/bookmarks/upload/${bookmark.id}?screenshotFilename=${bookmark.screenshot}&userID=${bookmark.user_id}`);
-    setImageUrl(res.data);
-    // setIsLoading(false);
-  }
-
-  useEffect(() => {
-    if (bookmark) {
-      getScreenshot(bookmark);
-    }
-  }, [bookmark]);
+  const imageUrl = useGetScreenshot(bookmark);
 
   const getHTML = (notes: string) => {
     let decodedNotes = decodeURIComponent(notes);

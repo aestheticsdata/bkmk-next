@@ -14,6 +14,7 @@ import useBookmark from "@components/bookmark/services/useBookmark";
 import { ROUTES } from "@components/shared/config/constants";
 import { alarmOptions } from "@components/common/alarm/constants";
 import { selectOptionsCSS } from "@components/common/form/css";
+import useGetScreenshot from "@helpers/getScreenshot";
 
 import type { FieldValues } from "react-hook-form";
 
@@ -39,6 +40,7 @@ const CreateBookmark = ({ id }) => {
   const { categories } = useCategories();
   const { createBookmark, editBookmark } = useBookmarks();
   const { bookmark } = useBookmark(id);
+  const imageUrl = useGetScreenshot(bookmark);
   const [initialCategories, setinitialCategories] = useState();
   const [initialPriority, setInitialPriority] = useState();
   const [initialReminder, setInitialReminder] = useState();
@@ -283,7 +285,7 @@ const CreateBookmark = ({ id }) => {
                     <div>
                       <img
                         className="border-8 rounded border-grey2"
-                        src={`/screenshotsUpload/${bookmark.user_id}/${bookmark.screenshot}`}
+                        src={imageUrl}
                         width="50%"
                       />
                     </div>
