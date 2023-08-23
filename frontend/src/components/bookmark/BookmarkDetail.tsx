@@ -6,10 +6,11 @@ import PriorityDisplay from "@components/common/priority/PriorityDisplay";
 import Categories from "@components/common/category/Categories";
 import useGetScreenshot from "@helpers/getScreenshot";
 import { alarmOptions } from "@components/common/alarm/constants";
+import Spinner from "@components/common/spinner/Spinner";
 
 const BookmarkDetail = ({ id } : { id: string }) => {
-  const { isLoading, bookmark } = useBookmark(id);
-  const imageUrl = useGetScreenshot(bookmark);
+  const { isLoading: isBookmarkLoading, bookmark } = useBookmark(id);
+  const { isLoading: isScreenshotLoading, imageUrl } = useGetScreenshot(bookmark);
 
   const getHTML = (notes: string) => {
     let decodedNotes = decodeURIComponent(notes);
@@ -30,7 +31,6 @@ const BookmarkDetail = ({ id } : { id: string }) => {
       }
     }
 
-    console.log(decodedNotes);
     return decodedNotes;
   }
 
@@ -62,7 +62,13 @@ const BookmarkDetail = ({ id } : { id: string }) => {
             </div>
           }
 
-          {bookmark.screenshot &&
+          {isScreenshotLoading && bookmark?.screenshot &&
+            <div className="flex justify-center items-center py-2 w-[520px] h-[120px]">
+              <Spinner />
+            </div>
+          }
+
+          {bookmark.screenshot && !isScreenshotLoading &&
             <div className="py-2">
               <img
                 className="border-8 rounded border-grey2"
