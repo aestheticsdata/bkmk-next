@@ -12,7 +12,7 @@ CREATE TABLE user (
 
 CREATE TABLE category (
     id      INT(11) AUTO_INCREMENT PRIMARY KEY,
-    name    VARCHAR(20) NOT NULL UNIQUE,
+    name    VARCHAR(20) NOT NULL,
     color   VARCHAR(20) NOT NULL,
     user_id INT(11),
     FOREIGN KEY (user_id) REFERENCES user(id)
