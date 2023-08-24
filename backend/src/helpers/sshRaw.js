@@ -43,3 +43,16 @@ module.exports.deleteFile = filepath => {
   });
   connection(deleteFile);
 };
+
+module.exports.copyDB = (src, dest) => {
+  const copy = conn => () => conn.sftp((err, sftp) => {
+    sftp.fastPut(src, dest, {}, error => {
+      if (error) {
+        console.log('db copy / sftp error: ', error)
+      } else {
+        console.log("successfull bkmk DB backup");
+      }
+    });
+  });
+  connection(copy);
+};

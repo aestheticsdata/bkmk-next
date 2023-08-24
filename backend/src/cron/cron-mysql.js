@@ -1,7 +1,7 @@
 // https://github.com/kelektiv/node-cron#readme
 const CronJob = require('cron').CronJob;
 
-const sshCopy = require('../helpers/sshRaw').copy;
+const sshCopyDB = require('../helpers/sshRaw').copyDB;
 
 const mysqlDump = () => {
   console.log('mysqlDump', new Date());
@@ -11,7 +11,7 @@ const mysqlDump = () => {
   exec(`
     mysqldump -u${process.env.DB_USER} -p${process.env.DB_PASSWORD} ${process.env.DB} > ${process.env.BKMK_DUMP_PATH}bkmkdump.sql
   `,
-    sshCopy(src, dest),
+    sshCopyDB(src, dest),
   );
 }
 
