@@ -15,6 +15,7 @@ import { ROUTES } from "@components/shared/config/constants";
 import { alarmOptions } from "@components/common/alarm/constants";
 import { selectOptionsCSS } from "@components/common/form/css";
 import useGetScreenshot from "@helpers/getScreenshot";
+import Spinner from "@components/common/spinner/Spinner";
 
 import type { FieldValues } from "react-hook-form";
 
@@ -40,7 +41,7 @@ const CreateBookmark = ({ id }) => {
   const { categories } = useCategories();
   const { createBookmark, editBookmark } = useBookmarks();
   const { bookmark } = useBookmark(id);
-  const imageUrl = useGetScreenshot(bookmark);
+  const { imageUrl, isLoading: isScreenshotLoading } = useGetScreenshot(bookmark);
   const [initialCategories, setinitialCategories] = useState();
   const [initialPriority, setInitialPriority] = useState();
   const [initialReminder, setInitialReminder] = useState();
@@ -283,11 +284,18 @@ const CreateBookmark = ({ id }) => {
                     }
                     </div>
                     <div>
-                      <img
-                        className="border-8 rounded border-grey2"
-                        src={imageUrl}
-                        width="50%"
-                      />
+                      {isScreenshotLoading &&
+                        <div className="flex justify-center items-center py-2 w-[320px] h-[200px]">
+                          <Spinner />
+                        </div>
+                      }
+                      {!isScreenshotLoading &&
+                        <img
+                          className="border-8 rounded border-grey2"
+                          src={imageUrl}
+                          width="50%"
+                        />
+                      }
                     </div>
                   </div>
               }
