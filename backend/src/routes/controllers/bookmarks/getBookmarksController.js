@@ -111,7 +111,7 @@ module.exports = async (req, res) => {
     ${sortPart}
     LIMIT ${page * ROWS_BY_PAGE}, ${ROWS_BY_PAGE};
   `;
-  console.log("sql : ", sql);
+
   const conn = await dbConnection();
   const [[{total_count}]] = await conn.execute(countSql);
   const [rows] = await conn.execute(sql);

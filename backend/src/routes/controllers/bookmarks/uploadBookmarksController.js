@@ -1,5 +1,6 @@
-const { format } = require('date-fns');
-const dbConnection = require('../../../db/dbinitmysql');
+const { format } = require("date-fns");
+const anyASCII = require("../../../helpers/anyascii");
+const dbConnection = require("../../../db/dbinitmysql");
 
 
 module.exports = async (req, res) => {
@@ -30,17 +31,17 @@ module.exports = async (req, res) => {
       urlID = result[0].insertId;
     } catch (err) {
       conn.end();
-      return res.status(500).json({msg: "error creating url : " + err});
+      return res.status(500).json({msg: "error creating url : " + err, url: bookmark.link});
     }
 
     let bookmarkTitle = bookmark.title.length > 120 ? bookmark.title.substring(0, 119) : bookmark.title;
     try {
       await conn.execute(`
         INSERT INTO bookmark (title, user_id, url_id, date_added)
-        VALUES ("${encodeURIComponent(bookmarkTitle)}", ${userID}, ${urlID}, "${format(new Date(), 'yyyy-MM-dd')}"); 
+        VALUES ("${encodeURIComponent(anyASCII(bookmarkTitle))}", ${userID}, ${urlID}, "${format(new Date(), 'yyyy-MM-dd')}"); 
       `);
     } catch (e) {
-      return res.status(500).json({ msg: "error creating bookmark : " + e });
+      return res.status(500).json({ msg: "error creating bookmark : " + e, title: bookmarkTitle });
     }
   }
 
