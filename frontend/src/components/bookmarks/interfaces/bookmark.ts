@@ -21,6 +21,7 @@ export interface Bookmark {
   date_added?: Date;
   date_last_modified?: Date;
   alarm_frequency?: number;
+  alarm_date_added?: Date;
 }
 
 export interface BookmarkAndAlarm extends Bookmark {

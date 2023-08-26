@@ -4,7 +4,7 @@ import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import type { FieldValues } from "react-hook-form";
 
 const doc = `
-le format est le suivant:
+le format est le suivant, soit un fichier .txt:
 en faisant sed -n 'l' session_buddy_export_2023_02_11_15_45_34.txt, on a:
 
 \\357\\273\\277\\357\\273\\277huge-session-07-01-23--3$
@@ -26,6 +26,16 @@ $
 
 où "$" est la caractère de fin de ligne.
 
+
+ou un fichier .csv:
+you can learn assembly FAST with this technique (arm64 breakdown);https://www.youtube.com/watch?v=vhyettT7sdA
+Oral History of Bob Belleville part 2 of 2;https://www.youtube.com/watch?v=ucjaQYjg55o
+Oral History of Robert Belleville part 1 of 2;https://www.youtube.com/watch?v=qNmgQVYSB34
+Rust Axum Production Coding - Rust Web Development;https://www.youtube.com/watch?v=3cA_mk4vdWY
+What Makes A Good Cli Tool | Prime Explains;https://www.youtube.com/watch?v=ztsOwk1zB3o
+Ageism in Software | Prime Reacts;https://www.youtube.com/watch?v=I9c4mGAhg4U
+
+
 `;
 
 const UploadBookmarks = () => {
@@ -42,7 +52,7 @@ const UploadBookmarks = () => {
 
   return (
     <div className="flex flex-col w-full pt-14 m-2 text-sm space-y-2">
-      <div className="italic">Le format doit être un fichier .txt exporté par le plugin Chrome Session Buddy</div>
+      <div className="italic font-bold text-base">Le format doit être un fichier .txt exporté par le plugin Chrome Session Buddy ou sous forme d'un fichier .csv dont le format est indiqué ci-dessous :</div>
       <a
         className="hover:text-white italic"
         href="https://chrome.google.com/webstore/detail/session-buddy/edacconmaakjimmfgnblocblbcdcpbko"

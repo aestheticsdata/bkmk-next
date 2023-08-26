@@ -104,9 +104,25 @@ const BookmarkDetail = ({ id } : { id: string }) => {
             </div>
           }
 
-          <div className="text-xs py-2">
-            Ajouté le: {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
+          <div className="flex justify-between text-xs w-60 py-2">
+            <div>
+              Bookmark ajouté le:
+            </div>
+            <div>
+              {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
+            </div>
           </div>
+
+          {bookmark.alarm_date_added &&
+            <div className="flex justify-between text-xs w-60 pb-20">
+              <div>
+                Reminder ajouté le:
+              </div>
+              <div>
+                {format(new Date(bookmark.alarm_date_added!), "dd MMM yyyy", { locale: fr })}
+              </div>
+            </div>
+          }
         </>
       }
     </div>

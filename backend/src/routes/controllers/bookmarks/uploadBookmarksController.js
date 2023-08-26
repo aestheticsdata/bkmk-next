@@ -5,19 +5,27 @@ const dbConnection = require("../../../db/dbinitmysql");
 
 module.exports = async (req, res) => {
   const userID = req.decoded.id; // from jwt token middleware
+  const originalName = req.file.originalname;
+  let entries = [];
   const buffer = Buffer.from(req.file.buffer);
   const arr = buffer.toString().split("\n");
-  arr.splice(0,2);
 
-  const entries = [];
-  for (let i = 0; i < arr.length; i += 2) {
-    const title = arr[i];
-    const link = arr[i+1];
-    if (title && link) {
+  if (originalName.split(".")[1] === "csv") {
+    arr.forEach(entry => {
+      const [title, link] = entry.split(";");
       entries.push({title: title.trim(), link: link.trim()});
-    }
-    if (arr[i+2] === "") {
-      i++;
+    });
+  } else {
+    arr.splice(0,2);
+    for (let i = 0; i < arr.length; i += 2) {
+      const title = arr[i];
+      const link = arr[i+1];
+      if (title && link) {
+        entries.push({title: title.trim(), link: link.trim()});
+      }
+      if (arr[i+2] === "") {
+        i++;
+      }
     }
   }
 
@@ -38,13 +46,12 @@ module.exports = async (req, res) => {
     try {
       await conn.execute(`
         INSERT INTO bookmark (title, user_id, url_id, date_added)
-        VALUES ("${encodeURIComponent(anyASCII(bookmarkTitle))}", ${userID}, ${urlID}, "${format(new Date(), 'yyyy-MM-dd')}"); 
+        VALUES ("${encodeURIComponent(anyASCII(bookmarkTitle))}", ${userID}, ${urlID}, "${format(new Date(), 'yyyy-MM-dd')}");
       `);
     } catch (e) {
       return res.status(500).json({ msg: "error creating bookmark : " + e, title: bookmarkTitle });
     }
   }
 
-  console.log("entries : ", entries)
   res.status(200).json({ msg: "bookmarks upload success" });
 }

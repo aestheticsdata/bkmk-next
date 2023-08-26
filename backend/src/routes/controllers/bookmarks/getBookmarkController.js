@@ -5,6 +5,7 @@ module.exports = async (req, res) => {
   const getSingleBookmarkSQL = `
       SELECT b.*,
              a.frequency AS alarm_frequency,
+             a.date_added AS alarm_date_added,
              u.original AS original_url,
              GROUP_CONCAT(c.name) AS categories_names,
              GROUP_CONCAT(c.color) AS categories_colors,
