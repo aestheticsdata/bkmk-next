@@ -122,6 +122,7 @@ const useBookmarks = (from: string = "") => {
     onSuccess: async () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
       await queryClient.invalidateQueries([QUERY_KEYS.REMINDERS]);
+      await queryClient.invalidateQueries([QUERY_KEYS.CATEGORIES]);
     },
     onError: ((e) => {console.log("error deleting bookmark", e)}),
   });
@@ -140,6 +141,7 @@ const useBookmarks = (from: string = "") => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARK, router.query.id]);
       await queryClient.invalidateQueries([QUERY_KEYS.REMINDERS]);
+      await queryClient.invalidateQueries([QUERY_KEYS.CATEGORIES]);
       router.push(`/bookmarks?page=${pageNumberSaved}`);
     },
     onError: ((e) => {console.log("error editing bookmark : ", e)}),
