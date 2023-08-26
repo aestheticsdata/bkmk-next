@@ -10,10 +10,6 @@ const Reminders = () => {
   const router = useRouter();
   const { data, isLoading } = useReminders();
 
-  useEffect(() => {
-    data && console.log("data : ", data);
-  }, [data]);
-
   return (
     <>
     {!isLoading ?

@@ -30,7 +30,6 @@ const Filters = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onSubmit = (e: FieldValues) => {
-    console.log("field values : ", e);
     let filters: any = {};
     filters["page"] = 0;
     e.title?.length > 0 && (filters["title"] = e.title.split(" ").join(","));
@@ -40,7 +39,6 @@ const Filters = () => {
     e.categories?.length > 0 && (filters["categories_id"] = e.categories.map((category: any) => category.id).join(","));
     e.reminder && (filters["reminder"] = e.reminder.value);
     e.stars && (filters["stars"] = e.stars.value);
-    console.log("filters : ", queryString.stringify(filters));
 
     // go to /?page=0 before applying filters //////
     const search = queryString.parse(window.location.search);

@@ -28,10 +28,6 @@ const Bookmarks = () => {
   const router = useRouter();
   const [displayDeleteConfirm, setDisplayDeleteConfirm] = useState<number>(-1);
 
-  useEffect(() => {
-    bookmarks?.rows && console.log("bookmarks.rows", bookmarks.rows);
-  }, [bookmarks]);
-
   return (
     <div className="flex flex-col w-full mt-2 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
       {isLoading && <div>loading...</div>}

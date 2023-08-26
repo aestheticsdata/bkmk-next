@@ -134,6 +134,15 @@ const CreateBookmark = ({ id }) => {
 
   return (
     <div className="flex w-full pt-14 text-sm">
+
+      {(editBookmark.status === "loading" || createBookmark.status === "loading") &&
+        <div className="fixed flex justify-center items-center top-0 bottom-0 left-0 right-0 bg-white z-50 opacity-60">
+          <div className="flex justify-center items-center uppercase w-[320px] h-[200px] text-2xl">
+            submitting
+          </div>
+        </div>
+      }
+
       <form
         className="flex flex-col pl-4 pt-4 space-y-4 w-full text-formsGlobalColor"
         onSubmit={handleSubmit(onSubmit)}

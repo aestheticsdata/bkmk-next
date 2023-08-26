@@ -92,7 +92,6 @@ const useBookmarks = (from: string = "") => {
   }, [data]);
 
   const createBookmarkService = async (bookmark: Bookmark) => {
-    console.log("bookmark in service : ", bookmark);
     return privateRequest("/bookmarks", {
       method: "POST",
       data: bookmark,
@@ -148,7 +147,6 @@ const useBookmarks = (from: string = "") => {
 
 
   const uploadBookmarksService = async (f: any) => {
-    console.log("bookmark file in service : ", f);
     return privateRequest("/bookmarks/upload",  {
       method: "POST",
       data: f,
@@ -156,7 +154,6 @@ const useBookmarks = (from: string = "") => {
     })
   }
   const uploadBookmarks = useMutation((bookmarkFile: any) => {
-    console.log("bookmarkFile : ", bookmarkFile);
     return uploadBookmarksService(bookmarkFile);
   }, {
     onSuccess: async () => {
