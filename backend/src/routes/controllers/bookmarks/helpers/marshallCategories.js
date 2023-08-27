@@ -18,5 +18,9 @@ module.exports = (rows) => {
     delete entry.categories_colors;
   });
 
+  for (const row of rows) {
+    row.categories.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+  }
+
   return rows;
 }
