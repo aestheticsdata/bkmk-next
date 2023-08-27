@@ -39,7 +39,7 @@ Ageism in Software | Prime Reacts;https://www.youtube.com/watch?v=I9c4mGAhg4U
 `;
 
 const UploadBookmarks = () => {
-  const { register, handleSubmit, formState: { isSubmitted } } = useForm();
+  const { register, handleSubmit, formState: { isDirty, isSubmitted } } = useForm();
   const { uploadBookmarks } = useBookmarks();
 
   const onSubmit = (e: FieldValues) => {
@@ -75,12 +75,14 @@ const UploadBookmarks = () => {
         />
         <button
           className={`
-            w-[80px] h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
-            font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
-            hover:shadow-login focus:outline-none p-1
+            w-[80px] h-8 rounded border border-formsGlobalColor bg-grey01alpha text-sm
+            font-medium uppercase text-formsGlobalColor transition-all
+            ${isDirty ? "hover:text-formsGlobalColorHover hover:shadow-login" : "cursor-not-allowed"}
+            focus:outline-none p-1
             ${isSubmitted && "pointer-events-none text-grey01 border-grey01"}
           `}
           type="submit"
+          disabled={!isDirty}
         >
           Send
         </button>

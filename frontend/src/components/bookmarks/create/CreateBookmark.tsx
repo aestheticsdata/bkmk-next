@@ -29,7 +29,7 @@ const priorityOptions = [
 
 const CreateBookmark = ({ id }) => {
   const router = useRouter();
-  const { register, handleSubmit, control, setValue,reset, watch, formState: { errors, isDirty, isValid} } = useForm({
+  const { register, handleSubmit, control, setValue, reset, watch, formState: { errors, isDirty, isValid} } = useForm({
     mode: "onChange",
     defaultValues: {
       categories: [],
