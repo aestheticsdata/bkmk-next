@@ -9,7 +9,7 @@ import queryString from "query-string";
 import useRequestHelper from "@helpers/useRequestHelper";
 import { useUserStore } from "@auth/store/userStore";
 import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
-import { PAGES } from "@components/shared/config/constants";
+import { PAGES, ROWS_BY_PAGE } from "@components/shared/config/constants";
 import { usePageStore } from "@components/shared/pageStore";
 
 import type { UserStore } from "@auth/store/userStore";
@@ -71,7 +71,7 @@ const useBookmarks = (from: string = "") => {
     const parsed = queryString.parse(location.search);
     const stringified = queryString.stringify(parsed);
     try {
-      return privateRequest(`/bookmarks?userID=${userID}&${stringified}`);
+      return privateRequest(`/bookmarks?rows=${ROWS_BY_PAGE}&userID=${userID}&${stringified}`);
     } catch (e) {
       console.log("get bookmarks error : ", e);
     }

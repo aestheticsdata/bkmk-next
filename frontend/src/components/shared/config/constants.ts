@@ -25,3 +25,5 @@ export const PAGES = {
   BOOKMARKS: "bookmarks",
   PAGINATION: "pagination",
 };
+
+export const ROWS_BY_PAGE = 25;

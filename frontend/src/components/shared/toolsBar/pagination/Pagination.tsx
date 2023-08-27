@@ -6,7 +6,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLeftLong } from "@fortawesome/free-solid-svg-icons";
 import { faRightLong } from "@fortawesome/free-solid-svg-icons";
 import { usePageStore } from "@components/shared/pageStore";
-import { PAGES } from "@components/shared/config/constants";
+import {
+  PAGES,
+  ROWS_BY_PAGE
+} from "@components/shared/config/constants";
 
 const Pagination = () => {
   const router = useRouter();
@@ -25,7 +28,7 @@ const Pagination = () => {
   }, []);
 
   useEffect(() => {
-    bookmarks?.rows.length! > 0 && setLasPage(Math.floor((bookmarks?.total_count!-1)/20));
+    bookmarks?.rows.length! > 0 && setLasPage(Math.floor((bookmarks?.total_count!-1)/ROWS_BY_PAGE));
   }, [bookmarks]);
 
   // useEffect(() => {

@@ -1,8 +1,6 @@
 const dbConnection = require("../../../db/dbinitmysql");
 const marshallCategories = require("./helpers/marshallCategories");
 
-const ROWS_BY_PAGE = 20;
-
 module.exports = async (req, res) => {
   const { page, title, screenshot, url, notes, categories_id, stars, reminder, sort } = req.query;
 
@@ -109,7 +107,7 @@ module.exports = async (req, res) => {
   sql += `
     GROUP BY b.id, b.user_id, b.url_id, u.original, b.date_added
     ${sortPart}
-    LIMIT ${page * ROWS_BY_PAGE}, ${ROWS_BY_PAGE};
+    LIMIT ${page * req.query.rows}, ${req.query.rows};
   `;
 
   const conn = await dbConnection();
