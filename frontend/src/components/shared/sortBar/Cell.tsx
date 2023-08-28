@@ -14,9 +14,10 @@ interface Cell {
   value: string;
   justify?: string;
   displayLabel?: boolean;
+  textSmall?: boolean;
 }
 
-const Cell = ({ width, label, value, onClick, propertyActive, justify="justify-center", displayLabel=true }: Cell) => {
+const Cell = ({ width, label, value, textSmall = false, onClick, propertyActive, justify="justify-center", displayLabel=true }: Cell) => {
   const [clickCount, setClickCount] = useState(0);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ const Cell = ({ width, label, value, onClick, propertyActive, justify="justify-c
 
   return (
     <div
-      className={`flex ${justify} items-center space-x-2 ${width} hover:bg-white py-1 cursor-pointer active:bg-grey0 ${clickCount !== 0 && "bg-lime-300 font-bold"}`}
+      className={`flex ${justify} ${textSmall && "text-tiny"} items-center space-x-2 ${width} hover:bg-white py-1 cursor-pointer active:bg-grey0 ${clickCount !== 0 && "bg-lime-300 font-bold"}`}
       onClick={() => {
         onClick(value);
         setClickCount((clickCount + 1)%3)

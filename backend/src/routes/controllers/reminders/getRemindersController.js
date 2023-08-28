@@ -25,8 +25,10 @@ module.exports = async (req, res) => {
         bookmarksToNotify.push(bookmark);
       }
     }
+    await conn.end();
     return res.status(200).json(bookmarksToNotify);
   } catch (e) {
+    await conn.end();
     return res.status(500).json({ msg: "error getting reminders : " + e });
   }
 };

@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
       const result = await conn.execute(sqlUrl);
       urlID = result[0].insertId;
     } catch (err) {
-      conn.end();
+      await conn.end();
       return res.status(500).json({msg: "error creating url : " + err, url: bookmark.link});
     }
 
@@ -49,9 +49,11 @@ module.exports = async (req, res) => {
         VALUES ("${encodeURIComponent(anyASCII(bookmarkTitle))}", ${userID}, ${urlID}, "${format(new Date(), 'yyyy-MM-dd')}");
       `);
     } catch (e) {
+      await conn.end();
       return res.status(500).json({ msg: "error creating bookmark : " + e, title: bookmarkTitle });
     }
   }
 
+  await conn.end();
   res.status(200).json({ msg: "bookmarks upload success" });
 }

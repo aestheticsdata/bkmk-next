@@ -40,6 +40,7 @@ module.exports = async (req, res) => {
       const result = await conn.execute(sqlAlarm);
       alarmID = result[0].insertId;
     } catch (err) {
+      await conn.end();
       return res.status(500).json({ msg: "error creating alarm : " + err });
     }
   }
@@ -55,7 +56,7 @@ module.exports = async (req, res) => {
       const result = await conn.execute(sqlUrl);
       urlID = result[0].insertId;
     } catch (err) {
-      conn.end();
+      await conn.end();
       return res.status(500).json({msg: "error creating url : " + err});
     }
   }
@@ -79,7 +80,7 @@ module.exports = async (req, res) => {
     const bookmarkResult = await conn.execute(sqlBookmark);
     bookmarkID = bookmarkResult[0].insertId;
   } catch (err) {
-    conn.end();
+    await conn.end();
     return res.status(500).json({ msg: "error creating bookmark : " + err });
   }
 
@@ -96,7 +97,7 @@ module.exports = async (req, res) => {
           const result = await conn.execute(sql);
           categoriesID.push(result[0].insertId);
         } catch (err) {
-          conn.end();
+          await conn.end();
           return res.status(500).json({ msg: "error creating new category : " + err });
         }
       } else {
@@ -113,11 +114,11 @@ module.exports = async (req, res) => {
       try {
         await conn.execute(sqlBookmarkCategory(bookmarkID, categoryID));
       } catch (err) {
-        conn.end();
+        await conn.end();
         return res.status(500).json({ msg: "error creating new bookmark_category : " + err });
       }
     }
   }
-
+  await conn.end();
   return res.status(200).json({ msg: "bookmark created" });
 };

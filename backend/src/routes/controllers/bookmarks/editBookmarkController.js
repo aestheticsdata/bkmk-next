@@ -14,6 +14,7 @@ module.exports = async (req, res) => {
     const result = await conn.execute(sqlBookmark);
     originalBookmark = result[0][0];
   } catch (e) {
+    await conn.end();
     return res.status(500).json({ msg: "error getting bookmark : ", e });
   }
 
@@ -22,6 +23,7 @@ module.exports = async (req, res) => {
     try {
       await conn.execute(`UPDATE bookmark SET title="${req.body.title}" WHERE id=${originalBookmark.id}`);
     } catch (e) {
+      await conn.end();
       return res.status(500).json({ msg: "error updating title : ", e });
     }
   }
@@ -46,6 +48,7 @@ module.exports = async (req, res) => {
                 VALUES ("${originalBookmark.id}", "${category.id}");
               `);
             } catch (e) {
+              await conn.end();
               return res.status(500).json({
                 msg: "error inserting existing categories to bookmark_category table : " + e
               });
@@ -63,6 +66,7 @@ module.exports = async (req, res) => {
                 VALUES ("${originalBookmark.id}", "${result[0].insertId}");
               `);
             } catch (e) {
+              await conn.end();
               return res.status(500).json({ msg: "error inserting new category " + e });
             }
           }
@@ -89,6 +93,7 @@ module.exports = async (req, res) => {
                 WHERE bookmark_id=${categoryToDelete.bookmark_id} AND category_id=${categoryToDelete.category_id};
               `);
             } catch (e) {
+              await conn.end();
               return res.status(500).json({ msg: "error deleting category in bookmark_category : " + e });
             }
           }
@@ -111,12 +116,14 @@ module.exports = async (req, res) => {
                 VALUES ("${originalBookmark.id}", ${result ? result[0].insertId : categoryToAdd.id});
               `);
             } catch (e) {
+              await conn.end();
               return res.status(500).json({ msg: "error creating category and/or bookmark_category : " + e });
             }
           }
         }
       }
     } catch (e) {
+      await conn.end();
       return res.status(500).json({ msg: "error getting bookmark_category entries : " + e });
     }
     // il n'y pas de catégories dans la requete
@@ -133,11 +140,13 @@ module.exports = async (req, res) => {
               WHERE bookmark_id=${existingCategory.bookmark_id} AND category_id=${existingCategory.category_id};
             `);
           } catch (e) {
+            await conn.end();
             return res.status(500).json({ msg: "error deleting bookmark_category : " + e });
           }
         }
       }
     } catch (e) {
+      await conn.end();
       return res.status(500).json({ msg: "error getting bookmark_category : " + e });
     }
   }
@@ -150,6 +159,7 @@ module.exports = async (req, res) => {
       const result = await conn.execute(`SELECT * FROM url WHERE id=${originalBookmark.url_id}`);
       originalURL = result[0][0];
     } catch (e) {
+      await conn.end();
       return res.status(500).json({ msg: "error getting url : ", e });
     }
 
@@ -158,6 +168,7 @@ module.exports = async (req, res) => {
       try {
         await conn.execute(`UPDATE url SET original="${req.body.url}" WHERE id=${originalURL.id}`);
       } catch (e) {
+        await conn.end();
         return res.status(500).json({ msg: "error updating url : ", e });
       }
       // sinon supprimer l'url et mettre à null url_id dans bookmark
@@ -166,6 +177,7 @@ module.exports = async (req, res) => {
         await conn.execute(`UPDATE bookmark SET url_id=NULL WHERE id=${originalBookmark.id}`);
         await conn.execute(`DELETE FROM url WHERE id=${originalURL.id}`);
       } catch (e) {
+        await conn.end();
         return res.status(500).json({ msg: "error deleting url : ", e });
       }
     }
@@ -179,9 +191,11 @@ module.exports = async (req, res) => {
         try {
           await conn.execute(`UPDATE bookmark SET url_id=${newURL_ID} WHERE id=${originalBookmark.id};`);
         } catch (e) {
+          await conn.end();
           return res.status(500).json({ msg: "error updating bookmark url : ", e });
         }
       } catch (e) {
+        await conn.end();
         return res.status(500).json({ msg: "error creating url : ", e });
       }
     }
@@ -195,6 +209,7 @@ module.exports = async (req, res) => {
       await conn.execute(`UPDATE bookmark SET notes=NULL WHERE id=${originalBookmark.id};`);
     }
   } catch (e) {
+    await conn.end();
     return res.status(500).json({ msg: "error updating notes : ", e });
   }
 
@@ -203,6 +218,7 @@ module.exports = async (req, res) => {
   try {
     await conn.execute(`UPDATE bookmark SET stars=${req.body.stars} WHERE id=${originalBookmark.id}`);
   } catch (e) {
+    await conn.end();
     return res.status(500).json({ msg: "error updating stars : ", e });
   }
 
@@ -212,6 +228,7 @@ module.exports = async (req, res) => {
       UPDATE bookmark SET priority=${req.body.priority === '' ? null : `"${req.body.priority}"`} WHERE id=${originalBookmark.id}`
     );
   } catch (e) {
+    await conn.end();
     return res.status(500).json({ msg: "error updating priority : ", e });
   }
 
@@ -232,6 +249,7 @@ module.exports = async (req, res) => {
             const newAlarmID = result[0].insertId;
             await conn.execute(`UPDATE bookmark SET alarm_id=${newAlarmID} WHERE id=${originalBookmark.id};`);
           } catch (e) {
+            await conn.end();
             return res.status(500).json({ msg: "error creating new alarm and/or updating bookmark.alarm_id : ", e });
           }
         }
@@ -241,10 +259,12 @@ module.exports = async (req, res) => {
           await conn.execute(`UPDATE bookmark SET alarm_id=NULL WHERE id=${originalBookmark.id};`);
           await conn.execute(`DELETE FROM alarm WHERE id=${originalBookmark.alarm_id};`);
         } catch (e) {
+          await conn.end();
           return res.status(500).json({ msg: "error deleting and/or updating to NULL bookmark alarm_id : ", e });
         }
       }
     } catch (e) {
+      await conn.end();
       return res.status(500).json({ msg: "error getting alarm : ", e });
     }
     // il n'y pas encore d'alarm existante
@@ -257,9 +277,11 @@ module.exports = async (req, res) => {
         try {
           await conn.execute(`UPDATE bookmark SET alarm_id=${newAlarmID} WHERE id=${originalBookmark.id};`);
         } catch (e) {
+          await conn.end();
           return res.status(500).json({ msg: "error updating bookmark.alarm_id : ", e });
         }
       } catch (e) {
+        await conn.end();
         return res.status(500).json({ msg: "error creating new alarm and/or updating bookmark.alarm_id : ", e });
       }
     }
@@ -278,9 +300,11 @@ module.exports = async (req, res) => {
           WHERE id=${originalBookmark.id} AND user_id=${originalBookmark.user_id};
         `);
       } catch (e) {
+        await conn.end();
         return res.status(500).json({ msg: "error removing screenshot from bookmark entry : " + e });
       }
     } catch (e) {
+      await conn.end();
       return res.status(500).json({ msg: "error unlink file : " + e });
     }
   }
@@ -295,6 +319,7 @@ module.exports = async (req, res) => {
       try {
         await deleteScreenshot();
       } catch (e) {
+        await conn.end();
         return res.status(500).json({ msg: "error deleting screenshot : " + e });
       }
     }
@@ -310,6 +335,7 @@ module.exports = async (req, res) => {
         WHERE id=${originalBookmark.id} AND user_id=${userID};
       `);
     } catch (e) {
+      await conn.end();
       return res.status(500).json({ msg: "error creating new screenshot : " + e });
     }
 
@@ -322,6 +348,6 @@ module.exports = async (req, res) => {
 
   conn.execute(`UPDATE bookmark SET date_last_modified="${format(new Date(), 'yyyy-MM-dd')}" WHERE id=${originalBookmark.id}`)
 
-  conn.end();
+  await conn.end();
   return res.status(200).json({ msg: "bookmark edited" });
 }

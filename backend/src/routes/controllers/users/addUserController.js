@@ -43,7 +43,7 @@ module.exports = async (req, res, next) => {
         if (err) {
           console.error('There was an error during hash', err);
           res.status(500).json({msg: "error adding new user : ", err});
-          conn.end();
+          await conn.end();
         } else {
           newUser.password = hash;
 
@@ -61,7 +61,7 @@ module.exports = async (req, res, next) => {
           } catch (err) {
             res.status(500).json({msg: "error adding new user : ", err});
           } finally {
-            conn.end();
+            await conn.end();
           }
         }
       });

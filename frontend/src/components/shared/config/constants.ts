@@ -15,9 +15,9 @@ export const COLUMN_WIDTH = {
   stars: "w-[78px]",
   notes: "w-[300px]",
   priority: "w-[80px]",
-  categories: "w-[240px]",
-  screenshot: "w-[120px]",
-  alarm: "w-[120px]",
+  categories: "w-[380px]",
+  screenshot: "w-[80px]",
+  alarm: "w-[70px]",
   dateAdded: "w-[160px]",
 };
 

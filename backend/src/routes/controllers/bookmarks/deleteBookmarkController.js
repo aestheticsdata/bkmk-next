@@ -16,8 +16,10 @@ module.exports = async (req, res) => {
   try {
     await conn.execute(sqlInactiveFlag);
     await conn.execute(sqlInactiveDate);
+    await conn.end();
     return res.status(200).json({ msg: "bookmark deleted" });
   } catch (err) {
+    await conn.end();
     return res.status(500).json({ msg: "error deleting bookmark : " + err });
   }
 };
