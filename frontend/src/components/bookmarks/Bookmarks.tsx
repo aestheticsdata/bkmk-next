@@ -42,9 +42,12 @@ const Bookmarks = () => {
         if (reminder.original_url) {
           window.open(reminder.original_url, "_blank");
         } else {
+          console.log(reminder.id);
           // ouvrir le reminder qui n'a pas d'url -> bookmark detail
+          window.open(`bookmarks/${reminder.id}`, "_blank");
         }
       }
+      router.push("/bookmarks/reminders");
     }
   }, [reminders]);
 

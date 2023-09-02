@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookBookmark } from "@fortawesome/free-solid-svg-icons";
@@ -27,34 +28,45 @@ const NavBar = () => {
     )
   }
 
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
   return (
-    <div className={`flex md:flex-row fixed ${token ? "h-32" : "h-14"} md:h-14 w-screen items-center justify-start bg-blueNavy text-white z-50`}>
-      {isWindowResponsive &&
-        <div className="mx-4">
-          <FontAwesomeIcon icon={faBookBookmark} size="xl" color="lime"/>
-        </div>
+    <>
+      {
+        isClient && token &&
+          <div className={`flex md:flex-row fixed ${token ? "h-32" : "h-14"} md:h-14 w-screen items-center justify-start bg-blueNavy text-white z-50`}>
+            {isWindowResponsive &&
+              <div className="mx-4">
+                <FontAwesomeIcon icon={faBookBookmark} size="xl" color="lime"/>
+              </div>
+            }
+            {token ? (
+              <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 space-x-5 items-center justify-between font-ubuntu w-full">
+                <div className="flex space-x-4">
+                  {isWindowResponsive && getLinkItem(ROUTES.bookmarks)}
+                  {isWindowResponsive && getLinkItem(ROUTES.bookmarksCreation)}
+                  {isWindowResponsive && getLinkItem(ROUTES.bookmarksBatchUpload)}
+                  {isWindowResponsive && getLinkItem(ROUTES.bookmarksReminders)}
+                  {/*{isCalendarVisible && <DatePickerWrapper />}*/}
+                </div>
+                <div className="flex">
+                  <UserMenu />
+                </div>
+              </div>
+            ) : (
+              <div className="flex space-x-5 font-ubuntu">
+                  {getLinkItem(ROUTES.login)}
+                  {getLinkItem(ROUTES.signup)}
+                  {getLinkItem(ROUTES.about)}
+              </div>
+            )}
+          </div>
       }
-      {token ? (
-        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 space-x-5 items-center justify-between font-ubuntu w-full">
-          <div className="flex space-x-4">
-            {isWindowResponsive && getLinkItem(ROUTES.bookmarks)}
-            {isWindowResponsive && getLinkItem(ROUTES.bookmarksCreation)}
-            {isWindowResponsive && getLinkItem(ROUTES.bookmarksBatchUpload)}
-            {isWindowResponsive && getLinkItem(ROUTES.bookmarksReminders)}
-            {/*{isCalendarVisible && <DatePickerWrapper />}*/}
-          </div>
-          <div className="flex">
-            <UserMenu />
-          </div>
-        </div>
-      ) : (
-        <div className="flex space-x-5 font-ubuntu">
-            {getLinkItem(ROUTES.login)}
-            {getLinkItem(ROUTES.signup)}
-            {getLinkItem(ROUTES.about)}
-        </div>
-      )}
-    </div>
+    </>
   );
 };
 
