@@ -19,6 +19,7 @@ import useReminders from "@components/reminders/services/useReminders";
 import StarsDisplay from "@components/common/stars/StarsDisplay";
 import PriorityDisplay from "@components/common/priority/PriorityDisplay";
 import Categories from "@components/common/category/Categories";
+import DeleteConfirm from "@components/common/deleteConfirm/DeleteConfirm";
 import {
   ROUTES,
   COLUMN_WIDTH,
@@ -123,29 +124,33 @@ const Bookmarks = () => {
                   ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
                 </div>
                 {displayDeleteConfirm === bookmark.id ?
-                  <div className="flex w-[100px] space-x-1 text-xxxs">
-                    <div
-                      className="outline outline-1 outline-grey3 rounded cursor-pointer px-1 hover:bg-grey01 uppercase"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setDisplayDeleteConfirm(-1);
-                        deleteBookmark.mutate(bookmark.id);
-                      }}
-                    >
-                      confirm
-                    </div>
-                    <div
-                      className="outline outline-1 outline-grey3 rounded cursor-pointer px-1 hover:bg-grey01 uppercase"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setDisplayDeleteConfirm(-1);
-                      }}
-                    >
-                      cancel
-                    </div>
-                  </div>
+                  // <div className="flex w-[100px] space-x-1 text-xxxs">
+                  //   <div
+                  //     className="outline outline-1 outline-grey3 rounded cursor-pointer px-1 hover:bg-grey01 uppercase"
+                  //     onClick={(e) => {
+                  //       e.preventDefault();
+                  //       e.stopPropagation();
+                  //       setDisplayDeleteConfirm(-1);
+                  //       deleteBookmark.mutate(bookmark.id);
+                  //     }}
+                  //   >
+                  //     confirm
+                  //   </div>
+                  //   <div
+                  //     className="outline outline-1 outline-grey3 rounded cursor-pointer px-1 hover:bg-grey01 uppercase"
+                  //     onClick={(e) => {
+                  //       e.preventDefault();
+                  //       e.stopPropagation();
+                  //       setDisplayDeleteConfirm(-1);
+                  //     }}
+                  //   >
+                  //     cancel
+                  //   </div>
+                  // </div>
+                  <DeleteConfirm
+                    closeCB={setDisplayDeleteConfirm}
+                    deleteCB={() => { deleteBookmark.mutate(bookmark.id) }}
+                  />
                   :
                   <>
                     <div

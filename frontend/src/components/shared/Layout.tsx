@@ -7,6 +7,7 @@ interface LayoutProps {
   displayTools?: boolean;
   backButton?: boolean;
   editButton?: boolean;
+  deleteButton?: boolean;
   filters?: boolean;
   sortbar?: boolean;
   children: React.ReactNode;
@@ -17,6 +18,7 @@ const Layout = ({
   displayTools = true,
   backButton = false,
   editButton = false,
+  deleteButton = false,
   filters = false,
   sortbar = false,
   children,
@@ -30,6 +32,7 @@ const Layout = ({
             <ToolsBar
               backButton={backButton}
               editButton={editButton}
+              deleteButton={deleteButton}
               filters={filters}
             />
           </div>

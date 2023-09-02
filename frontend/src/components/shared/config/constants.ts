@@ -30,3 +30,8 @@ export const ROWS_BY_PAGE = 25;
 
 export const FIRST_VISIT = "first_visit";
 export const VISITED = "visited";
+
+export const EDITION_TYPES = {
+  BOOKMARKS: "bookmarks",
+  CATEGORIES: "categories",
+};
