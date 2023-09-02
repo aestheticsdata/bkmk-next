@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import fr from "date-fns/locale/fr";
@@ -12,21 +15,38 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
+import useReminders from "@components/reminders/services/useReminders";
 import StarsDisplay from "@components/common/stars/StarsDisplay";
 import PriorityDisplay from "@components/common/priority/PriorityDisplay";
 import Categories from "@components/common/category/Categories";
 import {
   ROUTES,
   COLUMN_WIDTH,
+  FIRST_VISIT,
+  VISITED,
 } from "@components/shared/config/constants";
 import { PAGES } from "@components/shared/config/constants";
 
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
 const Bookmarks = () => {
+  const { data: reminders } = useReminders();
   const { bookmarks, deleteBookmark, isLoading } = useBookmarks(PAGES.BOOKMARKS);
   const router = useRouter();
   const [displayDeleteConfirm, setDisplayDeleteConfirm] = useState<number>(-1);
+
+  useEffect(() => {
+    if (reminders?.data.length > 0 && localStorage.getItem(FIRST_VISIT) !== VISITED) {
+      localStorage.setItem(FIRST_VISIT, VISITED);
+      for (const reminder of reminders!.data) {
+        if (reminder.original_url) {
+          window.open(reminder.original_url, "_blank");
+        } else {
+          // ouvrir le reminder qui n'a pas d'url -> bookmark detail
+        }
+      }
+    }
+  }, [reminders]);
 
   return (
     <div className="flex flex-col w-full mt-2 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">

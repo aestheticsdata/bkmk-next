@@ -62,6 +62,11 @@ module.exports = async (req, res) => {
     sortPart = sortPart.slice(0, sortPart.length-2);
   }
 
+  let titleMySQLPrepared;
+  if (title !== "") {
+    titleMySQLPrepared = decodeURIComponent(title).replaceAll(",", "%");
+  }
+
   const commonSQLParts = `
     FROM bookmark b
         LEFT JOIN url u ON b.url_id = u.id
@@ -69,7 +74,7 @@ module.exports = async (req, res) => {
         LEFT JOIN category c ON bc.category_id = c.id
         LEFT JOIN alarm a ON b.alarm_id = a.id
     WHERE b.user_id = '${req.query.userID}' AND b.active = 1 
-    ${title ? `AND b.title LIKE '%${decodeURIComponent(title)}%'` : ''}
+    ${title ? `AND b.title LIKE '%${titleMySQLPrepared}%'` : ''}
     ${screenshot ? `AND b.screenshot IS NOT NULL` : ''}
     ${url ? `AND b.url_id IS NOT NULL` : ''}
     ${reminder ? `AND a.frequency = '${decodeURIComponent(reminder)}'` : ''}

@@ -6,6 +6,7 @@ import {
 import { useUserStore } from "@auth/store/userStore";
 import Dropdown from '@components/common/dropdown/Dropdown';
 import UserMenuContent from './UserMenuContent';
+import { FIRST_VISIT } from "@components/shared/config/constants";
 
 
 const UserMenu = () => {
@@ -17,13 +18,16 @@ const UserMenu = () => {
       id: "changepassword",
       label: "modifier le mot de passe",
       icon: faKey,
-      callback: () => router.push("/changepassword"),
+      callback: () => {router.push("/changepassword")},
     },
     {
       id: "logout",
       label: "logout",
       icon: faSignOutAlt,
-      callback: () => router.push("/logout"),
+      callback: () => {
+        localStorage.removeItem(FIRST_VISIT);
+        router.push("/logout");
+      },
     },
   ];
 

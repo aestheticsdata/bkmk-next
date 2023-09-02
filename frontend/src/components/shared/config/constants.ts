@@ -27,3 +27,6 @@ export const PAGES = {
 };
 
 export const ROWS_BY_PAGE = 25;
+
+export const FIRST_VISIT = "first_visit";
+export const VISITED = "visited";

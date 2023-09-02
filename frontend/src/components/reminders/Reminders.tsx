@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useRouter } from "next/router";
 import useReminders from "@components/reminders/services/useReminders";
 import BookmarkDetail from "@components/bookmark/BookmarkDetail";
@@ -18,6 +17,7 @@ const Reminders = () => {
           {
             data!.data.map((bookmark: BookmarkAndAlarm) =>
               <div
+                key={bookmark.id}
                 className="
                   border-2 border-grey2 rounded p-2 bg-grey01 w-[750px]
                   cursor-pointer hover:bg-white transition-colors ease-linear duration-150
