@@ -13,7 +13,7 @@ const Reminders = () => {
     <>
     {!isLoading ?
       data?.data.length > 0 ?
-        <div className="flex flex-col mt-20 p-2 space-y-4">
+        <div className="grid grid-cols-2 gap-4 p-2 mt-20">
           {
             data!.data.map((bookmark: BookmarkAndAlarm) =>
               <div
