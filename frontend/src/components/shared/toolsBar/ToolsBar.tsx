@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useRouter } from "next/router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -6,11 +7,13 @@ import {
   faTrashAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import Pagination from "@components/shared/toolsBar/pagination/Pagination";
+import Filters from "@components/shared/toolsBar/filters/Filters";
+import DeleteConfirm from "@components/common/deleteConfirm/DeleteConfirm";
+import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import {
-  EDITION_TYPES,
+  EDITION_TYPES, PAGES,
   ROUTES
 } from "@components/shared/config/constants";
-import Filters from "@components/shared/toolsBar/filters/Filters";
 
 interface ToolBarProps {
   backButton: boolean;
@@ -22,6 +25,8 @@ interface ToolBarProps {
 
 const ToolsBar = ({ backButton, editButton = false, deleteButton = false, filters = false, editionType = "" }: ToolBarProps) => {
   const router = useRouter();
+  const { deleteBookmark } = useBookmarks(PAGES.BOOKMARKS);
+  const [displayDeleteConfirm, setDisplayDeleteConfirm] = useState<boolean>(false);
 
   return (
     <div className="fixed flex w-full py-2 mt-14 bg-grey01">
@@ -44,20 +49,15 @@ const ToolsBar = ({ backButton, editButton = false, deleteButton = false, filter
             </div>
           }
           {deleteButton &&
+            displayDeleteConfirm ?
+            <DeleteConfirm
+              closeCB={() => { setDisplayDeleteConfirm(false) }}
+              deleteCB={() => { deleteBookmark.mutate(+router.query.id!) }}
+            />
+            :
             <div
               className="flex items-center cursor-pointer hover:bg-grey1 hover:text-white space-x-1 text-sm px-1 mx-1 rounded"
-              onClick={() => {
-                switch (editionType) {
-                  case EDITION_TYPES.BOOKMARKS:
-                    router.push(`${ROUTES.bookmarks.path}`);
-                    break;
-                  case EDITION_TYPES.CATEGORIES:
-                    // TODO: handle categories case
-                    break;
-                  default:
-                    break;
-                }
-              }}
+              onClick={() => {setDisplayDeleteConfirm(true)}}
             >
               <FontAwesomeIcon icon={faTrashAlt} />
               <div>Delete</div>

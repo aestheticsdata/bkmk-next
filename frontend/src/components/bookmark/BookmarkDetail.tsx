@@ -20,13 +20,14 @@ const BookmarkDetail = ({ id } : { id: string }) => {
       for (const link of matches) {
         decodedNotes = decodedNotes.replace(
           link,
-          `<a
+          `<div class="w-full inline-block overflow-hidden text-ellipsis"><a
               href="${link}"
-              target='_blank'
+              title="${link}"
+              target="_blank"
               class="cursor-pointer hover:bg-lime-300 underline hover:no-underline text-xs whitespace-nowrap"
             >
             ${link}
-          </a>`
+          </a></div>`
         );
       }
     }
@@ -81,8 +82,10 @@ const BookmarkDetail = ({ id } : { id: string }) => {
 
           {bookmark.notes &&
             <div className="text-sm py-2 w-[550px] whitespace-pre-wrap italic">
-              <div dangerouslySetInnerHTML={{__html: getHTML(bookmark.notes) }} />
-
+              <div
+                dangerouslySetInnerHTML={{__html: getHTML(bookmark.notes) }}
+                onClick={(e) => {e.stopPropagation()}}
+              />
             </div>
           }
 

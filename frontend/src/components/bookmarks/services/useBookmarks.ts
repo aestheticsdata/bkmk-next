@@ -105,7 +105,7 @@ const useBookmarks = (from: string = "") => {
     onSuccess: async () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
       await queryClient.invalidateQueries([QUERY_KEYS.REMINDERS]);
-      router.push(`/bookmarks?page=${pageNumberSaved}`);
+      await router.push(`/${PAGES.BOOKMARKS}?page=${pageNumberSaved}`);
     },
     onError: ((e) => {console.log("error creating bookmark", e)}),
   });
@@ -123,6 +123,9 @@ const useBookmarks = (from: string = "") => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
       await queryClient.invalidateQueries([QUERY_KEYS.REMINDERS]);
       await queryClient.invalidateQueries([QUERY_KEYS.CATEGORIES]);
+      if (router.pathname.includes("[id]")) {
+        await router.push(`/${PAGES.BOOKMARKS}?page=0`);
+      }
     },
     onError: ((e) => {console.log("error deleting bookmark", e)}),
   });
@@ -142,7 +145,7 @@ const useBookmarks = (from: string = "") => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARK, router.query.id]);
       await queryClient.invalidateQueries([QUERY_KEYS.REMINDERS]);
       await queryClient.invalidateQueries([QUERY_KEYS.CATEGORIES]);
-      router.push(`/bookmarks?page=${pageNumberSaved}`);
+      await router.push(`/${PAGES.BOOKMARKS}?page=${pageNumberSaved}`);
     },
     onError: ((e) => {console.log("error editing bookmark : ", e)}),
   });
@@ -160,7 +163,7 @@ const useBookmarks = (from: string = "") => {
   }, {
     onSuccess: async () => {
       await queryClient.invalidateQueries([QUERY_KEYS.BOOKMARKS]);
-      router.push("/bookmarks?page=0");
+      await router.push(`/${PAGES.BOOKMARKS}?page=0`);
     },
     onError: ((e) => {console.log("error uploading bookmark file : ", e)}),
   })
