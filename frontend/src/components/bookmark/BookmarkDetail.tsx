@@ -85,6 +85,7 @@ const BookmarkDetail = ({ id } : { id: string }) => {
               <div
                 dangerouslySetInnerHTML={{__html: getHTML(bookmark.notes) }}
                 onClick={(e) => {e.stopPropagation()}}
+                className="max-h-[550px] overflow-y-auto"
               />
             </div>
           }
