@@ -65,7 +65,7 @@ const CreateBookmark = ({ id }) => {
             label: category.name,
             value: category.id,
           });
-        })
+        });
         setinitialCategories(tempCategories);
         setValue("categories", tempCategories);
       }

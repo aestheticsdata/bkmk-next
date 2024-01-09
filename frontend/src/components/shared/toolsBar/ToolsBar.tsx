@@ -56,6 +56,7 @@ const ToolsBar = ({ backButton, editButton = false, deleteButton = false, filter
             <DeleteConfirm
               closeCB={() => { setDisplayDeleteConfirm(false) }}
               deleteCB={() => { deleteBookmark.mutate(+router.query.id!) }}
+              invertHover={true}
             />
             :
             <ToolbarButton

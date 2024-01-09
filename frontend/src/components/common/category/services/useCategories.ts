@@ -30,11 +30,13 @@ const useCategories = () => {
 
   useEffect(() => {
     if (data) {
-      data.data.forEach((category: any) => {
+      const { data: categoriesTmp } = data;
+      categoriesTmp.forEach((category: any) => {
         category.label = category.name;
         category.value = category.id;
       });
-      setCategories(data.data);
+      categoriesTmp.sort((a: any, b: any) => a.label.localeCompare(b.label));
+      setCategories(categoriesTmp);
     }
   }, [data]);
 

@@ -3,13 +3,14 @@ import { useState } from "react";
 interface DeleteConfirmProps {
   closeCB: () => void;
   deleteCB: () => void;
+  invertHover?: boolean;
 }
 
-const DeleteConfirm = ({ closeCB, deleteCB }: DeleteConfirmProps ) => {
+const DeleteConfirm = ({ closeCB, deleteCB, invertHover = false }: DeleteConfirmProps ) => {
   return (
     <div className="flex w-[100px] space-x-1 text-xxxs">
       <div
-        className="flex items-center outline outline-1 outline-grey3 rounded cursor-pointer px-1 hover:bg-grey01 uppercase"
+        className={`flex items-center outline outline-1 outline-grey3 rounded cursor-pointer px-1 ${invertHover ? "hover:bg-grey1" : "hover:bg-grey01"} uppercase`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -20,7 +21,7 @@ const DeleteConfirm = ({ closeCB, deleteCB }: DeleteConfirmProps ) => {
         confirm
       </div>
       <div
-        className="flex items-center outline outline-1 outline-grey3 rounded cursor-pointer px-1 hover:bg-grey01 uppercase"
+        className={`flex items-center outline outline-1 outline-grey3 rounded cursor-pointer px-1 ${invertHover ? "hover:bg-grey1" : "hover:bg-grey01"} uppercase`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
