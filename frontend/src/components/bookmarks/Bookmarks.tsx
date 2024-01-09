@@ -125,7 +125,7 @@ const Bookmarks = () => {
                 </div>
                 {displayDeleteConfirm === bookmark.id ?
                   <DeleteConfirm
-                    closeCB={setDisplayDeleteConfirm}
+                    closeCB={() => setDisplayDeleteConfirm(-1)}
                     deleteCB={() => { deleteBookmark.mutate(bookmark.id) }}
                   />
                   :
