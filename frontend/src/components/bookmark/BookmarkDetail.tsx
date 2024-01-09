@@ -81,7 +81,7 @@ const BookmarkDetail = ({ id } : { id: string }) => {
           }
 
           {bookmark.notes &&
-            <div className="text-sm py-2 w-[550px] whitespace-pre-wrap italic">
+            <div className="text-sm py-2 w-[720px] whitespace-pre-wrap italic">
               <div
                 dangerouslySetInnerHTML={{__html: getHTML(bookmark.notes) }}
                 onClick={(e) => {e.stopPropagation()}}
