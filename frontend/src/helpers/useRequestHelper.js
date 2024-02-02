@@ -4,8 +4,8 @@ import { useAuthStore } from "@auth/store/authStore";
 
 axios.defaults.baseURL = (typeof window !== "undefined") &&
   window.location.host.search("bkmk") !== -1
-    ? `api${url}`
-    // ? "http://bkmk.1991computer.com/api/"
+    // ? `api${url}`
+    ? "https://bkmk.1991computer.com/api/"
     : `${process.env.NEXT_PUBLIC_REMOTE_HOST_FROM_LOCALHOST}`;
 
 const useRequestHelper = () => {
