@@ -31,26 +31,9 @@ import { PAGES } from "@components/shared/config/constants";
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
 const Bookmarks = () => {
-  const { data: reminders } = useReminders();
   const { bookmarks, deleteBookmark, isLoading } = useBookmarks(PAGES.BOOKMARKS);
   const router = useRouter();
   const [displayDeleteConfirm, setDisplayDeleteConfirm] = useState<number>(-1);
-
-  useEffect(() => {
-    if (reminders?.data.length > 0 && localStorage.getItem(FIRST_VISIT) !== VISITED) {
-      localStorage.setItem(FIRST_VISIT, VISITED);
-      for (const reminder of reminders!.data) {
-        if (reminder.original_url) {
-          window.open(reminder.original_url, "_blank");
-        } else {
-          console.log(reminder.id);
-          // ouvrir le reminder qui n'a pas d'url -> bookmark detail
-          window.open(`bookmarks/${reminder.id}`, "_blank");
-        }
-      }
-      router.push("/bookmarks/reminders");
-    }
-  }, [reminders]);
 
   return (
     <div className="flex flex-col w-full mt-2 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
