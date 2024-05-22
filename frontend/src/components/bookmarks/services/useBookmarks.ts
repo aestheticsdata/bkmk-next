@@ -56,6 +56,7 @@ const useBookmarks = (from: string = "") => {
   }, [router.query]);
 
   useEffect(() => {
+    console.log("test");
     if (pageNumberSaved) {
       setPage(Number(pageNumberSaved));
     } else {
