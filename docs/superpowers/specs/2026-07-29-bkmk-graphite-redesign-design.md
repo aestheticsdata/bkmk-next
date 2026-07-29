@@ -1,268 +1,395 @@
-# bkmk — Refonte GRAPHITE + auth sécurisée
+# bkmk — Refonte GRAPHITE, remise à niveau de la plateforme, auth sécurisée
 
-**Date :** 2026-07-29
-**Statut :** ⚠️ BROUILLON — non validé par l'utilisateur. Reprendre à l'étape « Questions ouvertes » demain.
+**Date :** 2026-07-29 (révisée le soir même — v2)
+**Statut :** ⚠️ BROUILLON — non validé. Reprendre à §8 (questions ouvertes) demain.
 **Projet Linear :** BKMK (`e386be48-060a-4e96-82a0-3a2e8c7bcd30`, équipe Cosmokaat / `COS`)
 
 ---
 
 ## 0. Où on en est (reprise de session)
 
-Session du 29/07 au soir, ~10 min. Ce qui a été fait :
+Session du 29/07 au soir. Ce qui a été fait :
 
-1. ✅ Lecture intégrale de `design_handoff_graphite/README.md` (spec design complète et définitive).
-2. ✅ Inventaire du codebase bkmk (frontend Next 13 pages router, backend Express).
-3. ✅ Étude du projet de référence `~/dev/pfa` (design system + auth session/CSRF/Redis).
-4. ✅ Rédaction de ce document.
-5. ✅ Création des tickets Linear dans le projet BKMK.
+1. ✅ Lecture du handoff **mis à jour** `design_handoff_graphite 2/README.md`.
+2. ✅ Inventaire du codebase bkmk (frontend Next 13 pages router, backend Express JS).
+3. ✅ Analyse approfondie de `~/dev/pfa/front` — versions, organisation, conventions, configs.
+4. ✅ Spec + 26 tickets Linear.
 
-**Rien n'a été codé.** Aucun fichier applicatif modifié. Le seul ajout au repo est ce document
-(+ `design_handoff_graphite/` déjà présent, non versionné).
+**Rien n'a été codé.** Le seul ajout versionné est ce document.
 
-**Demain, commencer par :** lire §7 (questions ouvertes), trancher, puis attaquer COS-xxx dans
-l'ordre indiqué en §6.
+### ⚠️ Deux dossiers de handoff coexistent
+
+`design_handoff_graphite/` (obsolète) et **`design_handoff_graphite 2/` (autorité)**. Le second
+ajoute la modale d'édition et les flux de suppression. **Supprimer l'ancien** pour éviter toute
+ambiguïté — tous les numéros de ligne de ce document et des tickets pointent vers le nouveau.
+
+Le nom contient un espace : penser aux guillemets en shell.
 
 ---
 
-## 1. Inventaire : écrans du handoff vs. existant
+## 1. Ce qui a changé dans le handoff (v2)
 
-Les 9 écrans GRAPHITE vivent dans `design_handoff_graphite/screens-graphite.jsx` :
+Trois ajouts, rien d'autre (`diff` vérifié : 2 hunks README, 3 hunks themes.css) :
+
+### §9 — Édition d'un record : **une modale, pas un écran**
+
+Le handoff tranche la question qui était ouverte hier. La fiche record reste l'écran de
+*consultation* (log, related, preview) ; l'édition passe par une **modale posée dessus**, ce qui
+évite un second écran quasi identique et permet d'éditer **depuis la liste** sans quitter la page.
+
+`min(680px, 100% - 20px)`, `max-height: calc(100% - 24px)`, scrollable. En-tête : `EDIT` +
+`record <id>` + `added <date> · unsaved changes` + `×`. Champs préremplis, mêmes contrôles que
+l'écran insert : `url`, `title`, `note` (3 lignes), `tags` (chips + `+ add` pointillée),
+`priority`/`stars` sur deux colonnes, `alarm`/`screenshot` (`captured` + `re-capture`) sur deux
+colonnes. Pied : `save ⌘↵` (primaire), `cancel`, et à droite `delete record` (outline oxyde).
+
+**Conséquence :** `pages/bookmarks/edit/[id]/index.tsx` disparaît. Ce n'est plus une route.
+
+### §10 — Suppression : deux chemins
+
+- **Depuis la liste** — au survol d'une ligne, trois actions à droite de la date : `↗` (ouvrir),
+  `✎` (éditer), `⌫` (supprimer, oxyde au survol). Le clic sur `⌫` transforme la fin de ligne en
+  **confirmation en place** : `DELETE?` + mini-boutons `CONFIRM` (plein oxyde) / `CANCEL`, hauteur
+  20px, 9.5px uppercase. Aucune modale : la ligne se supprime sur `CONFIRM`.
+- **Depuis la fiche ou la modale d'édition** — bouton `delete` (outline oxyde) → **modale de
+  confirmation** `min(440px, 100% - 20px)` : en-tête `DELETE / record <id>`, titre + url, ligne
+  d'avertissement (« note, tags, screenshot and alarm go with it… this cannot be undone »), pied
+  `delete record` (plein oxyde) / `cancel` / `esc cancels`.
+
+### §State — trois entrées de plus
+
+`editing` (record en édition ou `null`), `deleting` (record en attente de confirmation ou `null`),
+et `confirmId` **local à la liste** (id de la ligne en confirmation en place). Noter la règle
+d'exclusion mutuelle du prototype : `openEdit` ferme les filtres, `askDelete` ferme l'édition.
+
+### Styles associés (`themes.css`, lignes 369-379 + responsive 432-446)
+
+`.gr-acts` (conteneur, `opacity:0` → `1` au survol de `.gr-tr`) · `.gr-act` (bouton-glyphe 22px,
+rayon 6 ; **26px et toujours visible en mobile**) · `.gr-act.danger:hover` → `--accent-2` ·
+`.gr-mini` (20px, 9.5px uppercase) et `.gr-mini.danger` · `.gr-btn.danger` (outline oxyde) et
+`.gr-btn.danger.solid` (plein `linear-gradient(180deg,#8d4018,#763512)`, bordure `#5f2a0e`, texte
+`#f4ece6`).
+
+---
+
+## 2. Inventaire : écrans du handoff vs. existant
+
+`design_handoff_graphite 2/screens-graphite.jsx` — **les numéros de ligne ont tous bougé en v2** :
 
 | # | Fonction handoff | Ligne | Écran existant bkmk | État |
 |---|---|---|---|---|
-| 1 | `Login_Graphite` | 369 | `pages/login/index.tsx` + `src/components/shared/sharedLoginForm/` | existe, refonte totale |
-| 2 | `Signup_Graphite` | 568 | `pages/signup/index.tsx` (même form partagé) | existe, refonte + **jauge de force** et **case import Session Buddy** à créer |
-| 3 | `List_Graphite` | 82 | `pages/bookmarks/index.tsx` + `src/components/bookmarks/Bookmarks.tsx` | existe, refonte totale (rail catégories + table dense + pager) |
-| 4 | `Detail_Graphite` | 177 | `pages/bookmarks/[id]/index.tsx` + `src/components/bookmark/BookmarkDetail.tsx` | existe, refonte ; **`log`, `related · same tags`, `hash` sont nouveaux** |
-| 5 | `Create_Graphite` | 241 | `pages/bookmarks/create/index.tsx` + `create/CreateBookmark.tsx` | existe, refonte ; **`record preview` et détection de doublons nouveaux** |
-| 6 | `Upload_Graphite` | 490 | `pages/bookmarks/upload/index.tsx` + `upload/UploadBookmarks.tsx` | existe, refonte ; **staging/parse avant envoi, options `on import`, `last import` nouveaux** |
-| 7 | `Reminders_Graphite` | 311 | `pages/bookmarks/reminders/index.tsx` + `reminders/Reminders.tsx` | existe, refonte ; **carte `next 14 days · load` nouvelle** |
-| 8 | `About_Graphite` | 622 | `pages/about/index.tsx` | existe, refonte ; **`system`, `changelog`, `credits` nouveaux** |
-| 9 | `FilterModal_Graphite` | 413 | `src/components/shared/toolsBar/filters/Filters.tsx` | existe (filtres inline), devient **modale** |
+| 1 | `Login_Graphite` | 385 | `pages/login/index.tsx` | refonte |
+| 2 | `Signup_Graphite` | 584 | `pages/signup/index.tsx` | refonte + jauge de force, case import |
+| 3 | `List_Graphite` | 82 | `pages/bookmarks/index.tsx` | refonte + **actions au survol, confirm en place** |
+| 4 | `Detail_Graphite` | 192 | `pages/bookmarks/[id]/index.tsx` | refonte ; `log`, `related`, `hash` nouveaux |
+| 5 | `Create_Graphite` | 257 | `pages/bookmarks/create/index.tsx` | refonte + `record preview`, doublons |
+| 6 | `Upload_Graphite` | 506 | `pages/bookmarks/upload/index.tsx` | refonte + staging |
+| 7 | `Reminders_Graphite` | 327 | `pages/bookmarks/reminders/index.tsx` | refonte + `next 14 days` |
+| 8 | `About_Graphite` | 638 | `pages/about/index.tsx` | refonte + `system`, `changelog` |
+| 9 | **`EditModal_Graphite`** | **693** | `pages/bookmarks/edit/[id]/` | **route supprimée → modale** |
+| 10 | **`ConfirmDelete_Graphite`** | **771** | — | **entièrement nouveau** |
+| 11 | `FilterModal_Graphite` | 429 | `toolsBar/filters/Filters.tsx` | inline → modale |
 
-**Écrans existants sans équivalent dans le handoff** — à décider (voir §7) :
+`themes.css` : bloc `.theme-graphite` toujours à partir de la **ligne 292**.
 
-- `pages/bookmarks/edit/[id]/index.tsx` — édition. Le handoff a un bouton `edit` sur le détail mais
-  ne dessine pas l'écran. Proposition : réutiliser le gabarit `Create_Graphite` en mode « edit ».
-- `pages/logout/index.tsx` — page de déconnexion. Devient un appel `POST /users/logout` + redirection ;
-  plus d'écran dédié (le handoff met `sign out` dans About).
-- `pages/index.tsx` — redirection racine, à conserver tel quel.
-
-**Chrome / shell commun** (nouveau, transverse) : barre haute `BKMK IDX/2.4.1` + onglets + LED,
-barre de statut basse, barre d'onglets mobile. Remplace
-`src/components/shared/navBar/NavBar.tsx` et `src/components/shared/Layout.tsx`.
+**Autres écrans existants :** `pages/logout/` → devient `POST /users/logout` + redirection (le
+handoff met `sign out` dans About). `pages/index.tsx` → redirection racine, conservée.
 
 ---
 
-## 2. Le codebase actuel
+## 3. Remise à niveau de la plateforme
 
-### Frontend — `frontend/`
+C'est le **plus gros chantier**, et il passe avant tout le reste : refaire l'UI sur Next 13 +
+Tailwind 3 pour migrer ensuite serait du travail jeté.
 
-- **Next.js 13.4.13, pages router**, TypeScript, React 18.
-- **Tailwind 3** avec `tailwind.config.js` JS classique : ~45 couleurs nommées en `rgb()` littéral
-  (`grey1`, `blueNavy`, `addSpendingHover`…), héritées de pfa **avant** sa refonte. Aucun token
-  sémantique.
-- État : **zustand** (`authStore`, `userStore`, `globalStore`, `pageStore`), données serveur :
-  **@tanstack/react-query v4**, HTTP : **axios** via `src/helpers/useRequestHelper.js`.
-- Formulaires : `react-hook-form` **et** `formik` (les deux installés — dette).
-- Icônes : FontAwesome. Alertes : SweetAlert2.
-- Alias de chemins déjà en place : `@pages/*`, `@src/*`, `@components/*`, `@auth/*`, `@helpers/*`.
-- Polices : Poppins / Smooch Sans / Ubuntu via Google Fonts. **GRAPHITE impose IBM Plex Mono, unique.**
+### Versions cibles — celles de pfa, vérifiées dans `~/dev/pfa/front/package.json`
 
-### Backend — `backend/` (Express, JS)
-
-- Express 4 + helmet + cors, MySQL brut (`mysql2`, requêtes SQL **concaténées en clair** —
-  injection SQL dans `signInController.js`), `bcryptjs`, `jsonwebtoken`.
-- Routes : `users`, `bookmarks`, `categories`, `reminders`. Screenshots via `jimp` + backup `ssh2`, cron.
-- **Auth actuelle : JWT en header `Authorization: Bearer`, token persisté côté client dans
-  `localStorage` (`zustand/persist`, clé `bkmk-token`).** C'est exactement ce qu'on remplace.
-
-### Référence — `~/dev/pfa`
-
-- `pfa/front` : Next + **Tailwind v4 CSS-first** (`@theme` en CSS, pas de `tailwind.config.js`),
-  shadcn/ui (style new-york, lucide), tokens en oklch dans `styles/tokens/{colors,radius,typography,elevation}.css`,
-  doc faisant autorité dans `front/docs/design-system.md`, conventions Claude Design dans `front/.design-sync/`.
-- `pfa/nest-api` : **le modèle d'auth à copier** — `express-session` + `connect-redis`
-  (`main.ts`), cookie `httpOnly` / `sameSite: lax` / `secure` en prod / `rolling` / TTL 10 min,
-  CSRF double-submit à comparaison temps-constant (`users/csrf-token.util.ts` + `users/guards/csrf.guard.ts`),
-  rotation du token CSRF à la connexion, `redis.service.ts` avec `clearSessionsForUser` (session unique par
-  utilisateur), routes `GET /users/me`, `GET /users/csrf`, `POST /users`, `POST /users/add`, `POST /users/logout`.
-
----
-
-## 3. Approche retenue — design system
-
-**Recommandation : refaire le socle CSS de bkmk sur le modèle pfa, mais en gardant Tailwind 3.**
-
-Trois options ont été pesées :
-
-| Option | Pour | Contre |
+| | bkmk aujourd'hui | pfa (cible) |
 |---|---|---|
-| **A. Tokens CSS custom properties + Tailwind 3 lisant les tokens** (recommandée) | Pas de migration Tailwind risquée maintenant ; le fichier de tokens est déjà l'unité de vérité ; la migration v4 devient un simple changement de plomberie plus tard | `tailwind.config.js` reste, duplication légère nom-de-token → nom-d'utilitaire |
-| B. Migrer d'abord Tailwind 4 CSS-first (comme pfa) | Aligne bkmk sur pfa immédiatement | Migration Next 13 + Tailwind 4 + PostCSS = chantier à part, bloque la refonte UI |
-| C. CSS modules / vanilla, en portant `themes.css` | Fidélité maximale au handoff | S'écarte du reste de l'écosystème, on perd Tailwind |
+| next | 13.4.13 | **16.2.12** |
+| react / react-dom | 18.2.0 | **19.2.3** |
+| tailwindcss | ^3.2.7 | **^4.3.2** + `@tailwindcss/postcss` |
+| typescript | 5.0.2 | 5.9.3 |
+| @tanstack/react-query | ^4.29.5 | ^5.101.3 |
+| zustand | ^4.3.7 | ^5.0.11 |
+| zod | — | **^4.3.6** |
+| lint/format | eslint 8 + eslint-config-next | **@biomejs/biome 2.5.3** |
+| compilateur React | — | **`babel-plugin-react-compiler` ^1.0.0** |
+| tests | — | vitest ^4.1.10 + @playwright/test ^1.61.1 |
 
-**Décision A.** Structure cible, calquée sur pfa :
+**Le compilateur React** s'active par `reactCompiler: true` dans `next.config.js` (Next 16 le lit
+nativement) **et** la présence de `babel-plugin-react-compiler` en devDependency. Les deux sont
+nécessaires.
 
+### Ruptures attendues, Next 13 → 16
+
+- **`pages/` → `app/`.** pfa est intégralement en App Router avec les groupes de routes
+  `(public)` / `(private)`. Adopter son organisation implique cette migration — c'est le point le
+  plus risqué du lot (voir §8, question 1).
+- `next/font` remplace l'`@import` Google Fonts (IBM Plex Mono).
+- `next lint` est retiré → `biome check ./src`.
+- Turbopack par défaut ; pfa fixe `turbopack.root: __dirname` pour éviter l'avertissement multi-lockfile.
+- React 19 : `useFormState` → `useActionState`, refs en prop, `propTypes`/`defaultProps` retirés
+  des composants fonction.
+- `next export` disparaît (le script `deploy-kimsufi` de bkmk l'utilise encore) — pfa fait
+  `next build` seul.
+- Suppression de `formik` (bkmk a `formik` **et** `react-hook-form` — pfa n'a que
+  `react-hook-form` + `@hookform/resolvers` pour brancher zod).
+
+### Tailwind 3 → 4, CSS-first
+
+**Plus de `tailwind.config.js`** : le thème vit en CSS via `@theme`. `postcss.config.js` ne charge
+plus que `@tailwindcss/postcss`. Structure d'entrée, copiée de `pfa/front/styles/globals.css` :
+
+```css
+@import url('…IBM+Plex+Mono…') layer(base);   /* ou next/font */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* Design tokens — by type */
+@import './tokens/breakpoints.css';
+@import './tokens/colors.css';
+@import './tokens/radius.css';
+@import './tokens/typography.css';
+@import './tokens/elevation.css';
+
+@import './base.css';
+@import './animations.css';
+
+@import './components/chrome.css';
 ```
-frontend/styles/
-  globals.css              entrée : imports ordonnés + polices, aucune règle propre
-  tokens/
-    colors.css             les 17 couleurs GRAPHITE (§Design tokens du README)
-    typography.css         échelle 9.5 / 10.5 / 11 / 11.5 / 12 / 12.5 / 21 / 24 / 26, tracking, .num
-    radius.css             6 / 7 / 8 / 9 / 10 / 12 / 14 / 999
-    elevation.css          --e1, --e2, ombre modale, ombre bouton primaire, --hair
-  base.css                 resets (border-color, body, autofill, ::selection, ::placeholder)
-  animations.css           bkmk-pop, curseur bloc, apparition d'écran
-```
 
-**Règles reprises de pfa (non négociables) :**
+`globals.css` **n'a aucune règle propre** — uniquement les imports ordonnés. C'est la règle pfa.
 
-- Un token, jamais une valeur brute. Pas de `text-[12.5px]`, pas de `bg-[#a3a4a0]`, pas de palette
-  Tailwind stock (`gray-400`).
-- Toute surface claire porte `inset 0 1px 0 var(--hair)` — c'est **la signature du système**.
-- `font-variant-numeric: tabular-nums` (classe `.num`) sur toute colonne chiffrée.
-- Pas de variantes `dark:` — GRAPHITE est un thème unique, clair-gris.
-- Alias de chemins uniquement, jamais `./` ni `../`.
-- **La densité fait partie du design** : ligne de table 30px, chrome 38px. Ne pas « aérer ».
+**Différence assumée avec pfa :** pfa déclare `@custom-variant dark` et est dark-only. GRAPHITE est
+un thème unique clair-gris : **pas de variante `dark:`, pas de `next-themes`.**
 
-**Composants primitifs à extraire** (`src/components/ds/`), dérivés des classes `gr-*` de
-`themes.css` : `Chrome`, `StatusBar`, `TabBar`, `Card`, `CommandBar`, `Field`, `Button`,
-`Segment`, `Chip`, `Overline` (`.gr-lab`), `Stars`, `PriorityBars`, `Meter`, `Led`, `KeyValueTable`,
-`DropZone`, `ShotSlot`, `Modal`, `BlinkCursor`.
+### Biome — ESLint et Prettier sont retirés partout
 
-**Responsive : `@container (max-width: 720px)`**, pas de media query. La racine d'écran porte
-`container-type: inline-size`. Tailwind 3 gère mal les container queries → le bloc responsive
-GRAPHITE est porté **en CSS brut** dans `styles/components/`, comme `chrome.css` chez pfa.
-Le hook existant `useIsWindowResponsive.ts` devient inutile pour la mise en page.
+Décision explicite : **on vire eslint et prettier.** Cela vaut aussi pour le back — noter que
+`pfa/nest-api` est resté en `eslint.config.mjs` + prettier ; on ne reprend donc pas sa config de
+lint, on lui préfère Biome, en gardant ses réglages de formatage (double quotes, `printWidth: 120`)
+pour que les deux projets restent cohérents à l'œil.
+
+- **Racine** : copie conforme de `pfa/biome.json` — `root: true`, `vcs.useIgnoreFile`, rien d'autre.
+- **`frontend/`** : copie conforme de `pfa/front/biome.json` — `root: false`, formatter 2 espaces /
+  `lineWidth: 120`, double quotes, `attributePosition: multiline`, `css.parser.tailwindDirectives`,
+  `useExhaustiveDependencies: off`, `useImportType` en `separatedType`, et l'assist
+  `organizeImports` avec les groupes `[{type:false}, :BLANK_LINE:, {type:true}]` — c'est ce qui
+  produit le bloc `import type { … }` séparé en fin d'imports, visible partout dans pfa.
+- **`backend/`** : même fichier que le front, moins le bloc `css` (inutile) — le back est du JS
+  simple, Biome le gère nativement.
+- À désinstaller : `eslint`, `eslint-config-next`. Scripts : `"lint": "biome check ./src"`,
+  `"lint:fix": "biome check --write ./src"`.
+
+### shadcn/ui
+
+`components.json` calqué sur pfa : style **new-york**, `rsc: true`, `tsx: true`,
+`baseColor: neutral`, `cssVariables: true`, `iconLibrary: lucide`, alias `@components`,
+`@components/ui`, `@lib/utils`, `@components/hooks`.
+
+Chaîne : `class-variance-authority` + `clsx` + `tailwind-merge` (le `cn()` de `@lib/utils`) +
+`lucide-react` + `tw-animate-css`. Radix à la demande.
+
+Composants attendus pour bkmk : `dialog` (modales filtres/édition), `alert-dialog` (confirmation de
+suppression), `checkbox`, `input`, `label`, `select`, `tabs`, `popover`, `progress`, `separator`,
+`tooltip`, `scroll-area`, `sonner`.
+
+**Layering pfa, à respecter :** `ui/*` = shadcn restylé sur nos tokens, enveloppant Radix. À
+l'intérieur d'un fichier `ui/*`, l'import namespace Radix (`import * as DialogPrimitive`) est
+standard — le garder. Au niveau consommateur, les imports restent **plats**
+(`import { DialogContent }`), pour que re-lancer `shadcn add` régénère sans casse.
 
 ---
 
-## 4. Approche retenue — auth sécurisée
+## 4. Organisation et conventions — le modèle pfa
 
-Port de l'auth pfa **sur l'Express actuel** (Nest est explicitement remis à plus tard) :
+Relevé dans `~/dev/pfa/front`. C'est la cible pour bkmk, à l'identique.
 
-**Backend (`backend/`)**
-- `express-session` + `connect-redis` + `redis`, store préfixé `bkmk:`, TTL 10 min, `rolling: true`.
-- Cookie : `name: "bkmk.sid"`, `httpOnly`, `sameSite: "lax"`, `secure` en prod (`COOKIE_SECURE`),
-  `proxy: true` (reverse proxy Kimsufi), `app.set("trust proxy", 1)`.
-- `src/auth/csrfToken.js` — port direct de `csrf-token.util.ts` : `randomBytes(32)`,
-  `timingSafeEqual`, en-têtes `x-csrf-token` / `x-xsrf-token`, méthodes sûres exemptées,
-  `rotateCsrfToken` à la connexion/inscription, `clearCsrfToken` au logout.
-- `src/auth/csrfMiddleware.js` + `src/auth/sessionAuthMiddleware.js` remplacent `checkToken.js`.
-- `redisService.js` avec `clearSessionsForUser` → une seule session active par utilisateur.
-- Routes : `GET /users/me`, `GET /users/csrf`, `POST /users` (signin), `POST /users/add`,
-  `POST /users/logout`. `cors({ credentials: true, origin: FRONTEND_URL })`.
-- **Au passage :** requêtes SQL paramétrées dans `signInController.js` et partout ailleurs
-  (injection SQL présente aujourd'hui).
+```
+frontend/
+  biome.json            root:false
+  components.json       shadcn
+  next.config.js        reactCompiler, CSP, turbopack.root
+  postcss.config.js     @tailwindcss/postcss seul
+  styles/               globals.css + tokens/ + base.css + animations.css + components/
+  src/
+    app/                App Router
+      layout.tsx  providers.tsx  error.tsx
+      (public)/         login, signup, about
+      (private)/        layout.tsx + page.tsx par module
+    auth/               context/  server/  helpers/  interfaces/  use*Service.ts
+    components/
+      ui/               shadcn — exports plats
+      shared/           chrome transverse (navBar, config/constants, sessionWatcher…)
+      common/           primitives génériques
+      <module>/         view/  services/  helpers/  interfaces/  config/  __tests__/
+    schemas/            zod — la frontière d'API
+    lib/                utils.ts, query/keys.ts, dataviz/
+    helpers/            useRequestHelper.ts, …
+    text/               fr/<module>.ts — la copie, hors composants
+    i18n/
+```
 
-**Frontend**
-- Suppression de `authStore.ts` et de la persistance `localStorage` du token. `useCredentials.ts` réécrit.
-- `axios` en `withCredentials: true` ; intercepteur qui ajoute `x-csrf-token` sur les verbes non sûrs
-  et rejoue une fois après `GET /users/csrf` sur 403 CSRF.
-- Le token CSRF vit **en mémoire** (contexte React), jamais en storage.
-- `AuthContext` sur le modèle `pfa/front/src/auth/context/AuthContext.tsx`, hydraté par `GET /users/me`.
+**Conventions relevées :**
 
-**Ordre imposé :** l'auth passe **avant** la refonte des écrans login/signup, sinon on redessine
-deux fois les mêmes formulaires.
+- **Alias de chemins uniquement**, jamais `./` ni `../`, même à l'intérieur d'un module. bkmk a
+  déjà `@pages/* @src/* @components/* @auth/* @helpers/*` — ajouter `@styles/* @app/* @lib/*
+  @text/*` (bkmk n'a pas d'i18n : l'UI GRAPHITE est en anglais, `@i18n/*` est sans objet).
+- Composants `PascalCase.tsx`, hooks et helpers `camelCase.ts`, un composant par fichier.
+- **Les hooks react-query vivent dans `<module>/services/`** et s'appellent `use<Chose>.ts`. Un
+  hook = les queries **et** les mutations du domaine, avec sa fonction `invalidation()` locale.
+- **Tous les cache keys passent par `@lib/query/keys.ts`** (`QUERY_KEYS`, objet `as const`). Jamais
+  de chaîne magique : c'est ce qui rend l'invalidation croisée fiable.
+- Types dans `<module>/interfaces/`, constantes dans `<module>/config/constants.ts`.
+- Les imports de type sont **séparés en fin de bloc** (`import type { … }`) — produit
+  automatiquement par l'assist Biome.
+- La copie textuelle vit dans `src/text/`, pas en dur dans les composants.
 
 ---
 
-## 5. Ce que le handoff implique côté données
+## 5. zod — la frontière d'API
 
-Champs affichés par GRAPHITE qui n'existent pas forcément en base — à vérifier contre `backend/src/db/bkmk.sql` :
+pfa met zod **exactement à la frontière réseau** : chaque service parse la réponse avant de la
+rendre à l'app, et parse le payload avant de l'envoyer.
 
-- `hash` (fiche record), `log` (4 événements horodatés par bookmark), `related · same tags`.
-- Pagination serveur **22 lignes/page** (`?page=`), aujourd'hui la pagination est cliente.
+```ts
+const getCategoriesService = async () => {
+  const response = await privateRequest(`/categories?userID=${userID}`);
+  return CategoryListSchema.parse(response.data);   // ← la frontière
+};
+```
+
+**Règles reprises (commentaires de `pfa/front/src/schemas/auth.ts`) :**
+
+- Un `z.object` simple, **jamais `.strict()`** : zod retire les clés inconnues par défaut, donc un
+  champ ajouté côté serveur reste rétro-compatible. Un schéma strict transformerait tout ajout en
+  échec dur.
+- Les types viennent des schémas : `export type X = z.infer<typeof XSchema>`. On ne redéclare pas
+  d'interface à côté.
+- Primitives partagées dans `schemas/primitives.ts` (pfa y met `numberLikeSchema` pour absorber les
+  nombres renvoyés en chaîne par MySQL — **bkmk est aussi sur MySQL, le besoin est identique**).
+- Limites de champs dans `schemas/fieldLimits.ts`, partagées avec la validation serveur.
+
+Schémas bkmk à créer : `auth.ts` (`AuthUserSchema`, `AuthResponseSchema` avec `csrfToken`),
+`bookmarks.ts` (record, liste paginée, payloads create/update), `categories.ts`, `reminders.ts`,
+`filters.ts` (l'objet de filtres, réutilisé par la modale et l'url), `import.ts` (entrées
+analysées + résumé), `primitives.ts`, `fieldLimits.ts`.
+
+Côté Express, les mêmes schémas servent à valider les entrées — c'est le sens de « qui serviront
+aussi de validation de l'api ».
+
+---
+
+## 6. Auth sécurisée — le modèle pfa porté sur Express
+
+Inchangé depuis la v1 de cette spec. Le backend Nest reste explicitement remis à plus tard.
+
+**Backend** : `express-session` + `connect-redis`, store préfixé `bkmk:`, TTL 10 min,
+`rolling: true` ; cookie `bkmk.sid` `httpOnly` / `sameSite: lax` / `secure` en prod / `proxy: true`
++ `trust proxy` ; CSRF double-submit porté de `pfa/nest-api/src/users/csrf-token.util.ts`
+(`randomBytes(32)`, `timingSafeEqual`, en-têtes `x-csrf-token` / `x-xsrf-token`, méthodes sûres
+exemptées, rotation à la connexion) ; `clearSessionsForUser` → **une session active par
+utilisateur** ; routes `GET /users/me`, `GET /users/csrf`, `POST /users`, `POST /users/add`,
+`POST /users/logout`.
+
+**Frontend** : port de `pfa/front/src/helpers/useRequestHelper.ts` — `request` (public) et
+`privateRequest` (ajoute `x-csrf-token` sur les verbes non sûrs, **rejoue une fois** après
+`GET /users/csrf` sur 403, et sur 401 redirige vers `/login` en laissant la promesse pendante pour
+que le 401 n'atteigne jamais l'error boundary). `AuthContext` hydraté par `GET /users/me`. **Le
+token CSRF vit en mémoire, jamais en storage.** Suppression de `authStore.ts` (zustand `persist`,
+clé `bkmk-token`).
+
+**Ordre imposé :** l'auth passe avant les écrans login/signup.
+
+**Au passage** : requêtes SQL paramétrées — `signInController.js` concatène aujourd'hui l'email de
+`req.body` dans le SQL, sur une route non authentifiée.
+
+---
+
+## 7. Ce que le handoff implique côté données
+
+- `hash`, `log` (événements horodatés), `related · same tags` — absents de `backend/src/db/bkmk.sql`.
+- Pagination **serveur** 22 lignes/page (`?page=`) ; aujourd'hui cliente.
 - Objet de filtres : `title`, `categories[]`, `stars`, `priority[]`, `reminder`, `contains{shot,notes,url}`.
-- File d'import : fichier + entrées parsées + doublons, **avant** commit (aujourd'hui l'upload est direct).
-- Détection de doublons à la création (`2 duplicate candidates in index`).
-- `next 14 days · load` : agrégat de rappels par jour.
-- Compteurs de catégories sur 3 chiffres, `storage` (`shots 84/312`, `db 1.4 mb`).
-
-Ces manques sont des tickets à part entière (voir §6), pas du décor.
+- File d'import : fichier + entrées analysées + doublons **avant** commit.
+- Détection de doublons à la création.
+- Agrégats : `next 14 days · load`, `storage` (`shots 84/312`, `db 1.4 mb`), compteurs de catégories.
+- **Nouveau v2 :** `DELETE /bookmarks/:id` doit être exercé depuis trois points d'entrée (confirm en
+  place, fiche, modale d'édition) et invalider les caches react-query concernés en une seule
+  fonction `invalidation()`, façon pfa.
 
 ---
 
-## 6. Découpage en tickets Linear
+## 8. Questions ouvertes — à trancher demain avant de coder
 
-**24 tickets créés dans le projet BKMK (COS-290 → COS-313).** Ordre d'exécution recommandé :
+Trois des six questions d'hier sont **résolues** : l'édition est une modale (handoff §9), shadcn
+est adopté, Tailwind passe en v4.
+
+1. **App Router.** Adopter l'organisation pfa (`src/app/(public)|(private)`) implique de migrer
+   `pages/` → `app/`. C'est le plus gros risque du lot plateforme. Alternative : Next 16 en gardant
+   `pages/`, et on s'écarte de pfa sur ce point précis. **Recommandation : migrer** — l'écart
+   d'organisation serait permanent, et la refonte réécrit de toute façon chaque écran.
+2. **Métadonnées décoratives** — `uptime 04:12`, `sync 12s`, `IDX/2.4.1`, `build 2.4.1 · tls on` :
+   vraies valeurs (endpoints à créer) ou chrome statique ?
+3. **Champs manquants** (`hash`, `log`, `related`) — migration MySQL maintenant, ou écrans livrés
+   avec ces blocs masqués et remplis au lot DATA ?
+4. **Ancien dossier de handoff** — je supprime `design_handoff_graphite/` (obsolète) ?
+5. **Périmètre visuel** — la refonte remplace intégralement l'UI ; pas de mode « ancien thème ».
+   Confirmé ?
+
+---
+
+## 9. Découpage en tickets Linear
+
+**26 tickets dans le projet BKMK.** Ordre d'exécution :
+
+**Lot -1 — plateforme (nouveau, passe avant tout)**
+| Ticket | Titre |
+|---|---|
+| COS-314 | PLAT 01 — Next 13 → 16, React 19.2, compilateur React |
+| COS-315 | PLAT 02 — Tailwind 3 → 4 (CSS-first, plus de `tailwind.config.js`) |
+| COS-316 | PLAT 03 — Biome partout, retrait d'ESLint et Prettier |
+| COS-317 | PLAT 04 — shadcn/ui + chaîne `cn()` |
+| COS-318 | PLAT 05 — zod : schémas front + validation API |
 
 **Lot 0 — socle**
 | Ticket | Titre |
 |---|---|
 | COS-290 | DS 01 — Tokens de design system GRAPHITE |
-| COS-291 | DS 02 — Primitives de composants (`src/components/ds`) |
-| COS-292 | DS 03 — Shell applicatif : chrome haut, barre de statut, tab bar mobile |
+| COS-291 | DS 02 — Primitives de composants |
+| COS-292 | DS 03 — Shell applicatif |
 
-**Lot 1 — auth (avant les écrans d'auth)**
-| Ticket | Titre |
-|---|---|
-| COS-293 | AUTH 01 — Backend : session Redis + cookie httpOnly |
-| COS-294 | AUTH 02 — Backend : CSRF double-submit, retrait du JWT |
-| COS-295 | AUTH 03 — Backend : requêtes SQL paramétrées (injection SQL) |
-| COS-296 | AUTH 04 — Frontend : AuthContext, axios withCredentials, intercepteur CSRF |
+**Lot 1 — auth** : COS-293 (session Redis) · COS-294 (CSRF) · COS-295 (SQL paramétré) ·
+COS-296 (AuthContext + `useRequestHelper`)
 
-**Lot 2 — écrans**
-| Ticket | Titre |
-|---|---|
-| COS-297 | UI 01 — Login |
-| COS-298 | UI 02 — Signup (+ jauge de force, case import) |
-| COS-299 | UI 03 — Index (rail, table dense, pager) |
-| COS-300 | UI 04 — Modale de filtres |
-| COS-301 | UI 05 — Record (détail) |
-| COS-302 | UI 06 — Insert (création) + mode édition |
-| COS-303 | UI 07 — Import (upload) |
-| COS-304 | UI 08 — Alarms (rappels) |
-| COS-305 | UI 09 — About |
+**Lot 2 — écrans** : COS-297 (login) · COS-298 (signup) · COS-299 (index) · COS-300 (filtres) ·
+COS-301 (record) · COS-302 (insert) · COS-303 (import) · COS-304 (alarms) · COS-305 (about) ·
+**COS-319 (modale d'édition)** · **COS-320 (suppression, 2 flux)**
 
-**Lot 3 — données**
-| Ticket | Titre |
-|---|---|
-| COS-306 | DATA 01 — Pagination serveur 22/page + objet de filtres |
-| COS-307 | DATA 02 — Staging d'import (parse, doublons, options) |
-| COS-308 | DATA 03 — Détection de doublons à la création |
-| COS-309 | DATA 04 — Champs `hash` / `log` / `related` |
-| COS-310 | DATA 05 — Agrégats : `next 14 days`, `storage`, compteurs de catégories |
+**Lot 3 — données** : COS-306 (pagination + filtres) · COS-307 (staging d'import) ·
+COS-308 (doublons) · COS-309 (hash/log/related) · COS-310 (agrégats)
 
-**Lot 4 — finition**
-| Ticket | Titre |
-|---|---|
-| COS-311 | FIN 01 — Passe responsive `@container` sur les 9 écrans |
-| COS-312 | FIN 02 — Raccourcis clavier |
-| COS-313 | FIN 03 — Documenter le design system |
+**Lot 4 — finition** : COS-311 (responsive `@container`) · COS-312 (raccourcis clavier) ·
+COS-313 (doc design system)
 
 ---
 
-## 7. Questions ouvertes — à trancher demain avant de coder
-
-1. **Écran d'édition** — réutiliser le gabarit `Create_Graphite` en mode edit, ou ouvrir la fiche
-   record en édition inline ? (Le handoff ne le dessine pas.)
-2. **Métadonnées décoratives** — `uptime 04:12`, `sync 12s`, `IDX/2.4.1`, `build 2.4.1 · tls on` :
-   vraies valeurs (donc endpoints à créer) ou chrome statique ?
-3. **Champs manquants** (`hash`, `log`, `related`) — migration MySQL maintenant, ou écrans livrés
-   avec ces blocs masqués et remplis au Lot 3 ?
-4. **shadcn/ui** — pfa s'appuie dessus (dialog, checkbox, tabs, select…). On l'installe sur bkmk
-   pour la modale de filtres et les selects, ou tout en primitives maison ?
-5. **Tailwind 3 vs 4** — l'option A garde v3. Confirmé, ou on migre v4 tout de suite pour aligner
-   sur pfa ?
-6. **Périmètre visuel** — la refonte remplace intégralement l'UI actuelle ; il n'y a pas de mode
-   « ancien thème ». Confirmé ?
-
----
-
-## 8. Fichiers de référence
+## 10. Fichiers de référence
 
 | Quoi | Où |
 |---|---|
-| Spec design (autorité) | `design_handoff_graphite/README.md` |
-| Structure des écrans (autorité) | `design_handoff_graphite/screens-graphite.jsx` (fonctions `*_Graphite`) |
-| CSS GRAPHITE | `design_handoff_graphite/themes.css`, bloc `.theme-graphite` à partir de la **ligne 292** + son `@container (max-width:720px)` |
-| Maquettes visuelles | ouvrir `design_handoff_graphite/bkmk redesign.html` |
-| Données de démo | `design_handoff_graphite/data.js` |
-| Modèle design system | `~/dev/pfa/front/docs/design-system.md`, `~/dev/pfa/front/styles/`, `~/dev/pfa/front/.design-sync/conventions.md` |
-| Modèle auth | `~/dev/pfa/nest-api/src/main.ts`, `users/csrf-token.util.ts`, `users/guards/csrf.guard.ts`, `users/users.controller.ts`, `redis/redis.service.ts` |
+| Spec design (autorité) | `design_handoff_graphite 2/README.md` |
+| Structure des écrans (autorité) | `design_handoff_graphite 2/screens-graphite.jsx` |
+| CSS GRAPHITE | `design_handoff_graphite 2/themes.css`, `.theme-graphite` **ligne 292**, actions/danger **369-379** et **432-446** |
+| Maquettes | ouvrir `design_handoff_graphite 2/bkmk redesign.html` |
+| State du prototype | `design_handoff_graphite 2/bkmk-context.jsx` |
+| Versions & deps | `~/dev/pfa/front/package.json` |
+| Organisation & conventions | `~/dev/pfa/front/src/`, `~/dev/pfa/front/docs/design-system.md`, `~/dev/pfa/front/.design-sync/conventions.md` |
+| Configs | `~/dev/pfa/biome.json`, `~/dev/pfa/front/biome.json`, `next.config.js`, `postcss.config.js`, `tsconfig.json`, `components.json` |
+| Modèle zod | `~/dev/pfa/front/src/schemas/` |
+| Modèle auth | `~/dev/pfa/nest-api/src/main.ts`, `users/csrf-token.util.ts`, `users/guards/csrf.guard.ts`, `users/users.controller.ts`, `redis/redis.service.ts` ; côté client `~/dev/pfa/front/src/helpers/useRequestHelper.ts` |
 
-**Hors périmètre, à ignorer partout :** `*_Phosphor`, `*_Paperwhite`, `*_Neon`, `*_Dusk`,
-`.theme-phosphor`, `.theme-paperwhite`, `.theme-neon`, `.theme-dusk`, `.dusk-override`,
-et l'enveloppe de présentation (`app.jsx`, `design-canvas.jsx`, `bkmk redesign.html`).
+**Hors périmètre :** `*_Phosphor`, `*_Paperwhite`, `*_Neon`, `*_Dusk`, les sélecteurs de thème
+correspondants, et l'enveloppe de présentation (`app.jsx`, `design-canvas.jsx`,
+`bkmk redesign.html`).
