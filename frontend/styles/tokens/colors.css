@@ -1,25 +1,25 @@
-/* Deux blocs cohabitent dans ce fichier, et c'est voulu :
+/* Three blocks live in this file, on purpose:
  *
- *   1. la palette héritée, en `@theme`, qui garde ses couleurs à l'ancienne UI ;
- *   2. les tokens sémantiques shadcn (base **neutral**), en `:root` / `.dark` /
- *      `@theme inline`, sans lesquels les composants de `ui/` n'auraient aucune couleur.
+ *   1. the legacy palette, in `@theme`, which keeps the old UI's colours;
+ *   2. the GRAPHITE palette, the real one, added by DS 01 (COS-290);
+ *   3. the shadcn semantic tokens (**neutral** base), without which the components in
+ *      `ui/` would have no colour at all.
  *
- * Le premier disparaît avec le lot UI, le second est repeint aux valeurs GRAPHITE par
- * DS 01 (COS-290). Voir `~/dev/pfa/front/styles/tokens/colors.css` pour la cible.
+ * The first leaves with the UI lot. The third is repainted onto GRAPHITE values as the
+ * screens land. See `~/dev/pfa/front/styles/tokens/colors.css` for the target shape.
  * ═══════════════════════════════════════════════════════════════════════════════════ */
 
-/* ⚠️ PALETTE HÉRITÉE — TEMPORAIRE.
+/* ⚠️ LEGACY PALETTE — TEMPORARY.
  *
- * Ces couleurs viennent de l'ancien tailwind.config.js, lui-même copié du vieux pfa :
- * d'où des noms qui ne parlent que de finance personnelle (`spendingItemHover`…) sur
- * un gestionnaire de favoris. Elles ne sont là que pour que l'ancienne UI garde ses
- * couleurs pendant la refonte.
+ * These colours come from the old tailwind.config.js, itself copied from the old pfa:
+ * hence names that only speak of personal finance (`spendingItemHover`…) on a bookmark
+ * manager. They exist so the old UI keeps its colours through the redesign.
  *
- * DS 01 (COS-290) ajoute les vrais tokens GRAPHITE à côté. Chaque écran refait vide
- * sa part de ce fichier, qui doit avoir disparu quand le lot UI est terminé.
+ * Every rebuilt screen empties its share of this file, which must be gone by the time
+ * the UI lot is finished.
  *
- * Le codemod Tailwind en avait recopié 45 ; les 30 qui n'étaient utilisées nulle part
- * dans bkmk ont été supprimées ici. Il en reste 15. */
+ * The Tailwind codemod had copied 45 of them; the 30 used nowhere in bkmk were dropped.
+ * Fifteen remain. */
 @theme {
   --color-grey0: rgb(227, 227, 227);
   --color-grey01: rgb(200, 200, 200);
@@ -41,19 +41,64 @@
   --color-generalWarningBackground: rgb(255, 255, 0);
 }
 
-/* ═══ TOKENS SÉMANTIQUES shadcn — base `neutral`, valeurs par défaut ═══════════════
+/* ═══ GRAPHITE PALETTE ═════════════════════════════════════════════════════════════
  *
- * Recopiées telles quelles du registre (https://ui.shadcn.com/r/colors/neutral.json).
- * Le CLI ne les écrit que pendant `shadcn init` ; comme `components.json` est posé à la
- * main pour rester calqué sur pfa, elles sont posées à la main aussi.
+ * Authority: the "Design tokens" section of `design_handoff_graphite/README.md`.
  *
- * Ce sont des valeurs de remplissage : GRAPHITE est une UI sombre, le clair ne sera
- * jamais montré. DS 01 (COS-290) remplace `.dark` par les vraies surfaces et encres, et
- * `:root` disparaîtra si aucun thème clair n'est retenu.
+ * **Colours do not get snapped.** They are chosen hues, not steps on a scale: no stock
+ * Tailwind palette here (`gray-400`, `emerald-700`…), and none in the components either.
  *
- * Aucune règle `body { @apply bg-background text-foreground }` n'est ajoutée, contrairement
- * à ce que fait `shadcn init` : elle repeindrait d'un coup toute l'ancienne UI, qui tient
- * encore son fond de `base.css`. C'est UI 01 (COS-297) qui basculera le fond de page. */
+ * GRAPHITE is a **single light-grey theme**: no `dark:` variant, no `.dark` block. The
+ * `@custom-variant dark` in `globals.css` only serves the shadcn components that ship
+ * referencing it. */
+@theme {
+  /* Surfaces */
+  --color-gr-bg: #a3a4a0; /* screen background — flat, no texture, no gradient */
+  --color-gr-bg-2: #b3b4af; /* secondary light surfaces */
+  --color-gr-bg-3: #9b9c97; /* sunken surfaces */
+  --color-gr-panel: #adaea9; /* card background */
+  --color-gr-panel-2: #b4b5b0; /* top chrome, command bar, card footers */
+  --color-gr-sunk: #9a9b96; /* fields, code blocks, drop zone, image slots */
+
+  /* Ink */
+  --color-gr-fg: #161715; /* body text */
+  --color-gr-fg-2: #0c0d0c; /* strong text — titles, values */
+  --color-gr-fg-3: #474944; /* secondary text, micro-labels */
+  --color-gr-fg-4: #6a6c66; /* tertiary text — counters, timestamps */
+
+  /* Accents */
+  --color-gr-accent: #1d5b4f; /* muted teal — LED, caret, primary action, selected row */
+  --color-gr-accent-2: #7d3714; /* oxide — stars, imminent alarm */
+  --color-gr-danger: #8a3512; /* errors */
+
+  /* Rules and rings */
+  --color-gr-border: rgb(22 23 21 / 0.16); /* inner rules */
+  --color-gr-border-2: rgb(22 23 21 / 0.32); /* structural rules, button borders */
+  --color-gr-hair: rgb(255 255 255 / 0.45); /* 1px light edge along the top of surfaces */
+  --color-gr-ring: rgb(29 91 79 / 0.26); /* focus ring, 3px */
+  --color-gr-selection: rgb(29 91 79 / 0.2);
+
+  /* Delete flow — the v2 handoff's oxide hues. Tokens rather than literals, so UI 11
+   * (COS-305) does not have to copy them screen by screen. */
+  --color-gr-oxide-from: #8d4018;
+  --color-gr-oxide-to: #763512;
+  --color-gr-oxide-border: #5f2a0e;
+  --color-gr-oxide-fg: #f4ece6;
+}
+
+/* ═══ shadcn SEMANTIC TOKENS — `neutral` base, registry defaults ═══════════════════
+ *
+ * Copied verbatim from the registry (https://ui.shadcn.com/r/colors/neutral.json). The
+ * CLI only writes them during `shadcn init`; since `components.json` is placed by hand
+ * to stay aligned with pfa, these are placed by hand too.
+ *
+ * They are filler. GRAPHITE has its own palette above, and the screens rewire these
+ * tokens onto it as they land. Until then the `ui/` components render in shadcn's
+ * neutral, which is fine for components nothing renders yet.
+ *
+ * No `body { @apply bg-background text-foreground }` rule, unlike what `shadcn init`
+ * writes: it would repaint the whole old UI at once, and that UI still takes its
+ * background from `base.css`. UI 01 (COS-297) flips the page background. */
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -96,9 +141,9 @@
   --ring: oklch(0.556 0 0);
 }
 
-/* `inline` et pas `@theme` : la valeur est relue à chaque usage, donc `bg-card` suit le
- * thème courant au lieu d'être figée sur la valeur claire à la compilation. C'est ce qui
- * fait fonctionner la bascule `.dark`. */
+/* `inline` rather than `@theme`: the value is re-read at each use, so `bg-card` follows
+ * whatever `--card` currently resolves to instead of being frozen at compile time. That
+ * is what lets a screen rewire these onto the GRAPHITE palette. */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

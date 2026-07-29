@@ -35,7 +35,8 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | PLAT 02 | COS-315 — Tailwind 4 | ✅ mergé (PR #3) |
 | PLAT 03 | COS-316 — Biome | ✅ mergé (PR #5) |
 | PLAT 04 | COS-317 — shadcn/ui | ✅ mergé (PR #6) |
-| PLAT 05 | COS-318 — zod | en cours |
+| PLAT 05 | COS-318 — zod | ✅ mergé (PR #7) |
+| DS 01 | COS-290 — tokens GRAPHITE | en cours |
 
 **Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
 validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
@@ -418,6 +419,57 @@ ses « known rough edges ». Ici : **une seule échelle**, celle de `@theme`.
 
 Le détail, avec les premiers tableaux de correspondance et les arbitrages restants, est dans
 COS-290.
+
+### Ce qui a été posé (COS-290, le 2026-07-29)
+
+Les tableaux de correspondance complets sont dans **`frontend/docs/design-system.md`** (en anglais,
+sur le modèle de `pfa/front/docs/design-system.md`). C'est ce fichier qui fait autorité ; ce qui
+suit n'en garde que les arbitrages.
+
+**Le snapping a mordu beaucoup plus fort que prévu.** Sur les cinq familles du handoff, deux ne
+produisent **aucun token** :
+
+| Famille | Tokens créés | Pourquoi |
+|---|---|---|
+| Couleur | 22 (`gr-*`) | teintes choisies, hors règle de snapping |
+| Typo | 2 (`text-3xs`, `text-2xs`) | les 9 pas du handoff tombent sur 2 tokens + le natif |
+| Tracking | 2 (`tracking-caps`, `tracking-snug`) | 0.08/0.10em → `tracking-widest`, 0.04em → `tracking-wider` |
+| Élévation | 4 (`shadow-gr-*`) | ombres composées, le natif n'a rien d'équivalent |
+| Rayon | **0** | les 8 valeurs tombent sur l'échelle native |
+| Point de rupture | **0** | 720 → 768 = `@max-3xl` natif |
+
+**Les quatre arbitrages qui changent quelque chose :**
+
+- **Six pas de typo entre 9.5 et 12.5px, ce ne sont pas six décisions.** Le micro-label (9.5) et
+  le bouton (10.5) se rejoignent à **10** : à cette taille la hiérarchie est portée par la couleur
+  et le tracking, pas par un pixel. Les trois titres (21 / 24 / 26) tombent sur `text-xl` et
+  `text-2xl` — **aucun token de titre**.
+- **Le slot descend de 10 à 8.** Il est imbriqué dans une carte à 12 ; un rayon intérieur égal à
+  celui du conteneur fait déborder la courbe.
+- **La modale monte de 14 à 16.** À 12 elle porterait exactement le rayon d'une carte et perdrait
+  son indice de surface posée au-dessus du reste.
+- **720px → 768.** Le pas est pile entre `--container-2xl` (672) et `--container-3xl` (768). Choix
+  décidé sur l'iPad en portrait, exactement 768 : à 672 il garderait la table dense sur une largeur
+  qui ne la tient pas.
+
+**Trois pièges rencontrés, à ne pas réintroduire :**
+
+- **La doc polluait le build.** Tailwind scanne les noms de classes ; il a trouvé ceux des tableaux
+  de correspondance et les a émis — y compris `text-[12.5px]`, que la doc cite comme contre-exemple.
+  `@source not "../docs";` dans `globals.css` referme ça.
+- **`radius.css` ne déclare plus aucun token**, seulement `:root { --radius: 0.5rem }`, que
+  `ui/sonner.tsx` lit dans un style inline.
+- **`breakpoints.css` existe et ne déclare rien** : il documente le 720 → 768 pour que personne ne
+  recrée le token.
+
+**Ce qui reste volontairement legacy** : 15 couleurs, 2 ombres, 3 tailles et 3 familles de police,
+plus le fond de page de `base.css` et la police du `body`. Ils tiennent en vie les écrans que le
+lot UI n'a pas encore refaits et partent avec eux, écran par écran. `components/chrome.css` — dont
+la classe qui porte le filet clair `inset 0 1px 0` — appartient à DS 03 (COS-292).
+
+Ajouté au passage : `styles/animations.css` (`bkmk-blink`, `bkmk-pop`, `bkmk-fade` + un bloc
+`prefers-reduced-motion`) et **IBM Plex Mono** chargée par `next/font` sous
+`--font-plex-mono-face`.
 
 ---
 

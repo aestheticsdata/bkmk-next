@@ -1,9 +1,9 @@
-/* ⚠️ TEMPORAIRE — Tailwind v4 a changé la couleur de bordure par défaut, qui vaut
- * désormais `currentcolor` et non plus `gray-200`. Sans ce rappel, toutes les
- * bordures de l'ancienne UI changeraient de couleur d'un coup.
+/* ⚠️ TEMPORARY — Tailwind v4 changed the default border colour, which is now
+ * `currentcolor` rather than `gray-200`. Without this reminder every border in the old
+ * UI would change colour at once.
  *
- * GRAPHITE ne s'appuiera pas là-dessus : ses bordures sont explicites
- * (`var(--border)`, `var(--hair)`). Ce bloc part avec le dernier écran hérité. */
+ * GRAPHITE will not lean on it: its borders are explicit (`--color-gr-border`,
+ * `--color-gr-hair`). This block leaves with the last legacy screen. */
 @layer base {
   *,
   ::after,
@@ -20,7 +20,25 @@
   }
 }
 
-/* Le fond jaune que Chrome force sur les champs auto-remplis.
+/* ═══ GRAPHITE RESETS ══════════════════════════════════════════════════════════════
+ *
+ * Two resets only, and both are safe: neither repaints anything in the old UI. Flipping
+ * the page background and the body typeface belongs to UI 01 (COS-297) — doing it here
+ * would strip every page before GRAPHITE has anything to put in its place. */
+@layer base {
+  ::selection {
+    background: var(--color-gr-selection);
+    color: var(--color-gr-fg-2);
+  }
+
+  /* Input hints drop to the tertiary grey: they must read as an example, not as a value
+   * already typed in. */
+  ::placeholder {
+    color: var(--color-gr-fg-4);
+  }
+}
+
+/* The yellow background Chrome forces onto autofilled fields.
  * https://webagility.com/posts/the-ultimate-list-of-hacks-for-chromes-forced-yellow-background-on-autocompleted-inputs */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,

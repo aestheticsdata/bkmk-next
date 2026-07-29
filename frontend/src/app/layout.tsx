@@ -1,16 +1,26 @@
 import "@styles/globals.css";
 import Providers from "@app/providers";
-import { Poppins, Smooch_Sans, Ubuntu } from "next/font/google";
+import { IBM_Plex_Mono, Poppins, Smooch_Sans, Ubuntu } from "next/font/google";
 
 import type { Metadata } from "next";
 
-// Les trois familles de l'ancienne UI, auto-hébergées par next/font au lieu de
-// l'@import Google Fonts qui vivait en tête de globals.css.
-// DS 01 (COS-290) les remplace par IBM Plex Mono, seule police de GRAPHITE.
+// IBM Plex Mono is GRAPHITE's only typeface. The three families below belong to the
+// old UI: they stay until the UI lot has rebuilt the screens using them, otherwise every
+// page would lose its typography at once.
 //
-// Le suffixe `-face` évite une définition circulaire : le token de thème s'appelle
-// `--font-poppins` (il produit l'utilitaire `font-poppins`) et pointe sur ces
-// variables-ci — voir styles/tokens/typography.css.
+// The `-face` suffix avoids a circular definition: the theme token is named `--font-mono`
+// (it produces the `font-mono` utility) and points at these variables — see
+// styles/tokens/typography.css.
+//
+// Four weights, the ones the handoff uses: 400 body, 500 active rows and chips, 600
+// titles and wordmark, 700 nothing yet but the mockup calls for it on strong values.
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plex-mono-face",
+  display: "swap",
+});
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["100", "200", "700"],
@@ -44,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="fr"
-      className={`${poppins.variable} ${smoochSans.variable} ${ubuntu.variable}`}
+      className={`${plexMono.variable} ${poppins.variable} ${smoochSans.variable} ${ubuntu.variable}`}
       suppressHydrationWarning
     >
       <body className="bg-grey1">

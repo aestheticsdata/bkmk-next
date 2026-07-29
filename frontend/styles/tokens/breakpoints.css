@@ -1,0 +1,22 @@
+/* ═══ GRAPHITE RESPONSIVE ══════════════════════════════════════════════════════════
+ *
+ * **This file declares nothing, and that is the outcome of the ticket.**
+ *
+ * GRAPHITE switches once and only once. The handoff puts `container-type: inline-size`
+ * on the screen and a single query, `@container (max-width: 720px)`, under which the
+ * table folds into cards, the rail becomes a horizontal strip and the chrome grows.
+ *
+ * 720px is not a Tailwind step — `--container-2xl` is 672px, `--container-3xl` is 768px,
+ * and 720 sits exactly between them. Applying the snapping rule: **take 768px, that is
+ * `@max-3xl`**, native, no token.
+ *
+ * The choice between the two neighbours is decided on the iPad in portrait, exactly
+ * 768px wide: at 672 it would keep the dense table on a width that cannot hold it, at
+ * 768 it gets the folded layout. For a dense bookmark index, that is the right side.
+ *
+ * In practice components write `@max-3xl:` and nothing else — no `md:`, no `@media`.
+ * Container queries follow the width of the app screen rather than the window, which
+ * keeps the layout honest when a side panel narrows it.
+ *
+ * Should a second switching point ever appear, this is where it gets declared — and
+ * only if it has no native equivalent, the way pfa added `xs` and nothing more. */

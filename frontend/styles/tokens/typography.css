@@ -1,16 +1,52 @@
-/* ⚠️ Échelle et familles héritées — TEMPORAIRE, remplacées par DS 01 (COS-290).
- * GRAPHITE n'a qu'une police, IBM Plex Mono, et sa propre échelle
- * (9.5 / 10.5 / 11 / 11.5 / 12 / 12.5 / 21 / 24 / 26 px). */
+/* ═══ GRAPHITE TYPE SCALE ══════════════════════════════════════════════════════════
+ *
+ * The handoff offers nine text steps, **six of them between 9.5 and 12.5px**. Six steps
+ * spread over 3px are not six design decisions, they are mockup noise: normalised first,
+ * snapped second. **Two tokens** survive; everything else lands on the native Tailwind
+ * scale. The full mapping table lives in `docs/design-system.md`.
+ *
+ * Naming follows pfa (`~/dev/pfa/front/styles/tokens/typography.css`): extend the native
+ * scale downward as `2xs` / `3xs` rather than invent a private vocabulary. */
+@theme {
+  --text-2xs: 0.6875rem; /* 11px — small sentence-case text: chips, segments, search field, secondary url, timestamps */
+  --text-3xs: 0.625rem; /* 10px — every uppercase chrome label: micro-labels, column headers, buttons, tabs, status bar */
+
+  /* The handoff's wide uppercase tracking runs from 0.08em to 0.16em. Native `widest`
+   * is 0.1em and absorbs the two lower values; only the widest (0.14 / 0.16em) have no
+   * native equivalent, hence this single token. */
+  --tracking-caps: 0.14em;
+  /* Titles are tightened to -0.015em. Native `tight` is -0.025em, nearly double, which
+   * shows on a 24px title. The base's -0.005em is dropped: 0.06px on 12px text, nobody
+   * sees it. */
+  --tracking-snug: -0.015em;
+}
+
+@theme inline {
+  /* IBM Plex Mono via next/font — GRAPHITE has one family and no other. */
+  --font-mono: var(--font-plex-mono-face), ui-monospace, monospace;
+}
+
+/* Taken from pfa: a table dense with dates, counters and stars needs fixed-width digits
+ * as much as a table of amounts does. Plex Mono already aligns them, but `tabular-nums`
+ * also pins the proportional variants. */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Legacy — TEMPORARY ────────────────────────────────────────────────────────────
+ * The three sizes and three families that keep the old UI alive. They leave screen by
+ * screen with the UI lot, not here: removing them now would strip the typography from
+ * every page before GRAPHITE has anything to put in its place. */
 @theme {
   --text-xxxs: 0.6rem;
   --text-xxs: 0.7rem;
   --text-tiny: 0.5rem;
 }
 
-/* `inline` est nécessaire : sans lui, la valeur `var(--font-*-face)` serait figée à
- * la définition du thème au lieu d'être résolue sur l'élément. Les trois variables
- * `-face` sont produites par next/font dans src/app/layout.tsx — d'où le suffixe,
- * un token de thème `--font-poppins` qui se référencerait lui-même serait circulaire. */
+/* `inline` is required: without it the `var(--font-*-face)` value would be frozen at
+ * theme definition instead of resolved on the element. The `-face` variables come from
+ * next/font in src/app/layout.tsx — hence the suffix, since a theme token named
+ * `--font-poppins` referencing itself would be circular. */
 @theme inline {
   --font-poppins: var(--font-poppins-face), sans-serif;
   --font-smooch: var(--font-smooch-face), sans-serif;

@@ -1,0 +1,52 @@
+/* GRAPHITE animations. Kept apart from the tokens: these are `@keyframes`, not values,
+ * and they have no business inside `@theme`.
+ *
+ * Durations and easing stay at the point of use — a duration token buys nothing while a
+ * single animation uses each value. */
+
+/* The chrome's block caret (`.gr-caret` in the handoff): a solid square blinking at the
+ * end of a line, the theme's terminal signature. `steps(1)` rather than a transition —
+ * a terminal caret does not fade, it is either lit or dark. */
+@keyframes bkmk-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Entrance of something just created — a row inserted into the table, a chip added.
+ * Short and quiet: the point is to say "this one", not to celebrate it. */
+@keyframes bkmk-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Screen and modal entrance. The small upward offset is enough to convey depth without
+ * sliding the whole page around. */
+@keyframes bkmk-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Honour the system setting. The blinking caret is the worst offender: it never stops,
+ * which is exactly what this setting asks us to avoid. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
