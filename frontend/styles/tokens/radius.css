@@ -1,11 +1,30 @@
-/* shadcn dérive `rounded-sm/md/lg/xl` d'un `--radius` unique, par calc : 6/8/10/14px.
- * Aucun de ces quatre pas n'existe dans Tailwind (4/6/8/12px) — la chaîne de calc invente
- * des valeurs entre les pas natifs et leur reprend leurs noms. On ne la reprend pas :
- * l'échelle Tailwind reste intacte, et `rounded-lg` vaut bien ce que la doc annonce.
+/* ═══ GRAPHITE RADII ═══════════════════════════════════════════════════════════════
  *
- * Ne reste que `--radius`, que shadcn lit dans un style inline (`ui/sonner.tsx`) là où
- * `rounded-*` ne peut pas atteindre. Calé sur `rounded-lg`, pas sur le 10px hors grille
- * du registre. DS 01 (COS-290) l'ajuste si GRAPHITE demande autre chose. */
+ * **No radius token at all, and that is the outcome of the ticket.** The handoff offers
+ * eight (6 · 7 · 8 · 9 · 10 · 12 · 14 · 999), three of which differ from their neighbour
+ * by a single pixel. Once normalised, all eight land on the native Tailwind scale:
+ *
+ *   chip 6 → `rounded-md`             tab 7 → 6, `rounded-md`
+ *   segment 8 → `rounded-lg`          field & button 9 → 8, `rounded-lg`
+ *   slot & drop zone 10 → 8, `rounded-lg`      card 12 → `rounded-xl`
+ *   modal 14 → 16, `rounded-2xl`      gauge & LED 999 → `rounded-full`
+ *
+ * The two judgement calls, since no native step exists at 10 or at 14:
+ *
+ * — **The slot goes down to 8** rather than up to 12. It nests inside a card at 12, and
+ *   an inner radius equal to its container's makes the two curves overlap, so the slot
+ *   reads as if it were spilling out.
+ * — **The modal goes up to 16** rather than down to 12. At 12 it would carry exactly a
+ *   card's radius and lose its cue of being a surface laid over everything else.
+ *
+ * ⚠️ **One scale only.** pfa ended up with two sets of radii sharing names but not
+ * values (`--r-lg` = 14px on the CSS side, `rounded-lg` = 10px on the utility side),
+ * which it lists among its known rough edges. Here `rounded-*` in TSX and
+ * `var(--radius-*)` in the CSS partials mean the same thing: the native scale. */
+
+/* The one survivor: shadcn reads `--radius` from an inline style (`ui/sonner.tsx`) where
+ * `rounded-*` cannot reach. Aligned on `rounded-lg`, the radius GRAPHITE gives fields
+ * and buttons. */
 :root {
   --radius: 0.5rem;
 }

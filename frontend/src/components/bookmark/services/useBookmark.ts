@@ -13,8 +13,8 @@ const useBookmark = (bookmarkID: string) => {
 
   const getBookmark = async () => {
     const response = await privateRequest(`/bookmarks/${bookmarkID}`);
-    // Le contrôleur renvoie le résultat de la requête tel quel, donc un tableau d'une
-    // ligne. La frontière valide le tableau ; la fiche prend la ligne.
+    // The controller returns the query result as-is, so a one-row array. The boundary
+    // validates the array; the record screen takes the row.
     return BookmarkDetailResponseSchema.parse(response.data);
   };
 

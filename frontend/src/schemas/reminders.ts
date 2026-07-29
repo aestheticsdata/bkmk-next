@@ -4,21 +4,21 @@ import { z } from "zod";
 
 /* `GET /reminders` (COS-318).
  *
- * Le contrôleur renvoie des bookmarks joints à leur alarme, mais **sans les catégories** :
- * sa requête ne fait ni `GROUP_CONCAT` ni passage par `marshallCategories`, donc le champ
- * `categories` que porte `BookmarkSchema` est absent. D'où le `.omit()` plutôt qu'un
- * `.extend()` seul.
+ * The controller returns bookmarks joined to their alarm, but **without categories**: its
+ * query has no `GROUP_CONCAT` and never goes through `marshallCategories`, so the
+ * `categories` field `BookmarkSchema` carries is absent. Hence the `.omit()` rather than
+ * an `.extend()` alone.
  *
- * Les alias diffèrent aussi de ceux de la fiche : ici `alarm_added`, là-bas
- * `alarm_date_added`. Ce n'est pas une coquille de ce fichier, c'est ce qu'écrivent les
- * deux requêtes. DATA 03 (COS-308) les alignera. */
+ * The aliases differ from the record screen's too: `alarm_added` here,
+ * `alarm_date_added` there. That is not a typo in this file, it is what the two queries
+ * write. DATA 03 (COS-308) will align them. */
 
 export const ReminderSchema = BookmarkSchema.omit({ categories: true }).extend({
-  /** Ré-aliasé sur `alarm.id` par la jointure : jamais nul ici, l'`INNER JOIN` exclut
-   *  les bookmarks sans alarme. */
+  /** Re-aliased onto `alarm.id` by the join: never null here, the `INNER JOIN` excludes
+   *  bookmarks with no alarm. */
   alarm_id: numberLikeSchema,
-  /** Fréquence en jours. Le contrôleur ne retient une ligne que si le nombre de jours
-   *  écoulés depuis `alarm_added` est un multiple de cette valeur. */
+  /** Frequency in days. The controller only keeps a row when the number of days elapsed
+   *  since `alarm_added` is a multiple of this value. */
   alarm_frequency: numberLikeSchema,
   alarm_added: dateLikeSchema,
 });

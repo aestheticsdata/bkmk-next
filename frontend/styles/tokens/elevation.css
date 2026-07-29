@@ -1,10 +1,29 @@
-/* ⚠️ Ombres héritées — TEMPORAIRE, remplacées par DS 01 (COS-290), qui porte les
- * quatre élévations de GRAPHITE (--e1, --e2, l'ombre de modale et celle du bouton
- * primaire) ainsi que le filet `inset 0 1px 0 var(--hair)` que porte chaque surface
- * claire du thème.
+/* ═══ GRAPHITE ELEVATION ═══════════════════════════════════════════════════════════
  *
- * Les trois ombres inutilisées du codemod (spendingDaySelected, categories,
- * charttooltip) ont été supprimées. */
+ * Each token is a complete `box-shadow` value, exposed through `@theme`: usable as
+ * `shadow-gr-*` in TSX and as `var(--shadow-gr-*)` in the CSS partials. Same layout as
+ * pfa (`~/dev/pfa/front/styles/tokens/elevation.css`).
+ *
+ * ⚠️ **The system's signature: every light surface carries `inset 0 1px 0` of the hair
+ * line.** It is already baked into `--shadow-gr-modal` and `--shadow-gr-primary`;
+ * elsewhere it has to be added, which produces unreadable utility classes. DS 03
+ * (COS-292) will turn it into a class in `components/chrome.css` rather than repeat it
+ * screen by screen. */
+@theme {
+  /* Cards and buttons at rest. */
+  --shadow-gr-1: 0 1px 2px rgb(20 21 19 / 0.1), 0 3px 8px -2px rgb(20 21 19 / 0.1);
+  /* Button hover, auth card. */
+  --shadow-gr-2: 0 2px 4px rgb(20 21 19 / 0.12), 0 18px 40px -12px rgb(20 21 19 / 0.3);
+  /* The modal — carries its own hair line, unlike the two steps above. */
+  --shadow-gr-modal: 0 30px 70px -20px rgb(18 19 17 / 0.55), 0 2px 6px rgb(18 19 17 / 0.2), inset 0 1px 0
+    rgb(255 255 255 / 0.45);
+  /* The primary action: the teal glow lifts it off the rest of the chrome. */
+  --shadow-gr-primary: 0 1px 2px rgb(20 21 19 / 0.22), 0 8px 18px -8px rgb(23 71 64 / 0.75), inset 0 1px 0
+    rgb(255 255 255 / 0.2);
+}
+
+/* ─── Legacy — TEMPORARY ────────────────────────────────────────────────────────────
+ * The old UI's two shadows. They leave with the last legacy screen. */
 @theme {
   --shadow-login: 0 0 1px 1px rgb(10, 10, 10);
   --shadow-dashboard: 1px 4px 21px 6px rgba(0, 0, 0, 0.54);

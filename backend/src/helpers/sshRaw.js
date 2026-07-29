@@ -21,7 +21,7 @@ module.exports.copy = (src, destDir, filename) => {
       // adding a 1-minute timeout fixes the issue
       sftp.readdir(destDir, (err) => {
         if (err) {
-          // créer le répertoire avec l'ID du user
+          // create the directory named after the user ID
           sftp.mkdir(destDir, (mkdirErr) => {
             if (mkdirErr) throw mkdirErr;
             setTimeout(() => {

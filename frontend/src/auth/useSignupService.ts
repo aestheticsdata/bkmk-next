@@ -21,7 +21,7 @@ const useSignupService = () => {
           language: "fr",
         },
       });
-      // La frontière : rien n'entre dans l'app sans être passé par un schéma.
+      // The boundary: nothing reaches the app without going through a schema.
       return AuthResponseSchema.parse(res.data);
     } catch (err) {
       await Swal.fire({

@@ -19,8 +19,8 @@ const NavBar = () => {
   const pathname = usePathname();
   const isWindowResponsive = useIsWindowResponsive();
 
-  // `trailingSlash: true` fait finir les chemins par "/", et ROUTES.bookmarks porte
-  // sa query string : on compare des chemins normalisés des deux côtés.
+  // `trailingSlash: true` makes paths end with "/", and ROUTES.bookmarks carries its
+  // query string: compare normalised paths on both sides.
   const normalize = (path: string) => path.split("?")[0].replace(/\/+$/, "") || "/";
   const getActivePath = (route: string) =>
     normalize(route) === normalize(pathname ?? "") ? "bg-spendingItemHover rounded-sm text-blueNavy" : "";

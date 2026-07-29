@@ -1,25 +1,26 @@
 /**
- * Longueurs maximales des champs texte que l'utilisateur écrit (COS-318). Modèle :
+ * Maximum lengths of the text fields the user writes (COS-318). Modelled on
  * `~/dev/pfa/front/src/schemas/fieldLimits.ts`.
  *
- * ⚠️ **Ces valeurs sont déduites, pas lues.** pfa peut adosser sa table à
- * `schema.prisma` et le prouver par un test ; bkmk n'a ni migrations ni DDL versionné,
- * donc rien à confronter. Ce qui suit vient du seul endroit du code qui borne quelque
- * chose (l'import, qui tronque les titres à 120) et de valeurs prudentes ailleurs.
+ * ⚠️ **These values are inferred, not read.** pfa can back its table with
+ * `schema.prisma` and prove it with a test; bkmk has neither migrations nor versioned
+ * DDL, so there is nothing to check against. What follows comes from the only place in
+ * the code that bounds anything (the import, which truncates titles at 120) and from
+ * cautious guesses elsewhere.
  *
- * Conséquence : ces bornes protègent le **formulaire**, pas la base. Un champ plus long
- * que sa colonne remonte encore aujourd'hui en erreur SQL brute au lieu d'un message de
- * formulaire. DATA 01 (COS-306) doit relire les colonnes réelles et corriger cette table
- * — c'est un rattrapage, pas une vérité acquise.
+ * The consequence: these bounds protect the **form**, not the database. A field longer
+ * than its column still surfaces as a raw SQL error rather than a form message. DATA 01
+ * (COS-306) must read the real columns and correct this table — it is a catch-up, not
+ * settled fact.
  */
 export const FIELD_LIMITS = {
-  /** `bookmark.title` — l'import tronque à 120, seule borne écrite dans le code. */
+  /** `bookmark.title` — the import truncates at 120, the only bound written in the code. */
   title: 120,
-  /** `url.original`. Prudent : la limite pratique des navigateurs est bien plus haute. */
+  /** `url.original`. Cautious: the practical browser limit is far higher. */
   url: 2000,
   /** `bookmark.notes`. */
   notes: 1000,
-  /** `category.name` — les chips de l'index. */
+  /** `category.name` — the chips on the index. */
   categoryName: 50,
   /** `user.name`. */
   userName: 50,

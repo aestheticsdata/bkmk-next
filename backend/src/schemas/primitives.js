@@ -1,33 +1,32 @@
 const { z } = require("zod");
 
-/* Primitives partagées par les schémas d'entrée de l'API (COS-318).
+/* Primitives shared by the API's input schemas (COS-318).
  *
- * ⚠️ Ces schémas **miroitent** ceux du front (`frontend/src/schemas/`), ils ne sont pas
- * les mêmes objets : le front est en TypeScript ESM, le back en CommonJS, et il n'y a
- * pas de paquet partagé entre les deux. C'est la même situation que pfa, où
- * `nest-api/src/config/field-limits.ts` recopie la table du front. Les deux bougent
- * ensemble, à la main.
+ * ⚠️ These schemas **mirror** the front's (`frontend/src/schemas/`), they are not the same
+ * objects: the front is TypeScript ESM, the backend CommonJS, and there is no shared
+ * package between them. Same situation as pfa, where `nest-api/src/config/field-limits.ts`
+ * copies the front's table. The two move together, by hand.
  *
- * Et ils ne décrivent pas tout à fait la même chose : le front décrit l'objet **logique**
- * que manipule le formulaire, le back décrit ce qui arrive **sur le fil**. Après multer,
- * un corps multipart n'a que des chaînes — d'où les `coerce` ici. */
+ * And they do not describe quite the same thing: the front describes the **logical**
+ * object the form manipulates, the backend describes what arrives **on the wire**. After
+ * multer, a multipart body holds nothing but strings — hence the `coerce` calls here. */
 
-/** Un identifiant de ligne. Coercition parce qu'il arrive d'une query string ou d'un
- *  champ multipart, donc toujours en chaîne. */
+/** A row identifier. Coerced because it arrives from a query string or a multipart field,
+ *  so always as a string. */
 const idSchema = z.coerce.number().int().positive();
 
-/** Un booléen porté par une query string, où « présent » vaut vrai. */
+/** A boolean carried by a query string, where "present" means true. */
 const queryFlagSchema = z.coerce.boolean();
 
 const starsSchema = z.coerce.number().int().min(0).max(5);
 
-/** `bookmark.priority` — chaîne vide quand rien n'est choisi, le formulaire l'envoie
- *  telle quelle et le contrôleur teste `!== ""`. */
+/** `bookmark.priority` — an empty string when nothing is picked; the form sends it that
+ *  way and the controller tests `!== ""`. */
 const prioritySchema = z.enum(["low", "medium", "high", "highest"]).or(z.literal(""));
 
-/** Le formulaire envoie les catégories en **JSON encodé dans une chaîne** (multipart ne
- *  transporte pas de structures), et le contrôleur fait `JSON.parse`. On valide donc la
- *  chaîne *et* ce qu'elle contient, avant que le contrôleur ne la parse à son tour. */
+/** The form sends categories as **JSON encoded in a string** (multipart carries no
+ *  structures), and the controller calls `JSON.parse`. So validate the string *and* what
+ *  it contains, before the controller parses it in turn. */
 const categoriesJSONSchema = z.string().transform((value, ctx) => {
   let parsed;
   try {

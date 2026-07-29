@@ -1,8 +1,8 @@
 "use client";
 
 import { TooltipProvider } from "@components/ui/tooltip";
-// FontAwesome injecte sa feuille de style à la volée, ce qui produit des icônes
-// géantes au premier paint avec Next : on importe la CSS et on coupe l'injection.
+// FontAwesome injects its stylesheet at runtime, which gives giant icons on the first
+// paint under Next: import the CSS ourselves and switch the injection off.
 // https://github.com/vercel/next.js/issues/20682#issuecomment-770565613
 import { config as fontawesomeConfig } from "@fortawesome/fontawesome-svg-core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -17,8 +17,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Exigé par le `Tooltip` de shadcn, qui lève à l'usage sans lui. Il ne rend rien
-          et ne coûte rien tant qu'aucune infobulle n'est montée. */}
+      {/* Required by shadcn's `Tooltip`, which throws at use without it. It renders
+          nothing and costs nothing while no tooltip is mounted. */}
       <TooltipProvider>{children}</TooltipProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

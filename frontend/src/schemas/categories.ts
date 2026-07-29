@@ -1,18 +1,17 @@
 import { numberLikeSchema } from "@src/schemas/primitives";
 import { z } from "zod";
 
-/* Les catégories traversent l'API sous **deux formes différentes**, et c'est le piège
- * de ce fichier (COS-318).
+/* Categories cross the API in **two different shapes**, and that is this file's trap
+ * (COS-318).
  *
- * `GET /categories` renvoie les lignes brutes de la table : `id` est un `INT`.
- * Les catégories embarquées dans un bookmark, elles, sortent de `GROUP_CONCAT` puis de
- * `marshallCategories`, qui les reconstruit en découpant des chaînes : `id` y est une
- * **chaîne**, et `user_id` n'y est pas du tout.
+ * `GET /categories` returns raw table rows, where `id` is an `INT`. The categories
+ * embedded in a bookmark come out of a `GROUP_CONCAT` that `marshallCategories` rebuilds
+ * by splitting strings: there `id` is a **string**, and `user_id` is absent entirely.
  *
- * `numberLikeSchema` absorbe l'écart sur `id` ; les deux schémas restent distincts parce
- * que leurs champs le sont. */
+ * `numberLikeSchema` absorbs the difference on `id`; the two schemas stay separate
+ * because their fields genuinely differ. */
 
-/** Une ligne de la table `category` — ce que rend `GET /categories`. */
+/** A row of the `category` table — what `GET /categories` returns. */
 export const CategorySchema = z.object({
   id: numberLikeSchema,
   name: z.string(),
@@ -24,8 +23,8 @@ export type Category = z.infer<typeof CategorySchema>;
 
 export const CategoryListSchema = z.array(CategorySchema);
 
-/** Une catégorie telle que `marshallCategories` la recompose dans un bookmark : pas de
- *  `user_id`, et un `id` qui sort d'un découpage de chaîne. */
+/** A category as `marshallCategories` rebuilds it inside a bookmark: no `user_id`, and
+ *  an `id` that came out of splitting a string. */
 export const BookmarkCategorySchema = z.object({
   id: numberLikeSchema,
   name: z.string(),
@@ -34,9 +33,9 @@ export const BookmarkCategorySchema = z.object({
 
 export type BookmarkCategory = z.infer<typeof BookmarkCategorySchema>;
 
-/** Ce que le formulaire envoie. `react-select` produit `{ value, label }` ; une catégorie
- *  déjà connue porte en plus son `id`, une catégorie neuve n'en a pas et le back la crée
- *  (`postBookmarkController`). La distinction se lit donc sur la présence de `id`. */
+/** What the form sends. `react-select` produces `{ value, label }`; a category that
+ *  already exists also carries its `id`, a new one does not and the backend creates it
+ *  (`postBookmarkController`). The distinction is read off the presence of `id`. */
 export const CategoryOptionSchema = z.object({
   label: z.string().min(1),
   value: z.union([z.string(), z.number()]).optional(),

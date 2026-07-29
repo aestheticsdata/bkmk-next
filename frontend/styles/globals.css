@@ -1,22 +1,29 @@
-/* Entrée unique des styles. Ce fichier ne porte **aucune règle** : uniquement des
- * imports, dans cet ordre — Tailwind, puis les tokens par type, puis la base, puis
- * les composants. C'est la convention de pfa (`~/dev/pfa/front/styles/globals.css`).
+/* The single stylesheet entry point. This file carries **no rule of its own**: imports
+ * only, in this order — Tailwind, then tokens by type, then base, then animations, then
+ * components. That is pfa's convention (`~/dev/pfa/front/styles/globals.css`).
  *
- * Les polices ne sont pas importées ici : next/font les auto-héberge depuis
- * src/app/layout.tsx.
+ * Fonts are not imported here: next/font self-hosts them from src/app/layout.tsx.
  *
- * DS 01 (COS-290) ajoutera ./tokens/breakpoints.css, DS 03 (COS-292)
- * ./components/chrome.css — chacun avec son import. */
+ * DS 03 (COS-292) will add ./components/chrome.css, with its own import. */
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-/* Sans ça, `dark:` suivrait la préférence système. shadcn et pfa le font piloter par la
- * classe `.dark`, seule façon d'imposer le thème sombre de GRAPHITE. */
+/* Keep the docs out of the scan. Tailwind walks the project for class-name candidates,
+ * and `docs/design-system.md` lists utilities in its mapping tables — including the
+ * arbitrary values it exists to forbid. Without this, documenting `text-[12.5px]` as a
+ * counter-example literally emits that utility. */
+@source not "../docs";
+
+/* GRAPHITE is a single light-grey theme with no dark variant. This line only exists so
+ * that the `dark:` classes shipped inside the shadcn components resolve somewhere; no
+ * bkmk surface carries `.dark`. */
 @custom-variant dark (&:is(.dark *));
 
+@import './tokens/breakpoints.css';
 @import './tokens/colors.css';
 @import './tokens/radius.css';
 @import './tokens/typography.css';
 @import './tokens/elevation.css';
 
 @import './base.css';
+@import './animations.css';

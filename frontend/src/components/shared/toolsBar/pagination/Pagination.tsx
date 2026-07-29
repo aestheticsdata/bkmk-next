@@ -16,12 +16,12 @@ const Pagination = () => {
   const [page, setPage] = useState(0);
   const [lastPage, setLasPage] = useState(0);
 
-  // zustand v5 : un sélecteur qui renvoie un objet littéral produit une nouvelle
-  // référence à chaque rendu et fait boucler le composant — on sélectionne la fonction.
+  // zustand v5: a selector returning an object literal produces a new reference on every
+  // render and loops the component — select the function itself.
   const setPageNumberSaved = usePageStore((state: any) => state.setPageNumberSaved);
 
-  // Le routeur d'App Router n'accepte plus `push({ query })` : on reconstruit la
-  // query string et on pousse une URL relative, qui reste sur le chemin courant.
+  // The App Router no longer accepts `push({ query })`: rebuild the query string and
+  // push a relative URL, which stays on the current path.
   const pushPage = (nextPage: number) => {
     const parsed: any = queryString.parse(window.location.search);
     parsed["page"] = nextPage.toString();

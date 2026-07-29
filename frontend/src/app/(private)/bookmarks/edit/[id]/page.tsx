@@ -3,9 +3,9 @@ import Layout from "@components/shared/Layout";
 import { Suspense } from "react";
 
 /**
- * Écran d'édition **transitoire**. Le handoff v2 le remplace par une modale
- * (UI 10, COS-319) : c'est ce ticket-là qui supprimera cette route, pour que
- * l'édition ne soit jamais indisponible entre deux lots.
+ * **Transitional** edit screen. The v2 handoff replaces it with a modal (UI 10,
+ * COS-319), and that ticket is the one that removes this route — so editing is never
+ * unavailable between two lots.
  */
 export default async function BookmarkEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

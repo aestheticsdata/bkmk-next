@@ -1,23 +1,23 @@
 /**
- * Middleware de validation des entrées (COS-318).
+ * Request-input validation middleware (COS-318).
  *
- * S'utilise en nommant les parties à valider :
+ * Used by naming the parts to validate:
  *
  *     router.get("/", checkToken, validate({ query: listBookmarksQuerySchema }), catchAsync(controller));
  *
- * **Il ne remplace pas `req.body` ni `req.query`.** Le résultat validé est posé dans
- * `req.validated.{body,query,params}`, et les contrôleurs continuent de lire les objets
- * d'origine. C'est délibéré : `z.object` retire les clés inconnues, et écraser `req.body`
- * ferait disparaître sans bruit un champ qu'un contrôleur hérité lit encore. La migration
- * vers `req.validated` se fait contrôleur par contrôleur, au moment où on le réécrit —
- * COS-295 pour l'authentification, le lot DATA pour le reste.
+ * **It does not replace `req.body` or `req.query`.** The validated result is placed on
+ * `req.validated.{body,query,params}`, and the controllers keep reading the original
+ * objects. That is deliberate: `z.object` strips unknown keys, and overwriting `req.body`
+ * would silently remove a field some legacy controller still reads. Migrating to
+ * `req.validated` happens one controller at a time, as each gets rewritten — COS-295 for
+ * authentication, the DATA lot for the rest.
  *
- * En échec, réponse **400** avec la liste des champs fautifs. On répond ici plutôt que de
- * passer par `next(err)` : le serveur n'a aucun gestionnaire d'erreurs, donc `next(err)`
- * tombe sur celui d'Express, qui rend une page HTML. Et 400 plutôt que le 500 que le
- * reste de l'API renvoie à tout : une entrée malformée est une erreur du client.
+ * On failure it answers **400** with the offending fields. It answers here rather than
+ * calling `next(err)`: the server has no error handler wired, so `next(err)` falls through
+ * to Express's, which renders an HTML page. And 400 rather than the 500 the rest of the
+ * API returns to everything — a malformed input is the client's error.
  *
- * Pour les routes multipart, à placer **après** multer — sans quoi `req.body` est vide.
+ * On multipart routes, place it **after** multer, otherwise `req.body` is empty.
  */
 const validate = (schemas) => (req, res, next) => {
   const validated = {};

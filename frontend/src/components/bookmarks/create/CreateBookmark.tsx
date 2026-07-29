@@ -1,4 +1,4 @@
-// @ts-nocheck — doit rester le tout premier commentaire du fichier, avant la directive
+// @ts-nocheck — must stay the very first comment in the file, ahead of the "use client"
 "use client";
 
 import useBookmark from "@components/bookmark/services/useBookmark";
