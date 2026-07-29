@@ -1,34 +1,20 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import fr from "date-fns/locale/fr";
-import format from "date-fns/format";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRightToBracket } from "@fortawesome/free-solid-svg-icons";
-import {
-  faImage,
-  faBell,
-  faTrashAlt,
-} from "@fortawesome/free-regular-svg-icons";
-import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
-import useReminders from "@components/reminders/services/useReminders";
-import StarsDisplay from "@components/common/stars/StarsDisplay";
-import PriorityDisplay from "@components/common/priority/PriorityDisplay";
 import Categories from "@components/common/category/Categories";
 import DeleteConfirm from "@components/common/deleteConfirm/DeleteConfirm";
-import {
-  ROUTES,
-  COLUMN_WIDTH,
-  FIRST_VISIT,
-  VISITED,
-} from "@components/shared/config/constants";
-import { PAGES } from "@components/shared/config/constants";
+import PriorityDisplay from "@components/common/priority/PriorityDisplay";
+import StarsDisplay from "@components/common/stars/StarsDisplay";
+import useReminders from "@components/reminders/services/useReminders";
+import { COLUMN_WIDTH, FIRST_VISIT, PAGES, ROUTES, VISITED } from "@components/shared/config/constants";
+import { faBell, faImage, faTrashAlt } from "@fortawesome/free-regular-svg-icons";
+import { faPencilAlt, faRightToBracket } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import format from "date-fns/format";
+import fr from "date-fns/locale/fr";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
@@ -41,30 +27,33 @@ const Bookmarks = () => {
     <div className="flex flex-col w-full mt-2 pb-20 divide-y divide-grey2 overflow-x-auto overflow-y-hidden min-h-0">
       {isLoading && <div>loading...</div>}
       {bookmarks?.rows.length === 0 && !isLoading && <div>Pas de bookmarks</div>}
-      {bookmarks?.rows?.length! > 0 && !isLoading &&
+      {bookmarks?.rows?.length! > 0 &&
+        !isLoading &&
         bookmarks!.rows.map((bookmark: Bookmark) => (
           <div
             key={`${bookmark.id}-${decodeURIComponent(bookmark.title)}`}
             className={`
               flex cursor-pointer px-0.5 text-xs 
-              ${bookmark.original_url ? "hover:bg-blue-300": "hover:bg-yellow-500"}
+              ${bookmark.original_url ? "hover:bg-blue-300" : "hover:bg-yellow-500"}
               transition-colors ease-linear duration-150
             `}
           >
-
-            {bookmark.original_url ?
+            {bookmark.original_url ? (
               <div className={`flex justify-center hover:text-blue-500 ${COLUMN_WIDTH.linkIcon} py-1`}>
                 <a
                   href={bookmark.original_url}
                   target="_blank"
-                  onClick={(e) => {e.stopPropagation()}}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                  rel="noopener"
                 >
                   <FontAwesomeIcon icon={faRightToBracket} />
                 </a>
               </div>
-              :
+            ) : (
               <div className={`${COLUMN_WIDTH.linkIcon}`} />
-            }
+            )}
             <Link
               className="flex"
               href={`/bookmarks/${bookmark.id}`}
@@ -74,43 +63,49 @@ const Bookmarks = () => {
                   title={bookmark.original_url ?? ""}
                   className="w-[400px] truncate font-semibold"
                 >
-                    {decodeURIComponent(bookmark.title)}
+                  {decodeURIComponent(bookmark.title)}
                 </div>
                 <div className={`flex justify-start ${COLUMN_WIDTH.stars}`}>
                   {bookmark.stars > 0 && <StarsDisplay count={bookmark.stars} />}
                 </div>
-                <div className={`${COLUMN_WIDTH.notes} truncate`} title={bookmark.notes && decodeURIComponent(bookmark.notes)}>
+                <div
+                  className={`${COLUMN_WIDTH.notes} truncate`}
+                  title={bookmark.notes && decodeURIComponent(bookmark.notes)}
+                >
                   {bookmark.notes && decodeURIComponent(bookmark.notes)}
                 </div>
-                <div className={`flex justify-center items-center ${COLUMN_WIDTH.priority}`} title={`priority: ${bookmark.priority || "N/A"}`}>
-                  {bookmark.priority &&
-                    <PriorityDisplay priorityLevel={bookmark.priority} />
-                  }
+                <div
+                  className={`flex justify-center items-center ${COLUMN_WIDTH.priority}`}
+                  title={`priority: ${bookmark.priority || "N/A"}`}
+                >
+                  {bookmark.priority && <PriorityDisplay priorityLevel={bookmark.priority} />}
                 </div>
                 <Categories categories={bookmark.categories} />
                 <div className={`flex ${COLUMN_WIDTH.screenshot} text-xs`}>
-                  {bookmark.screenshot &&
+                  {bookmark.screenshot && (
                     <div>
                       <FontAwesomeIcon icon={faImage} />
                     </div>
-                  }
+                  )}
                 </div>
                 <div className={`flex ${COLUMN_WIDTH.alarm} text-xs`}>
-                  {bookmark.alarm_id &&
+                  {bookmark.alarm_id && (
                     <div>
                       <FontAwesomeIcon icon={faBell} />
                     </div>
-                  }
+                  )}
                 </div>
                 <div className={`flex justify-center text-xxs ${COLUMN_WIDTH.dateAdded}`}>
                   ajouté le : {format(new Date(bookmark.date_added!), "dd MMM yyyy", { locale: fr })}
                 </div>
-                {displayDeleteConfirm === bookmark.id ?
+                {displayDeleteConfirm === bookmark.id ? (
                   <DeleteConfirm
                     closeCB={() => setDisplayDeleteConfirm(-1)}
-                    deleteCB={() => { deleteBookmark.mutate(bookmark.id) }}
+                    deleteCB={() => {
+                      deleteBookmark.mutate(bookmark.id);
+                    }}
                   />
-                  :
+                ) : (
                   <>
                     <div
                       className="flex w-[20px] mx-1 text-grey1"
@@ -120,7 +115,10 @@ const Bookmarks = () => {
                         setDisplayDeleteConfirm(bookmark.id);
                       }}
                     >
-                      <FontAwesomeIcon icon={faTrashAlt} className="hover:text-black" />
+                      <FontAwesomeIcon
+                        icon={faTrashAlt}
+                        className="hover:text-black"
+                      />
                     </div>
                     <div
                       className="flex w-[20px] mx-1 text-grey1"
@@ -130,15 +128,17 @@ const Bookmarks = () => {
                         router.push(`${ROUTES.bookmarksEdition.path}/${bookmark.id}`);
                       }}
                     >
-                      <FontAwesomeIcon icon={faPencilAlt} className="hover:text-black" />
+                      <FontAwesomeIcon
+                        icon={faPencilAlt}
+                        className="hover:text-black"
+                      />
                     </div>
                   </>
-                }
+                )}
               </div>
             </Link>
           </div>
-        ))
-      }
+        ))}
     </div>
   );
 };

@@ -14,16 +14,11 @@ const Row = ({ label, children, childrenWidth = "xl" }: RowProps) => {
   }
 
   return (
-      <div className="flex justify-start items-center">
-        <div className="w-[100px]">
-          {label}
-        </div>
-        <div className={`${width} flex justify-start`}>
-          {children}
-        </div>
-      </div>
-    )
-  }
-;
+    <div className="flex justify-start items-center">
+      <div className="w-[100px]">{label}</div>
+      <div className={`${width} flex justify-start`}>{children}</div>
+    </div>
+  );
+};
 
 export default Row;

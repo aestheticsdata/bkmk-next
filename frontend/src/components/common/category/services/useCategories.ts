@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useUserStore } from "@auth/store/userStore";
+import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
+import useRequestHelper from "@helpers/useRequestHelper";
 import {
   useQuery,
   // useMutation,
   // useQueryClient
 } from "@tanstack/react-query";
-import useRequestHelper from "@helpers/useRequestHelper";
-import { useUserStore } from "@auth/store/userStore";
-import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
+import { useEffect, useState } from "react";
 
 import type { UserStore } from "@auth/store/userStore";
 
@@ -45,7 +45,7 @@ const useCategories = () => {
   return {
     categories,
     isLoading,
-  }
+  };
 };
 
 export default useCategories;

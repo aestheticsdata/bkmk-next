@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import useRequestHelper from "@helpers/useRequestHelper";
 import { useUserStore } from "@auth/store/userStore";
 import { QUERY_KEYS } from "@components/bookmarks/config/constants";
+import useRequestHelper from "@helpers/useRequestHelper";
+import { useQuery } from "@tanstack/react-query";
 
-import type {UserStore}  from "@auth/store/userStore";
+import type { UserStore } from "@auth/store/userStore";
 
 const useReminders = () => {
   const { privateRequest } = useRequestHelper();
@@ -15,9 +15,9 @@ const useReminders = () => {
     } catch (e) {
       console.log("get reminders error : ", e);
     }
-  }
+  };
 
-  const {data, isLoading} = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: [QUERY_KEYS.REMINDERS],
     queryFn: () => getReminders(),
   });
@@ -25,7 +25,7 @@ const useReminders = () => {
   return {
     data,
     isLoading,
-  }
-}
+  };
+};
 
 export default useReminders;

@@ -1,13 +1,9 @@
-import { useRouter } from "next/navigation";
-import {
-  faSignOutAlt,
-  faKey,
-} from '@fortawesome/free-solid-svg-icons';
 import { useUserStore } from "@auth/store/userStore";
-import Dropdown from '@components/common/dropdown/Dropdown';
-import UserMenuContent from './UserMenuContent';
+import Dropdown from "@components/common/dropdown/Dropdown";
 import { FIRST_VISIT } from "@components/shared/config/constants";
-
+import { faKey, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
+import { useRouter } from "next/navigation";
+import UserMenuContent from "./UserMenuContent";
 
 const UserMenu = () => {
   const userStore = useUserStore();
@@ -18,7 +14,9 @@ const UserMenu = () => {
       id: "changepassword",
       label: "modifier le mot de passe",
       icon: faKey,
-      callback: () => {router.push("/changepassword")},
+      callback: () => {
+        router.push("/changepassword");
+      },
     },
     {
       id: "logout",
@@ -38,8 +36,7 @@ const UserMenu = () => {
         <UserMenuContent listItems={listItems} />
       </Dropdown>
     </div>
-  )
+  );
 };
 
 export default UserMenu;
-

@@ -14,6 +14,6 @@ export const usePageStore = create<PageStoreType>()(
     }),
     {
       name: "bkmk-page",
-    }
-  )
+    },
+  ),
 );

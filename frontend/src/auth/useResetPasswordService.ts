@@ -1,8 +1,8 @@
-import { useRouter } from "next/navigation";
-import Swal from "sweetalert2";
-import useRequestHelper from "@helpers/useRequestHelper";
 import { useAuthStore } from "@auth/store/authStore";
 import { useUserStore } from "@auth/store/userStore";
+import useRequestHelper from "@helpers/useRequestHelper";
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 
 import type { AxiosError } from "axios";
 
@@ -19,9 +19,9 @@ const useResetPasswordService = () => {
         data: {
           email,
           subject: "BKMK - changement de mot de passe",
-        }
+        },
       });
-      // @ts-ignore
+      // @ts-expect-error
       Swal.fire({
         title: "Succès",
         text: "un nouveau mot de passe vous a été envoyé",
@@ -36,9 +36,9 @@ const useResetPasswordService = () => {
           userStore.setUser(null);
           router.push("/login");
         },
-      })
+      });
     } catch (err: unknown) {
-      // @ts-ignore
+      // @ts-expect-error
       await Swal.fire({
         title: "le mot de passe n'a pas pu être ré-initialisé",
         text: (err as any).response?.data.error ?? "",
@@ -50,11 +50,11 @@ const useResetPasswordService = () => {
         timer: 3000,
       });
     }
-  }
+  };
 
   return {
     resetPasswordService,
-  }
+  };
 };
 
 export default useResetPasswordService;

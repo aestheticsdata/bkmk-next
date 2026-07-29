@@ -4,7 +4,7 @@ interface DeleteConfirmProps {
   invertHover?: boolean;
 }
 
-const DeleteConfirm = ({ closeCB, deleteCB, invertHover = false }: DeleteConfirmProps ) => {
+const DeleteConfirm = ({ closeCB, deleteCB, invertHover = false }: DeleteConfirmProps) => {
   return (
     <div className="flex w-[100px] space-x-1 text-xxxs">
       <div
@@ -29,7 +29,7 @@ const DeleteConfirm = ({ closeCB, deleteCB, invertHover = false }: DeleteConfirm
         cancel
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default DeleteConfirm;

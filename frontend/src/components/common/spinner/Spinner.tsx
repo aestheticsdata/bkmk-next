@@ -1,9 +1,9 @@
-import styles from './Spinner.module.css';
+import styles from "./Spinner.module.css";
 
 const Spinner = () => {
   return (
     <div className={styles.loader}>
-      <div className={styles['loader-inner']} />
+      <div className={styles["loader-inner"]} />
     </div>
   );
 };

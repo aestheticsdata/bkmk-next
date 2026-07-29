@@ -1,23 +1,23 @@
 // @ts-nocheck — doit rester le tout premier commentaire du fichier, avant la directive
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import Select from "react-select";
-import CreatableSelect from "react-select/creatable";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
-import StarsSelector from "@components/common/stars/StarsSelector";
-import useCategories from "@components/common/category/services/useCategories";
+import useBookmark from "@components/bookmark/services/useBookmark";
 import Row from "@components/bookmarks/create/Row";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
-import useBookmark from "@components/bookmark/services/useBookmark";
-import { ROUTES } from "@components/shared/config/constants";
 import { alarmOptions } from "@components/common/alarm/constants";
+import useCategories from "@components/common/category/services/useCategories";
 import { selectOptionsCSS } from "@components/common/form/css";
-import useGetScreenshot from "@helpers/getScreenshot";
 import Spinner from "@components/common/spinner/Spinner";
+import StarsSelector from "@components/common/stars/StarsSelector";
+import { ROUTES } from "@components/shared/config/constants";
+import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import useGetScreenshot from "@helpers/getScreenshot";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import Select from "react-select";
+import CreatableSelect from "react-select/creatable";
 
 import type { FieldValues } from "react-hook-form";
 
@@ -28,10 +28,17 @@ const priorityOptions = [
   { value: "highest", label: "Highest" },
 ];
 
-
 const CreateBookmark = ({ id }) => {
   const router = useRouter();
-  const { register, handleSubmit, control, setValue, reset, watch, formState: { errors, isDirty, isValid} } = useForm({
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    reset,
+    watch,
+    formState: { errors, isDirty, isValid },
+  } = useForm({
     mode: "onChange",
     defaultValues: {
       categories: [],
@@ -60,7 +67,7 @@ const CreateBookmark = ({ id }) => {
       });
       setValue("stars", bookmark.stars);
 
-      let tempCategories = [];
+      const tempCategories = [];
       if (bookmark.categories.length > 0) {
         bookmark.categories.forEach((category) => {
           tempCategories.push({
@@ -75,7 +82,7 @@ const CreateBookmark = ({ id }) => {
       if (bookmark.priority) {
         const tempPriority = {
           value: bookmark.priority,
-          label: `${bookmark.priority[0].toUpperCase()}${bookmark.priority.slice(1)}`
+          label: `${bookmark.priority[0].toUpperCase()}${bookmark.priority.slice(1)}`,
         };
         setInitialPriority(tempPriority);
         setValue("priority", tempPriority);
@@ -84,8 +91,8 @@ const CreateBookmark = ({ id }) => {
       if (bookmark.alarm_frequency) {
         const tempAlarmFrequency = {
           value: bookmark.alarm_frequency,
-          label: alarmOptions.find((o)=> o.value === bookmark.alarm_frequency).label,
-        }
+          label: alarmOptions.find((o) => o.value === bookmark.alarm_frequency).label,
+        };
         setInitialReminder(tempAlarmFrequency);
         setValue("reminder", tempAlarmFrequency);
       }
@@ -97,7 +104,7 @@ const CreateBookmark = ({ id }) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setScreenshotFile(reader.result!.toString());
-      }
+      };
       reader.readAsDataURL(watchImageFile[0]);
     }
   }, [watchImageFile]);
@@ -114,7 +121,7 @@ const CreateBookmark = ({ id }) => {
       } else if (name === "notes") {
         e[name] && formData.append(name, encodeURIComponent(e[name]));
       } else if (name === "reminder") {
-        e[name] && formData.append(name, e[name].value)
+        e[name] && formData.append(name, e[name].value);
       } else if (name === "url") {
         e[name] && formData.append(name, e[name]);
       } else {
@@ -132,24 +139,20 @@ const CreateBookmark = ({ id }) => {
     const entries = formData.entries();
     const data = Object.fromEntries(entries);
     id ? editBookmark.mutate(data) : createBookmark.mutate(data);
-  }
+  };
 
   return (
     <div className="flex w-full pt-14 text-sm">
-
-      {(editBookmark.status === "loading" || createBookmark.status === "loading") &&
+      {(editBookmark.status === "loading" || createBookmark.status === "loading") && (
         <div className="fixed flex justify-center items-center top-0 bottom-0 left-0 right-0 bg-white z-50 opacity-60">
-          <div className="flex justify-center items-center uppercase w-[320px] h-[200px] text-2xl">
-            submitting
-          </div>
+          <div className="flex justify-center items-center uppercase w-[320px] h-[200px] text-2xl">submitting</div>
         </div>
-      }
+      )}
 
       <form
         className="flex flex-col pl-4 pt-4 space-y-4 w-full text-formsGlobalColor"
         onSubmit={handleSubmit(onSubmit)}
       >
-
         <div className=" w-11/12 flex flex-col">
           <Row label="Title">
             <input
@@ -160,9 +163,7 @@ const CreateBookmark = ({ id }) => {
               {...register("title", { required: true })}
             />
           </Row>
-          {errors.title &&
-            <div className="flex text-red-500 justify-start">titre obligatoire</div>
-          }
+          {errors.title && <div className="flex text-red-500 justify-start">titre obligatoire</div>}
         </div>
 
         <div className="w-11/12 flex flex-col">
@@ -182,7 +183,7 @@ const CreateBookmark = ({ id }) => {
             <Controller
               name="categories"
               control={control}
-              render={({ field }) =>
+              render={({ field }) => (
                 <CreatableSelect
                   isMulti
                   styles={selectOptionsCSS("500px")}
@@ -194,7 +195,7 @@ const CreateBookmark = ({ id }) => {
                     field.onChange(selectedOptions);
                   }}
                 />
-            }
+              )}
             />
           </Row>
         </div>
@@ -214,7 +215,10 @@ const CreateBookmark = ({ id }) => {
 
         <div className="w-11/12 flex flex-col">
           <Row label="Stars">
-            <StarsSelector setValue={setValue} watch={watch} />
+            <StarsSelector
+              setValue={setValue}
+              watch={watch}
+            />
           </Row>
         </div>
 
@@ -223,7 +227,7 @@ const CreateBookmark = ({ id }) => {
             <Controller
               name="priority"
               control={control}
-              render={({ field }) =>
+              render={({ field }) => (
                 <Select
                   isClearable={true}
                   styles={selectOptionsCSS("170px")}
@@ -235,7 +239,7 @@ const CreateBookmark = ({ id }) => {
                     field.onChange(selectedOption);
                   }}
                 />
-              }
+              )}
             />
           </Row>
         </div>
@@ -245,7 +249,7 @@ const CreateBookmark = ({ id }) => {
             <Controller
               name="reminder"
               control={control}
-              render={({ field }) =>
+              render={({ field }) => (
                 <Select
                   isClearable={true}
                   styles={selectOptionsCSS("170px")}
@@ -257,7 +261,7 @@ const CreateBookmark = ({ id }) => {
                     field.onChange(selectedOption);
                   }}
                 />
-              }
+              )}
             />
           </Row>
         </div>
@@ -271,17 +275,18 @@ const CreateBookmark = ({ id }) => {
                 accept="image/jpeg, image/png"
                 {...register("screenshot")}
               />
-              {!screenshotFile &&
-                id &&
-                bookmark &&
-                bookmark.screenshot &&
-                  <div className="flex relative" >
-                    <div
-                      className="w-1/2 absolute h-full"
-                      onMouseEnter={() => {setIsHoverScreenshot(true)}}
-                      onMouseLeave={() => {setIsHoverScreenshot(false)}}
-                    >
-                    { isHoverScreenshot &&
+              {!screenshotFile && id && bookmark && bookmark.screenshot && (
+                <div className="flex relative">
+                  <div
+                    className="w-1/2 absolute h-full"
+                    onMouseEnter={() => {
+                      setIsHoverScreenshot(true);
+                    }}
+                    onMouseLeave={() => {
+                      setIsHoverScreenshot(false);
+                    }}
+                  >
+                    {isHoverScreenshot && (
                       <div
                         className="flex justify-center items-center h-full bg-white text-3xl opacity-70"
                         onClick={() => {
@@ -290,33 +295,39 @@ const CreateBookmark = ({ id }) => {
                           setIsHoverScreenshot(false);
                         }}
                       >
-                        <FontAwesomeIcon className="cursor-pointer hover:text-blue-600 p-2" icon={faTrashAlt} />
-                      </div>
-                    }
-                    </div>
-                    <div>
-                      {isScreenshotLoading &&
-                        <div className="flex justify-center items-center py-2 w-[320px] h-[200px]">
-                          <Spinner />
-                        </div>
-                      }
-                      {!isScreenshotLoading &&
-                        <img
-                          className="border-8 rounded-sm border-grey2"
-                          src={imageUrl}
-                          width="50%"
+                        <FontAwesomeIcon
+                          className="cursor-pointer hover:text-blue-600 p-2"
+                          icon={faTrashAlt}
                         />
-                      }
-                    </div>
+                      </div>
+                    )}
                   </div>
-              }
-              {screenshotFile &&
-                <div className="flex relative">
                   <div>
-                    <img src={screenshotFile} width="320" />
+                    {isScreenshotLoading && (
+                      <div className="flex justify-center items-center py-2 w-[320px] h-[200px]">
+                        <Spinner />
+                      </div>
+                    )}
+                    {!isScreenshotLoading && (
+                      <img
+                        className="border-8 rounded-sm border-grey2"
+                        src={imageUrl}
+                        width="50%"
+                      />
+                    )}
                   </div>
                 </div>
-              }
+              )}
+              {screenshotFile && (
+                <div className="flex relative">
+                  <div>
+                    <img
+                      src={screenshotFile}
+                      width="320"
+                    />
+                  </div>
+                </div>
+              )}
             </>
           </Row>
         </div>
@@ -336,12 +347,11 @@ const CreateBookmark = ({ id }) => {
                 className={`h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                   font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
                   hover:shadow-login focus:outline-hidden p-1
-                  ${!id && (!isDirty || !isValid) && "pointer-events-none text-grey01 border-grey01"}`
-                }
+                  ${!id && (!isDirty || !isValid) && "pointer-events-none text-grey01 border-grey01"}`}
               >
                 Submit
               </button>
-              {id &&
+              {id && (
                 <button
                   className="h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                     font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
@@ -354,14 +364,13 @@ const CreateBookmark = ({ id }) => {
                 >
                   Cancel
                 </button>
-              }
+              )}
             </div>
           </Row>
         </div>
-
       </form>
     </div>
-  )
+  );
 };
 
 export default CreateBookmark;

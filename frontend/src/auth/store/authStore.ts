@@ -16,6 +16,6 @@ export const useAuthStore = create<AuthType>()(
     }),
     {
       name: "bkmk-token",
-    }
-  )
+    },
+  ),
 );

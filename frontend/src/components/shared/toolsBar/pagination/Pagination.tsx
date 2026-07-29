@@ -1,17 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import useBookmarks from "@components/bookmarks/services/useBookmarks";
+import { PAGES, ROWS_BY_PAGE } from "@components/shared/config/constants";
+import { usePageStore } from "@components/shared/pageStore";
+import { faLeftLong, faRightLong } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter, useSearchParams } from "next/navigation";
 import queryString from "query-string";
-import useBookmarks from "@components/bookmarks/services/useBookmarks";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLeftLong } from "@fortawesome/free-solid-svg-icons";
-import { faRightLong } from "@fortawesome/free-solid-svg-icons";
-import { usePageStore } from "@components/shared/pageStore";
-import {
-  PAGES,
-  ROWS_BY_PAGE
-} from "@components/shared/config/constants";
+import { useEffect, useState } from "react";
 
 const Pagination = () => {
   const router = useRouter();
@@ -39,7 +35,7 @@ const Pagination = () => {
   }, []);
 
   useEffect(() => {
-    bookmarks?.rows.length! > 0 && setLasPage(Math.floor((bookmarks?.total_count!-1)/ROWS_BY_PAGE));
+    bookmarks?.rows.length! > 0 && setLasPage(Math.floor((bookmarks?.total_count! - 1) / ROWS_BY_PAGE));
   }, [bookmarks]);
 
   useEffect(() => {
@@ -86,7 +82,7 @@ const Pagination = () => {
         <FontAwesomeIcon icon={faRightLong} />
       </button>
     </div>
-  )
-}
+  );
+};
 
 export default Pagination;

@@ -1,23 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm, Controller } from "react-hook-form";
-import queryString from "query-string";
-import Select from "react-select";
-import useCategories from "@components/common/category/services/useCategories";
 import Row from "@components/bookmarks/create/Row";
-import { selectOptionsCSS } from "@components/common/form/css";
 import { alarmOptions } from "@components/common/alarm/constants";
+import useCategories from "@components/common/category/services/useCategories";
+import { selectOptionsCSS } from "@components/common/form/css";
+import { useRouter } from "next/navigation";
+import queryString from "query-string";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import Select from "react-select";
 
 import type { FieldValues } from "react-hook-form";
 
 const starsOptions = [
-  { value: 1, label: "1 étoile"},
-  { value: 2, label: "2 étoiles"},
-  { value: 3, label: "3 étoiles"},
-  { value: 4, label: "4 étoiles"},
-  { value: 5, label: "5 étoiles"},
+  { value: 1, label: "1 étoile" },
+  { value: 2, label: "2 étoiles" },
+  { value: 3, label: "3 étoiles" },
+  { value: 4, label: "4 étoiles" },
+  { value: 5, label: "5 étoiles" },
 ];
 
 const Filters = () => {
@@ -32,7 +32,7 @@ const Filters = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onSubmit = (e: FieldValues) => {
-    let filters: any = {};
+    const filters: any = {};
     filters["page"] = 0;
     e.title?.length > 0 && (filters["title"] = e.title.split(" ").join(","));
     e.screenshot && (filters["screenshot"] = 1);
@@ -51,34 +51,34 @@ const Filters = () => {
 
     router.push(`?${queryString.stringify(filters)}`);
     setIsOpen(false);
-  }
+  };
 
   return (
     <div className="flex relative mx-8 select-none cursor-pointer">
-
       <div
         className="
           flex justify-center items-center w-[55px] bg-grey1 rounded p-1 hover:bg-grey0 hover:text-grey3 text-xxs font-semibold
           transition-colors ease-linear duration-50"
-        onClick={() => { setIsOpen(!isOpen) }}
+        onClick={() => {
+          setIsOpen(!isOpen);
+        }}
       >
         FILTERS
       </div>
 
-      {isOpen &&
+      {isOpen && (
         <div className="absolute w-[800px] top-[30px] p-4 bg-grey01 rounded-sm shadow-dashboard text-xs space-y-2">
           <form
             className="flex flex-col"
             onSubmit={handleSubmit(onSubmit)}
           >
             <div className="flex flex-col space-y-4">
-
               <div className="w-11/12">
                 <Row label="Categories">
                   <Controller
                     name="categories"
                     control={control}
-                    render={({ field }) =>
+                    render={({ field }) => (
                       <Select
                         isMulti
                         styles={selectOptionsCSS("630px")}
@@ -90,13 +90,16 @@ const Filters = () => {
                           field.onChange(selectedOptions);
                         }}
                       />
-                    }
+                    )}
                   />
                 </Row>
               </div>
 
               <div className="w-11/12">
-                <Row label="Title" childrenWidth="xl">
+                <Row
+                  label="Title"
+                  childrenWidth="xl"
+                >
                   <input
                     type="text"
                     placeholder="title contains"
@@ -112,7 +115,7 @@ const Filters = () => {
                   <Controller
                     name="stars"
                     control={control}
-                    render={({ field }) =>
+                    render={({ field }) => (
                       <Select
                         isClearable={true}
                         styles={selectOptionsCSS("170px")}
@@ -124,7 +127,7 @@ const Filters = () => {
                           field.onChange(selectedOption);
                         }}
                       />
-                    }
+                    )}
                   />
                 </Row>
               </div>
@@ -134,7 +137,7 @@ const Filters = () => {
                   <Controller
                     name="reminder"
                     control={control}
-                    render={({ field }) =>
+                    render={({ field }) => (
                       <Select
                         isClearable={true}
                         styles={selectOptionsCSS("170px")}
@@ -146,7 +149,7 @@ const Filters = () => {
                           field.onChange(selectedOption);
                         }}
                       />
-                    }
+                    )}
                   />
                 </Row>
               </div>
@@ -154,7 +157,6 @@ const Filters = () => {
               <div className="w-11/12 flex flex-col">
                 <Row label="Contains">
                   <div className="flex space-x-2">
-
                     <div className="flex space-x-1">
                       <label htmlFor="image">Screenshot</label>
                       <input
@@ -181,7 +183,6 @@ const Filters = () => {
                         {...register("url")}
                       />
                     </div>
-
                   </div>
                 </Row>
               </div>
@@ -189,9 +190,12 @@ const Filters = () => {
               <div className="w-11/12">
                 <Row label="">
                   <div className="flex w-[240px] space-x-4">
-                    <button type="submit" className="h-6 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
+                    <button
+                      type="submit"
+                      className="h-6 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                             font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
-                            hover:shadow-login focus:outline-hidden px-1">
+                            hover:shadow-login focus:outline-hidden px-1"
+                    >
                       Filter
                     </button>
                     <button
@@ -221,18 +225,12 @@ const Filters = () => {
                   </div>
                 </Row>
               </div>
-
-
             </div>
           </form>
-
-
         </div>
-      }
-
-
+      )}
     </div>
   );
-}
+};
 
 export default Filters;

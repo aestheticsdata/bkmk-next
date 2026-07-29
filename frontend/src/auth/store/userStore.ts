@@ -20,6 +20,6 @@ export const useUserStore = create<UserStore>()(
     }),
     {
       name: "bkmk-user",
-    }
-  )
+    },
+  ),
 );
