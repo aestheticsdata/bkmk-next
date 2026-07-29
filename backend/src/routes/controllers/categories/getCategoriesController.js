@@ -1,4 +1,4 @@
-const dbConnection = require('../../../db/dbinitmysql');
+const dbConnection = require("../../../db/dbinitmysql");
 
 module.exports = async (req, res) => {
   const sql = `

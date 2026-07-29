@@ -9,14 +9,14 @@ const deleteBookmarkController = require("../controllers/bookmarks/deleteBookmar
 const editBookmarkController = require("../controllers/bookmarks/editBookmarkController");
 const uploadBookmarksControoler = require("../controllers/bookmarks/uploadBookmarksController");
 const getScreenshotController = require("../controllers/bookmarks/getScreenshotController");
-const catchAsync = require('../../utils/catchAsync');
+const catchAsync = require("../../utils/catchAsync");
 
 router.get("/", checkToken, catchAsync(getBookmarksController));
 router.get("/:id", checkToken, catchAsync(getBookmarkController));
-router.post("/", [checkToken, upload.single('screenshot')], catchAsync(postBookmarkController));
-router.put("/", [checkToken, upload.single('screenshot')], catchAsync(editBookmarkController));
+router.post("/", [checkToken, upload.single("screenshot")], catchAsync(postBookmarkController));
+router.put("/", [checkToken, upload.single("screenshot")], catchAsync(editBookmarkController));
 router.delete("/:id", checkToken, catchAsync(deleteBookmarkController));
-router.post("/upload", checkToken, upload.single('bookmark_file'), catchAsync(uploadBookmarksControoler));
-router.get('/upload/:id', checkToken, catchAsync(getScreenshotController));
+router.post("/upload", checkToken, upload.single("bookmark_file"), catchAsync(uploadBookmarksControoler));
+router.get("/upload/:id", checkToken, catchAsync(getScreenshotController));
 
 module.exports = router;

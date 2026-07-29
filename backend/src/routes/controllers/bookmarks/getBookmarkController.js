@@ -25,4 +25,4 @@ module.exports = async (req, res) => {
   const marshalledRows = marshallCategories(bookmark);
 
   res.json(marshalledRows);
-}
+};

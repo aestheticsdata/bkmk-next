@@ -1,20 +1,10 @@
-const { format } = require('date-fns');
-const dbConnection = require('../../../db/dbinitmysql');
+const { format } = require("date-fns");
+const dbConnection = require("../../../db/dbinitmysql");
 const jimpHelper = require("./helpers/jimpHelper");
 const generateHexColor = require("./helpers/generateHexColor");
 
-
 module.exports = async (req, res) => {
-  const {
-    title,
-    url,
-    categories: categoriesString,
-    notes,
-    stars,
-    priority,
-    reminder,
-    group,
-  } = req.body;
+  const { title, url, categories: categoriesString, notes, stars, priority, reminder, group } = req.body;
 
   const categories = JSON.parse(categoriesString);
 
@@ -33,7 +23,7 @@ module.exports = async (req, res) => {
   let alarmID = null;
   if (reminder) {
     const sqlAlarm = ` 
-      INSERT INTO alarm (frequency, date_added) VALUES (${reminder}, "${format(new Date(), 'yyyy-MM-dd')}");
+      INSERT INTO alarm (frequency, date_added) VALUES (${reminder}, "${format(new Date(), "yyyy-MM-dd")}");
     `;
 
     try {
@@ -46,7 +36,6 @@ module.exports = async (req, res) => {
   }
 
   if (group) {
-
   }
 
   let urlID = null;
@@ -57,7 +46,7 @@ module.exports = async (req, res) => {
       urlID = result[0].insertId;
     } catch (err) {
       await conn.end();
-      return res.status(500).json({msg: "error creating url : " + err});
+      return res.status(500).json({ msg: "error creating url : " + err });
     }
   }
 
@@ -72,7 +61,7 @@ module.exports = async (req, res) => {
       ${notes !== undefined ? `"${notes}"` : null},
       ${Number(stars)},
       ${screenshotFilename !== null ? `"${String(screenshotFilename)}"` : null},
-      "${format(new Date(), 'yyyy-MM-dd')}");
+      "${format(new Date(), "yyyy-MM-dd")}");
   `;
 
   let bookmarkID;

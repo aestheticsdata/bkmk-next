@@ -1,5 +1,5 @@
-const { format } = require('date-fns');
-const dbConnection = require('../../../db/dbinitmysql');
+const { format } = require("date-fns");
+const dbConnection = require("../../../db/dbinitmysql");
 const jimpHelper = require("./helpers/jimpHelper");
 const generateHexColor = require("./helpers/generateHexColor");
 
@@ -50,7 +50,7 @@ module.exports = async (req, res) => {
             } catch (e) {
               await conn.end();
               return res.status(500).json({
-                msg: "error inserting existing categories to bookmark_category table : " + e
+                msg: "error inserting existing categories to bookmark_category table : " + e,
               });
             }
 
@@ -74,16 +74,17 @@ module.exports = async (req, res) => {
 
         // il y des catégories associées au bookmark et il y une ou plusieurs catégories dans la requete
       } else {
-        const incomingCategoryIds = incomingCategories.map(category => {
+        const incomingCategoryIds = incomingCategories.map((category) => {
           return {
             label: category.label,
             id: !isNaN(Number(category.value)) ? Number(category.value) : null,
-          }
+          };
         });
-        const existingCategoryIds = existingCategories.map(category => category.category_id);
+        const existingCategoryIds = existingCategories.map((category) => category.category_id);
 
-        const categoriesToDelete = existingCategories.filter(category =>
-          !incomingCategories.some(incomingCategory => incomingCategory.value === category.category_id.toString())
+        const categoriesToDelete = existingCategories.filter(
+          (category) =>
+            !incomingCategories.some((incomingCategory) => incomingCategory.value === category.category_id.toString()),
         );
         if (categoriesToDelete.length > 0) {
           for (const categoryToDelete of categoriesToDelete) {
@@ -103,9 +104,11 @@ module.exports = async (req, res) => {
         if (categoriesToAdd.length > 0) {
           for (const categoryToAdd of categoriesToAdd) {
             try {
-              const [categories] = await conn.execute(`SELECT id FROM category WHERE user_id="${originalBookmark.user_id}";`);
+              const [categories] = await conn.execute(
+                `SELECT id FROM category WHERE user_id="${originalBookmark.user_id}";`,
+              );
               let result = null;
-              if (!categories.some(category => category.id === categoryToAdd.id)) {
+              if (!categories.some((category) => category.id === categoryToAdd.id)) {
                 result = await conn.execute(`
                   INSERT INTO category (name, color, user_id)
                   VALUES ("${categoryToAdd.label}", "${generateHexColor()}", ${originalBookmark.user_id});
@@ -213,7 +216,6 @@ module.exports = async (req, res) => {
     return res.status(500).json({ msg: "error updating notes : ", e });
   }
 
-
   // stars
   try {
     await conn.execute(`UPDATE bookmark SET stars=${req.body.stars} WHERE id=${originalBookmark.id}`);
@@ -225,8 +227,7 @@ module.exports = async (req, res) => {
   // priority
   try {
     await conn.execute(`
-      UPDATE bookmark SET priority=${req.body.priority === '' ? null : `"${req.body.priority}"`} WHERE id=${originalBookmark.id}`
-    );
+      UPDATE bookmark SET priority=${req.body.priority === "" ? null : `"${req.body.priority}"`} WHERE id=${originalBookmark.id}`);
   } catch (e) {
     await conn.end();
     return res.status(500).json({ msg: "error updating priority : ", e });
@@ -245,7 +246,9 @@ module.exports = async (req, res) => {
           try {
             await conn.execute(`UPDATE bookmark SET alarm_id=NULL WHERE id=${originalBookmark.id};`);
             await conn.execute(`DELETE FROM alarm WHERE id=${originalBookmark.alarm_id};`);
-            const result = await conn.execute(`INSERT INTO alarm (frequency, date_added) VALUES (${req.body.reminder}, "${format(new Date(), 'yyyy-MM-dd')}");`);
+            const result = await conn.execute(
+              `INSERT INTO alarm (frequency, date_added) VALUES (${req.body.reminder}, "${format(new Date(), "yyyy-MM-dd")}");`,
+            );
             const newAlarmID = result[0].insertId;
             await conn.execute(`UPDATE bookmark SET alarm_id=${newAlarmID} WHERE id=${originalBookmark.id};`);
           } catch (e) {
@@ -272,7 +275,9 @@ module.exports = async (req, res) => {
     // il a une alarm à créer
     if (req.body.reminder) {
       try {
-        const result = await conn.execute(`INSERT INTO alarm (frequency, date_added) VALUES (${req.body.reminder}, "${format(new Date(), 'yyyy-MM-dd')}");`);
+        const result = await conn.execute(
+          `INSERT INTO alarm (frequency, date_added) VALUES (${req.body.reminder}, "${format(new Date(), "yyyy-MM-dd")}");`,
+        );
         const newAlarmID = result[0].insertId;
         try {
           await conn.execute(`UPDATE bookmark SET alarm_id=${newAlarmID} WHERE id=${originalBookmark.id};`);
@@ -289,7 +294,9 @@ module.exports = async (req, res) => {
 
   // screenshot
   const deleteScreenshot = async () => {
-    const [[result]] = await conn.execute(`SELECT screenshot FROM bookmark WHERE id=${originalBookmark.id} and user_id=${originalBookmark.user_id};`);
+    const [[result]] = await conn.execute(
+      `SELECT screenshot FROM bookmark WHERE id=${originalBookmark.id} and user_id=${originalBookmark.user_id};`,
+    );
     const filename = result.screenshot;
     try {
       await jimpHelper.deleteScreenshot({ filename, userID: originalBookmark.user_id });
@@ -307,7 +314,7 @@ module.exports = async (req, res) => {
       await conn.end();
       return res.status(500).json({ msg: "error unlink file : " + e });
     }
-  }
+  };
 
   // nouveau screenshot
   if (req.file) {
@@ -338,7 +345,6 @@ module.exports = async (req, res) => {
       await conn.end();
       return res.status(500).json({ msg: "error creating new screenshot : " + e });
     }
-
   }
 
   // plus de screenshot
@@ -346,8 +352,10 @@ module.exports = async (req, res) => {
     await deleteScreenshot();
   }
 
-  conn.execute(`UPDATE bookmark SET date_last_modified="${format(new Date(), 'yyyy-MM-dd')}" WHERE id=${originalBookmark.id}`)
+  conn.execute(
+    `UPDATE bookmark SET date_last_modified="${format(new Date(), "yyyy-MM-dd")}" WHERE id=${originalBookmark.id}`,
+  );
 
   await conn.end();
   return res.status(200).json({ msg: "bookmark edited" });
-}
+};

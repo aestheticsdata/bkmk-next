@@ -1,10 +1,6 @@
-const {
-  access,
-  mkdir,
-  unlink,
-} = require('fs').promises;
-const jimp = require('jimp');
-const { v1: uuidv1 } = require('uuid');
+const { access, mkdir, unlink } = require("fs").promises;
+const jimp = require("jimp");
+const { v1: uuidv1 } = require("uuid");
 const { uploadPath } = require("../../../controllers/bookmarks/helpers/constants");
 const screenshotsImagesBackup = require("../../../../screenshotsBackup/screenshotsBackup");
 
@@ -17,7 +13,7 @@ const createScreenshot = async ({ file, userID }) => {
   }
 
   const fileName = `screenshot--user-${userID}-${uuidv1()}`;
-  const extension = file.originalname.split('.').pop();
+  const extension = file.originalname.split(".").pop();
 
   const screenshotFromDisk = await jimp.read(file.buffer);
   await screenshotFromDisk.resize(1024, jimp.AUTO);
@@ -28,7 +24,7 @@ const createScreenshot = async ({ file, userID }) => {
   }
 
   return `${fileName}.${extension}`;
-}
+};
 
 const deleteScreenshot = async ({ filename, userID }) => {
   const userDir = uploadPath + userID;
@@ -37,11 +33,9 @@ const deleteScreenshot = async ({ filename, userID }) => {
   } catch (e) {
     throw e;
   }
-}
+};
 
 module.exports = {
   createScreenshot,
   deleteScreenshot,
-}
-
-
+};

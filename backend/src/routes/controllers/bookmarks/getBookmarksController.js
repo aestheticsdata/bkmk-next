@@ -8,58 +8,58 @@ module.exports = async (req, res) => {
   if (sort) {
     sortPart += "ORDER BY ";
     switch (sort) {
-        case "link":
-          sortPart += "b.url_id ASC, ";
-          break;
-        case "-link":
-          sortPart += "b.url_id DESC, ";
-          break;
-        case "title":
-          sortPart += "b.title ASC, ";
-          break;
-        case "-title":
-          sortPart += "b.title DESC, ";
-          break;
-        case "stars":
-          sortPart += "b.stars ASC, ";
-          break;
-        case "-stars":
-          sortPart += "b.stars DESC, ";
-          break;
-        case "notes":
-          sortPart += "b.notes ASC, ";
-          break;
-        case "-notes":
-          sortPart += "b.notes DESC, ";
-          break;
-        case "priority":
-          sortPart += "b.priority ASC, ";
-          break;
-        case "-priority":
-          sortPart += "b.priority DESC, ";
-          break;
-        case "screenshot":
-          sortPart += "b.screenshot ASC, ";
-          break;
-        case "-screenshot":
-          sortPart += "b.screenshot DESC, ";
-          break;
-        case "alarm":
-          sortPart += "b.alarm_id ASC, ";
-          break;
-        case "-alarm":
-          sortPart += "b.alarm_id DESC, ";
-          break;
-        case "date":
-          sortPart += "b.date_added ASC, ";
-          break;
-        case "-date":
-          sortPart += "b.date_added DESC, ";
-          break;
-        default:
-          break;
-      }
-    sortPart = sortPart.slice(0, sortPart.length-2);
+      case "link":
+        sortPart += "b.url_id ASC, ";
+        break;
+      case "-link":
+        sortPart += "b.url_id DESC, ";
+        break;
+      case "title":
+        sortPart += "b.title ASC, ";
+        break;
+      case "-title":
+        sortPart += "b.title DESC, ";
+        break;
+      case "stars":
+        sortPart += "b.stars ASC, ";
+        break;
+      case "-stars":
+        sortPart += "b.stars DESC, ";
+        break;
+      case "notes":
+        sortPart += "b.notes ASC, ";
+        break;
+      case "-notes":
+        sortPart += "b.notes DESC, ";
+        break;
+      case "priority":
+        sortPart += "b.priority ASC, ";
+        break;
+      case "-priority":
+        sortPart += "b.priority DESC, ";
+        break;
+      case "screenshot":
+        sortPart += "b.screenshot ASC, ";
+        break;
+      case "-screenshot":
+        sortPart += "b.screenshot DESC, ";
+        break;
+      case "alarm":
+        sortPart += "b.alarm_id ASC, ";
+        break;
+      case "-alarm":
+        sortPart += "b.alarm_id DESC, ";
+        break;
+      case "date":
+        sortPart += "b.date_added ASC, ";
+        break;
+      case "-date":
+        sortPart += "b.date_added DESC, ";
+        break;
+      default:
+        break;
+    }
+    sortPart = sortPart.slice(0, sortPart.length - 2);
   }
 
   let titleMySQLPrepared;
@@ -74,21 +74,23 @@ module.exports = async (req, res) => {
         LEFT JOIN category c ON bc.category_id = c.id
         LEFT JOIN alarm a ON b.alarm_id = a.id
     WHERE b.user_id = '${req.query.userID}' AND b.active = 1 
-    ${title ? `AND b.title LIKE '%${titleMySQLPrepared}%'` : ''}
-    ${screenshot ? `AND b.screenshot IS NOT NULL` : ''}
-    ${url ? `AND b.url_id IS NOT NULL` : ''}
-    ${reminder ? `AND a.frequency = '${decodeURIComponent(reminder)}'` : ''}
-    ${stars ? ` AND b.stars = ${stars}` : ''}
-    ${notes ? `AND b.notes IS NOT NULL` : ''}
+    ${title ? `AND b.title LIKE '%${titleMySQLPrepared}%'` : ""}
+    ${screenshot ? `AND b.screenshot IS NOT NULL` : ""}
+    ${url ? `AND b.url_id IS NOT NULL` : ""}
+    ${reminder ? `AND a.frequency = '${decodeURIComponent(reminder)}'` : ""}
+    ${stars ? ` AND b.stars = ${stars}` : ""}
+    ${notes ? `AND b.notes IS NOT NULL` : ""}
   `;
 
   const sqlCategoriesHelper = (sql) => {
-    const decodedCategories = decodeURIComponent(categories_id).split(',').map(catId => parseInt(catId, 10));
+    const decodedCategories = decodeURIComponent(categories_id)
+      .split(",")
+      .map((catId) => parseInt(catId, 10));
     for (const categoryId of decodedCategories) {
       sql += ` AND EXISTS (SELECT 1 FROM bookmark_category bc WHERE b.id = bc.bookmark_id AND bc.category_id = ${categoryId})`;
     }
     return sql;
-  }
+  };
 
   let countSql = `
       SELECT COUNT(DISTINCT b.id)  AS total_count
@@ -116,7 +118,7 @@ module.exports = async (req, res) => {
   `;
 
   const conn = await dbConnection();
-  const [[{total_count}]] = await conn.execute(countSql);
+  const [[{ total_count }]] = await conn.execute(countSql);
   const [rows] = await conn.execute(sql);
 
   await conn.end();
@@ -127,7 +129,6 @@ module.exports = async (req, res) => {
     rows: marshalledRows,
     total_count,
   };
-
 
   res.json(rowsWithCount);
 };
