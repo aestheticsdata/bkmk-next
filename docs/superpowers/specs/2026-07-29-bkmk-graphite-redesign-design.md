@@ -37,7 +37,8 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | PLAT 04 | COS-317 — shadcn/ui | ✅ mergé (PR #6) |
 | PLAT 05 | COS-318 — zod | ✅ mergé (PR #7) |
 | DS 01 | COS-290 — tokens GRAPHITE | ✅ mergé (PR #8) |
-| DS 02 | COS-291 — primitives de composants | en cours |
+| DS 02 | COS-291 — primitives de composants | ✅ mergé (PR #9) |
+| DS 03 | COS-292 — shell applicatif | en cours |
 
 **Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
 validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
@@ -465,8 +466,8 @@ produisent **aucun token** :
 
 **Ce qui reste volontairement legacy** : 15 couleurs, 2 ombres, 3 tailles et 3 familles de police,
 plus le fond de page de `base.css` et la police du `body`. Ils tiennent en vie les écrans que le
-lot UI n'a pas encore refaits et partent avec eux, écran par écran. `components/chrome.css` — les
-classes du shell — appartient à DS 03 (COS-292).
+lot UI n'a pas encore refaits et partent avec eux, écran par écran. (`components/chrome.css` était
+annoncé ici pour DS 03 ; COS-292 a décidé de ne pas le créer — voir plus bas.)
 
 > Le filet clair, lui, n'attend pas DS 03 : DS 02 en a fait un token, `inset-shadow-gr-hair`.
 > Tailwind v4 garde `inset-shadow-*` sur une couche distincte de `shadow-*`, donc les deux se
@@ -517,13 +518,106 @@ miroir teal (`gr-teal-from/to/border/fg`), sans lequel le bouton primaire inline
 et le voile des modales (`gr-scrim`) n'existait pas.
 
 **Le filet clair n'attend plus DS 03.** Trois tokens `inset-shadow-*` — `hair`, `sunk`, `mark` —
-sur la couche que Tailwind v4 tient séparée de `shadow-*`. `chrome.css` reste pour les classes du
-shell.
+sur la couche que Tailwind v4 tient séparée de `shadow-*`. (Il ne restait donc plus rien à mettre
+dans `chrome.css`, ce que COS-292 a constaté en refusant de le créer.)
 
 **Ce qui n'est volontairement pas fait :** `alert-dialog` n'est restylé qu'en surface (voile, coque,
 titre, description). Sa mise en page shadcn — slot média, variantes de taille — est réécrite par
 UI 11 (COS-320), qui décide de la composition réelle de la confirmation de suppression. La toucher
 ici serait deviner à sa place.
+
+### Ce qui a été posé (COS-292, le 2026-07-29)
+
+Le détail est dans **`frontend/docs/design-system.md` §9**, qui fait autorité. Ici, seulement les
+décisions.
+
+Le shell vit dans `components/shared/shell/` et est monté **une fois**, dans
+`app/(private)/layout.tsx` : `AppShell` (racine d'écran, `@container`, `h-dvh`) → `TopChrome` →
+`Desk` → `StatusBar` → `TabBar`.
+
+**`chrome.css` n'existe pas, et c'est un choix contre la recommandation du ticket.** Le `chrome.css`
+de pfa existe pour ce que les utilitaires ne savent pas dire : bordures en dégradé sur deux
+`background-clip`, `::-webkit-scrollbar`, voiles en `:has()`. Le shell GRAPHITE n'a rien de tout ça,
+DS 02 avait déjà mis ses propres surcharges `@max-3xl:` en ligne (`Card`, `CommandBar`), et un second
+idiome pour quatre composants coûterait plus que ne fait gagner le bloc responsive groupé.
+**Il n'y a donc pas de `styles/components/`**, et le commentaire d'en-tête de `globals.css` le dit.
+
+**La racine d'écran est le seul conteneur du système.** Toutes les variantes `@max-3xl:` du DS —
+celles du shell, celles de `ds/`, celles de `ui/` — se résolvent contre elle.
+
+⚠️ **Conséquence relevée au passage, et corrigée : ce qui est portalisé dans `document.body` sort du
+conteneur.** Une requête de conteneur sans conteneur ne retombe pas sur la fenêtre, elle est fausse à
+toutes les largeurs. Les variantes `@max-3xl:` que DS 02 avait posées sur l'en-tête et le pied de
+`ui/dialog` étaient donc mortes. Elles sont retirées :
+
+- **Le pied garde le comportement visé sans seuil du tout** : `flex-wrap` inconditionnel. Le retour à
+  la ligne est déjà conditionné par le fait que le contenu ne tient pas — la variante n'apportait
+  rien, et l'inconditionnel couvre en plus les largeurs qu'un seuil unique manquait.
+- **L'en-tête attend le lot UI.** Sa croissance 46 → 54px n'avait de raison que par partage de la
+  classe `.gr-cmd` avec la barre de commande d'une carte, qui grandit parce qu'elle porte le champ de
+  recherche ; un en-tête de modale porte un titre et une croix. Et le resserrement de 2-4px devrait se
+  déclencher sur la largeur de la modale, qui est encore le `sm:max-w-lg` de shadcn : le
+  `min(680px, 100% - 20px)` de GRAPHITE arrive avec la composition (UI 10 / UI 11). Auto-conteneuriser
+  ne sauverait rien — une modale plafonnée sous 768px rend `@max-3xl` vrai en permanence, ce qui est
+  pire que jamais.
+
+Reste su et assumé : `size="chrome"` d'un bouton porte `@max-3xl:h-8.5`, qui marche sur les écrans et
+ne s'appliquera pas dans une modale. Le détail est au §7 de `frontend/docs/design-system.md`.
+
+**Cinq écarts assumés, tous documentés dans le DS :**
+
+- **La barre de statut reste à 10px en mobile** (le handoff descend à 9). Un pixel sous le plus petit
+  label du système, payé par un token que rien d'autre n'utiliserait : même arbitrage que DS 01 sur
+  9.5 / 10.5.
+- **Les onglets portent une bordure transparente au repos.** Le handoff n'en met qu'à l'onglet actif,
+  qui devient alors 2px plus grand que ses voisins et décale la rangée.
+- **Le bureau défile** (`overflow-auto`). Le handoff le laisse fixe et fait défiler chaque carte ; les
+  écrans GRAPHITE se comportent pareil dans les deux cas, mais les écrans hérités plus hauts que la
+  fenêtre seraient tronqués.
+- **`bkmk-fade` passe de 4px à 2px**, la valeur du handoff. DS 01 avait écrit 4px avant que quoi que
+  ce soit ne consomme la keyframe ; le bureau est son premier consommateur.
+- **La copie est en anglais dans `src/text/shell.ts`, sans segment de locale.** Le ticket disait
+  `src/text/fr/` ; §4 de cette spec avait déjà tranché que bkmk n'a pas d'i18n et que l'UI GRAPHITE
+  est en anglais.
+
+**Le contenu de la barre de statut est de la copie, indexée par écran** (`SHELL_STATUS`). Un layout ne
+peut pas recevoir de props de la page qu'il rend, et l'alternative — un store que chaque écran remplit
+au montage — achète un flash de contenu faux et un effet par écran contre une table de constantes.
+Deux écrans calculent leur valeur de droite depuis les compteurs ; le `record <id>` de la fiche
+appartient à COS-301.
+
+**Un seul token ajouté :** `--shadow-gr-chrome` (`0 1px 3px`). Le `shadow-gr-1` d'une carte
+projetterait une bande de 8px en travers du bureau, et le `shadow-sm` natif est la même forme en noir
+pur alors que toutes les ombres GRAPHITE sont teintées gris chaud.
+
+**Les compteurs sont réels, et pour rien de plus qu'une requête.** `useShellCounts` interroge
+`?rows=1&page=0` — la page la moins chère qui rapporte quand même `total_count`, que le contrôleur
+calcule dans un `COUNT(DISTINCT b.id)` séparé — sous la clé `[bookmarks, "count"]`. Comme toutes les
+mutations existantes invalident le préfixe `[bookmarks]`, le compteur se rafraîchit tout seul après
+une création ou une suppression. Les rappels réutilisent la clé exacte de leur écran. Aucun compteur
+n'affiche `000` en attendant : il n'affiche rien.
+
+**Ce qui a été supprimé :** `shared/navBar/` (NavBar, UserMenu et leurs deux composants de contenu) et
+`useIsWindowResponsive.ts`. La suppression du menu utilisateur a orphelin `common/dropdown/`, parti
+avec lui, et avec lui la dépendance `use-onclickoutside` qui s'arrêtait à React 18 — celle que DS 02
+devait emporter.
+
+⚠️ **`shared/Layout.tsx` survit, amputé.** Il perd sa barre de navigation mais garde `ToolsBar` et
+`SortBar` : rien ne les remplace encore, et les retirer coûterait aux écrans hérités leur pagination,
+leurs filtres et leurs actions de fiche plusieurs tickets avant que la barre de commande GRAPHITE
+n'arrive. Conséquence visible pendant la transition : les `mt-*` des écrans hérités dégagent encore
+une barre de navigation qui n'existe plus, donc leur contenu s'affiche trop bas dans le bureau. Ça ne
+se corrige pas — ces fichiers sont supprimés par le lot UI.
+
+**L'email du chrome est la seule sortie de session** jusqu'à ce que UI 09 (COS-305) en mette une dans
+About. Il pointe sur `/logout`, ce qui est la traduction fidèle du prototype (« l'email du chrome →
+login »), avec un `aria-label` explicite parce que l'adresse seule ne dit pas ce que le clic fait.
+AUTH 04 (COS-296) remplacera la cible par un `POST /users/logout`.
+
+**Le chrome d'auth réduit n'est pas fait** (`BKMK` + `auth` + `build 2.4.1 · tls on` + LED, README
+§1). Le ticket porte sur les écrans **applicatifs** ; login et signup appartiennent à UI 01 / UI 02.
+Idem pour About, qui est aujourd'hui dans `(public)` et n'a donc pas le shell : c'est COS-305 qui
+décidera de son groupe de routes.
 
 ---
 

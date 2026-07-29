@@ -93,13 +93,36 @@ function DialogContent({
 /* The header is the card's command bar again, not a stack of centred text (COS-291). All
  * three GRAPHITE modals open with the same strip: a title, a couple of overlines, the
  * close glyph pushed right. Sticky, because the content scrolls under it when a long form
- * outgrows the viewport. */
+ * outgrows the viewport.
+ *
+ * ⚠️ **No narrow-width variant, and it is not an oversight.** This carried a `@max-3xl:`
+ * copy of `CommandBar`'s fold — 54px tall, 8px gap, 12px padding — which could never
+ * apply: the modal is portalled to `document.body`, outside the app screen, and that is
+ * the only element in the system declaring `container-type`, so the query had no container
+ * and evaluated false at every width.
+ *
+ * It cannot simply be re-pointed, because the trigger does not exist yet:
+ *
+ * - The 46 → 54px growth has no reason here in the first place. A card's command bar grows
+ *   because it holds the search field, which is taller than its line box; a modal header
+ *   holds a title and a close glyph. The handoff only gives it that rule by sharing the
+ *   `.gr-cmd` class, and only ever renders its modal *inside* the screen.
+ * - The 2–4px of tightening needs to fire on the modal's own width, and the modal's width
+ *   is still shadcn's stock `sm:max-w-lg` — GRAPHITE's `min(680px, 100% - 20px)` lands with
+ *   the composition, in UI 10 / UI 11. A self-container here would not help either: it
+ *   would measure the modal, and a modal capped below 768px makes `@max-3xl` permanently
+ *   true, which is worse than never.
+ *
+ * So whichever ticket composes a real modal (COS-300 filters, COS-319 edit, COS-320 delete)
+ * decides it with a layout in hand: either `@container` on the content plus a threshold on
+ * the modal's own scale, or the fold in the composed component. See §7 of
+ * docs/design-system.md. */
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
       className={cn(
-        "sticky top-0 z-10 flex min-h-11.5 shrink-0 items-center gap-3 border-b border-gr-border bg-gr-panel-2 px-3.5 inset-shadow-gr-hair @max-3xl:min-h-13.5 @max-3xl:gap-2 @max-3xl:px-3",
+        "sticky top-0 z-10 flex min-h-11.5 shrink-0 items-center gap-3 border-b border-gr-border bg-gr-panel-2 px-3.5 inset-shadow-gr-hair",
         className,
       )}
       {...props}
@@ -120,6 +143,12 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+/* It wraps unconditionally, not behind a width variant. The wrap used to sit behind the
+ * same dead `@max-3xl:` query as the header — and the variant was not buying anything in
+ * the first place: wrapping is already conditional on the content not fitting.
+ * Unconditional, it does nothing while the buttons fit and wraps as soon as they do not,
+ * which also covers the widths a single threshold would have missed. The gap is a flex
+ * `gap`, so the wrapped rows get their 10px too. */
 function DialogFooter({
   className,
   showCloseButton = false,
@@ -132,7 +161,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex shrink-0 items-center gap-2.5 border-t border-gr-border bg-gr-panel-2 px-5 py-3 @max-3xl:flex-wrap",
+        "flex shrink-0 flex-wrap items-center gap-2.5 border-t border-gr-border bg-gr-panel-2 px-5 py-3",
         className,
       )}
       {...props}
