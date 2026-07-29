@@ -5,10 +5,13 @@
  * single animation uses each value. */
 
 /* The composed shorthands, so the components name an animation instead of spelling one
- * out in an arbitrary value. Only the caret needs one today — the other two keyframes
- * are driven by shadcn's `tw-animate-css` classes at the point of use. */
+ * out in an arbitrary value. `bkmk-pop` has none yet — the row and chip entrances that
+ * will use it do not exist; the modal's entrance comes from shadcn's `tw-animate-css`
+ * classes at the point of use. */
 @theme {
   --animate-gr-caret: bkmk-blink 1.05s steps(1) infinite;
+  /* A screen arriving in the desk (COS-292). Duration and easing are the handoff's. */
+  --animate-gr-screen: bkmk-fade 220ms ease-out;
 }
 
 /* The chrome's block caret (`.gr-caret` in the handoff): a solid square blinking at the
@@ -33,12 +36,14 @@
   }
 }
 
-/* Screen and modal entrance. The small upward offset is enough to convey depth without
- * sliding the whole page around. */
+/* Screen entrance. The small upward offset is enough to convey depth without sliding the
+ * whole page around. 2px is the handoff's figure; DS 01 wrote 4px before anything used
+ * this keyframe, and COS-292 brought it back in line when the desk became its first
+ * consumer. */
 @keyframes bkmk-fade {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(2px);
   }
   to {
     opacity: 1;

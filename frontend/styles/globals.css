@@ -4,7 +4,11 @@
  *
  * Fonts are not imported here: next/font self-hosts them from src/app/layout.tsx.
  *
- * DS 03 (COS-292) will add ./components/chrome.css, with its own import. */
+ * There is no ./components/ directory, and DS 03 (COS-292) decided there would not be one:
+ * the shell is written in Tailwind utilities like every other component. pfa keeps a
+ * `components/chrome.css` for what utilities cannot express — gradient borders across
+ * padding-box and border-box, `::-webkit-scrollbar`, `:has()` scrims — and the GRAPHITE
+ * shell needs none of that. See §9 of docs/design-system.md. */
 @import "tailwindcss";
 @import "tw-animate-css";
 

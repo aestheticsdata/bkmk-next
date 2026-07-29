@@ -23,6 +23,13 @@ every screen.
 **No stock Tailwind palette.** Not `gray-400`, not `emerald-700`. GRAPHITE's colours are chosen
 hues; Tailwind's greys don't come close and would clash beside them.
 
+**Never name a utility you are not using — not even in a comment.** Tailwind scans source files for
+class-name candidates and cannot tell code from prose, so a comment explaining "this used to be
+`X`" emits `X`. DS 01 met this through the docs and closed it with `@source not "../docs"`; that
+does not cover `src/`. COS-292 met it again while explaining a class it had just removed, and left a
+dead rule in the bundle until the comment was reworded. Describe the utility instead: *54px tall*,
+not the class that produces it.
+
 **Snap before creating a token.** If the native Tailwind scale has an equivalent step, take the
 native step. Add a token only where the native scale genuinely has nothing. That is why this system
 has **no** radius token at all and only **two** text-size tokens.
@@ -89,6 +96,7 @@ remain:
 
 | Handoff | Decision | Result |
 |---|---|---|
+| 9 (status bar, narrow) | → 10 | `text-3xs` |
 | 9.5 (micro-label, column header, mini-button) | → 10 | `text-3xs` |
 | 10 (chip, slot, status bar) | keep | `text-3xs` |
 | 10.5 (button) | → 10 | `text-3xs` |
@@ -98,6 +106,7 @@ remain:
 | 12.5 (base) | → 12 | `text-xs` |
 | 13 (BKMK wordmark) | → 12 | `text-xs` |
 | 14 | native | `text-sm` |
+| 15 (tab-bar glyph) | → 14 | `text-sm` |
 | 21 (record title) | → 20 | `text-xl` |
 | 24 (About title) | native | `text-2xl` |
 | 26 (auth title) | → 24 | `text-2xl` |
@@ -107,6 +116,10 @@ the button (10.5) by one pixel: at that size colour and letter-spacing carry the
 1px, so the two meet at 10. And the three titles (21 / 24 / 26) land on two native steps, which
 puts the record and auth titles on their nearest neighbour without creating a single token.
 
+The same argument settles the 9px the handoff drops the status bar to on narrow widths (COS-292):
+it is one pixel below the smallest label in the system, and the shrink would be paid for with a
+token nothing else would ever use. The status bar stays `text-3xs` at both widths.
+
 ### Letter-spacing
 
 | Token | Value | Usage |
@@ -115,8 +128,9 @@ puts the record and auth titles on their nearest neighbour without creating a si
 | `tracking-snug` | `-0.015em` | titles |
 
 Control uppercase (the handoff's 0.08 / 0.10em) takes native **`tracking-widest`**, which is 0.1em.
-Chips and segments (0.04em) take **`tracking-wider`**, 0.05em. The base's -0.005em is dropped:
-0.06px on 12px text, invisible.
+The tab bar's 0.12em sits halfway between that and `tracking-caps`; it is the same kind of control
+label as the chrome tabs, so it joins them on `tracking-widest`. Chips and segments (0.04em) take
+**`tracking-wider`**, 0.05em. The base's -0.005em is dropped: 0.06px on 12px text, invisible.
 
 `.num` applies `font-variant-numeric: tabular-nums` — the table is dense with dates, counters and
 stars.
@@ -132,6 +146,7 @@ scale (`md` 6 · `lg` 8 · `xl` 12 · `2xl` 16 · `full`).
 |---|---|---|
 | chip 6 | native | `rounded-md` |
 | tab 7 | → 6 | `rounded-md` |
+| tab-bar button 11 | → 12 | `rounded-xl` |
 | segment 8 | native | `rounded-lg` |
 | field & button 9 | → 8 | `rounded-lg` |
 | slot & drop zone 10 | → 8 | `rounded-lg` |
@@ -159,6 +174,7 @@ or as `var(--shadow-gr-*)`.
 |---|---|
 | `shadow-gr-1` | cards and buttons at rest |
 | `shadow-gr-2` | button hover, auth card |
+| `shadow-gr-chrome` | the top chrome strip — one tight drop, where a card's would band the desk |
 | `shadow-gr-modal` | the modal — carries its own hair line |
 | `shadow-gr-primary` | primary action, with the teal glow |
 | `shadow-gr-oxide` | destructive action — the same shape in oxide |
@@ -199,6 +215,7 @@ No tokens: everything lands on the numbered scale, half-steps included.
 | button 30 · segment 24 · chip 18 | `h-7.5` · `h-6` · `h-4.5` |
 | action 22 · mini-button 20 | `h-5.5` · `h-5` |
 | status bar 26 | `h-6.5` |
+| tab-bar button 48 / gap 6 | `h-12` / `gap-1.5` |
 | field padding 8/11 | `py-2 px-2.75` |
 
 ---
@@ -217,6 +234,29 @@ right side.
 
 Components write `@max-3xl:` and nothing else — no `md:`, no `@media`. Container queries follow the
 width of the app screen, not the window.
+
+### Where that rule stops: portalled surfaces
+
+The rule holds for anything rendered **inside** the app screen, which declares the system's only
+`container-type` (§9). A container query needs such an ancestor; with none, it does not fall back to
+the viewport, it evaluates false at every width. So `@max-3xl:` on anything Radix portals to
+`document.body` — a dialog, an alert dialog, a toast — is not a fold, it is a no-op.
+
+That is not a rule to work around by reaching for `@media`, and not one to satisfy by making the
+portalled element its own container either: a modal capped at 680px is *always* under 768px, so a
+self-container would make `@max-3xl` permanently true, which is worse than never. Either the fold
+belongs to the composed component, or it needs a threshold on the modal's own scale — a decision that
+needs a real layout, so it belongs to the ticket that builds one (COS-300, COS-319, COS-320).
+
+Two live consequences, both deliberate:
+
+- **`ui/dialog` has no width variants.** COS-291 gave its header and footer a copy of `CommandBar`'s
+  fold; COS-292 found it inert and removed it. The footer kept the behaviour it was reaching for by
+  wrapping unconditionally, which needs no threshold at all. The header's is deferred — see the
+  comment in the file for why its 46 → 54px growth had no reason here to begin with.
+- **`size="chrome"` on a button still carries `@max-3xl:h-8.5`**, and that one stays: buttons live on
+  screens, where it works. Inside a modal it silently does not apply, and the ticket that composes
+  the modal inherits that too.
 
 ---
 
@@ -281,7 +321,100 @@ four dim bars.
 
 ---
 
-## 9. What is still legacy
+## 9. The shell
+
+Established by **COS-292 (DS 03)**. `components/shared/shell/` — the frame every application
+screen is rendered into, mounted once in `app/(private)/layout.tsx`:
+
+```
+AppShell        the screen root: @container, h-dvh, the grey field
+  TopChrome     38px — wordmark, the four module tabs, account meta, LED
+  Desk          the cards float here; the only thing that scrolls
+  StatusBar     26px — state word, the screen's keyboard hints, one value at the right
+  TabBar        below @3xl only — the four modules as a bottom bar
+```
+
+`SHELL_TABS` (`shell/config/constants.ts`) is the single list of modules; the chrome and the tab bar
+both render it, so they cannot drift. `useShellRoute` answers two different questions — **which
+screen** (the status bar's hints) and **which tab is lit** — because they differ on a record, where
+`index` stays lit. `useShellCounts` fetches the only real data up there.
+
+### It is written in utilities, not in a stylesheet
+
+The ticket recommended a `styles/components/chrome.css`, on pfa's model. It is not there, and that is
+deliberate: pfa's `chrome.css` exists for what utilities genuinely cannot say — gradient borders
+across `padding-box` and `border-box`, `::-webkit-scrollbar`, `:has()` scrims. The GRAPHITE shell
+needs none of that, DS 02 already put its own `@max-3xl:` overrides inline (see `Card`,
+`CommandBar`), and a second idiom for four components would cost more than the dense responsive
+block saves. **There is no `styles/components/` directory.**
+
+### The screen root is the system's one container
+
+`AppShell` carries `@container`. Every `@max-3xl:` variant in this system — here, in `ds/`, in the
+restyled `ui/` — resolves against it, which is what makes the interface fold on the width of the app
+panel rather than the window (§7).
+
+Two consequences worth knowing. `container-type` makes that element the containing block for
+`position: fixed` descendants; it spans the viewport exactly, so nothing inside notices. And
+**anything portalled to `document.body` lands outside the container** and gets no `@max-3xl` at all —
+which is why `ui/dialog` carries no width variants. That boundary, and what to do at it, is in §7.
+
+### What is alive and what is furniture
+
+`IDX/2.4.1`, `uptime 04:12` and `sync 12s` are **static chrome** (§8.1 of the spec) and live as copy
+in `@text/shell.ts`. They are rendered exactly as written: no interval advancing the clock, no
+blinking LED, nothing that suggests a reading. The tab counters and the account email are the only
+real values in the shell.
+
+Counters print on three digits (`index 312`, `alarms 004`) and render **nothing** until the number
+arrives — `000` would be a wrong answer, not a pending one.
+
+### The status bar's content is copy, keyed by screen
+
+`SHELL_STATUS` in `@text/shell.ts` holds each screen's hints and, where it is static, its right-hand
+value. A layout cannot take props from the page it renders, and the alternative — a store every
+screen writes into on mount — buys a flash of the wrong content and an effect per screen in exchange
+for a table of constants. Two screens compute their right-hand slot from the counters instead; the
+record screen's `record <id>` is left to COS-301, which owns that route.
+
+### The fold is narrow, not mobile
+
+Below `@3xl` the chrome keeps only the wordmark and the LED, grows to 48px, and the four tabs
+reappear as `TabBar` at the bottom. Because the switch is a container query, that happens in a 700px
+split view on a large display exactly as it does on a phone — so the component is `TabBar`, not
+`MobileTabBar`.
+
+### Four small departures from the handoff
+
+- **The tabs carry a transparent border at rest.** The handoff adds a border only to the lit tab,
+  which makes it 2px larger than its neighbours and nudges the row. Same for the tab bar's buttons.
+- **The desk scrolls** (`overflow-auto`). The handoff keeps it fixed and has each card scroll its own
+  body; GRAPHITE screens behave identically either way, and the legacy screens that are taller than
+  the viewport would otherwise be cut off.
+- **`bkmk-fade` moved from 4px to 2px**, the handoff's figure for a screen entrance. DS 01 wrote 4px
+  before anything consumed the keyframe; the desk is its first consumer, through
+  `animate-gr-screen`.
+- **The desk is keyed on the pathname.** The shell lives in the layout so the chrome never remounts,
+  which is also why an animation declared on the desk would play once per session. Keying it on the
+  path replays the entrance on every route change — and leaves the query string out, so paging
+  through the index does not flash the table.
+
+### What the shell replaced
+
+`shared/navBar/` (NavBar, UserMenu and their two content components) and
+`shared/helpers/useIsWindowResponsive.ts` are **gone**: the chrome does that job, and the fold is a
+container query now. Deleting the user menu orphaned `common/dropdown/`, which went with it, and with
+it the `use-onclickoutside` dependency that stopped at React 18.
+
+`shared/Layout.tsx` lost its navigation bar and keeps only the old tool bar and sort bar, because
+nothing replaces those yet — removing them would cost the legacy screens their pagination, filters
+and record actions several tickets before the GRAPHITE command bar arrives. The account email is the
+one sign-out affordance left until UI 09 puts one in About; it points at `/logout`, which AUTH 04
+(COS-296) turns into a `POST /users/logout`.
+
+---
+
+## 10. What is still legacy
 
 Three files still carry tokens from the old UI, marked as such: **15 colours** in `colors.css`,
 **2 shadows** in `elevation.css`, **3 sizes and 3 families** in `typography.css`. They are not this
@@ -290,4 +423,5 @@ screen with it.
 
 Two resets are waiting on the UI lot too: the page background (`base.css` still applies `bg-grey1`)
 and the `body` typeface. Flipping them here would strip every page before GRAPHITE has anything to
-put in its place — UI 01 (COS-297) does it.
+put in its place — UI 01 (COS-297) does it. The shell does not wait on them and does not need to:
+`AppShell` paints its own surface and sets its own typeface, inside its own subtree.

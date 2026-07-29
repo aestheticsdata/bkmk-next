@@ -14,6 +14,11 @@
   --shadow-gr-1: 0 1px 2px rgb(20 21 19 / 0.1), 0 3px 8px -2px rgb(20 21 19 / 0.1);
   /* Button hover, auth card. */
   --shadow-gr-2: 0 2px 4px rgb(20 21 19 / 0.12), 0 18px 40px -12px rgb(20 21 19 / 0.3);
+  /* The top chrome strip (COS-292): one tight drop under a full-width surface, where a
+   * card's `--shadow-gr-1` would cast an 8px band across the desk. Native `shadow-sm` is
+   * the same shape in pure black, and GRAPHITE tints every shadow the same warm grey —
+   * the reason this is a token rather than a stock utility. */
+  --shadow-gr-chrome: 0 1px 3px rgb(20 21 19 / 0.1);
   /* The modal — carries its own hair line, unlike the two steps above. */
   --shadow-gr-modal:
     0 30px 70px -20px rgb(18 19 17 / 0.55), 0 2px 6px rgb(18 19 17 / 0.2), inset 0 1px 0 rgb(255 255 255 / 0.45);
