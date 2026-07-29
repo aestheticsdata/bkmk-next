@@ -10,20 +10,21 @@
 
 Session du 29/07 au soir. Ce qui a été fait :
 
-1. ✅ Lecture du handoff **mis à jour** `design_handoff_graphite 2/README.md`.
+1. ✅ Lecture du handoff **mis à jour** `design_handoff_graphite/README.md`.
 2. ✅ Inventaire du codebase bkmk (frontend Next 13 pages router, backend Express JS).
 3. ✅ Analyse approfondie de `~/dev/pfa/front` — versions, organisation, conventions, configs.
 4. ✅ Spec + 26 tickets Linear.
 
 **Rien n'a été codé.** Le seul ajout versionné est ce document.
 
-### ⚠️ Deux dossiers de handoff coexistent
+### Ménage fait
 
-`design_handoff_graphite/` (obsolète) et **`design_handoff_graphite 2/` (autorité)**. Le second
-ajoute la modale d'édition et les flux de suppression. **Supprimer l'ancien** pour éviter toute
-ambiguïté — tous les numéros de ligne de ce document et des tickets pointent vers le nouveau.
+L'ancien dossier de handoff et `bkmk-redesign-2.zip` ont été supprimés ; le dossier v2 a été
+renommé `design_handoff_graphite/` (le zip livré par Claude Design le nommait déjà ainsi — le
+suffixe « 2 » n'était qu'un artefact de collision macOS). Avant suppression, `diff -rq` a confirmé
+que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiques, aucune perte.
 
-Le nom contient un espace : penser aux guillemets en shell.
+**Il n'y a donc plus qu'un seul chemin de handoff, sans espace.**
 
 ---
 
@@ -62,6 +63,17 @@ colonnes. Pied : `save ⌘↵` (primaire), `cancel`, et à droite `delete record
 et `confirmId` **local à la liste** (id de la ligne en confirmation en place). Noter la règle
 d'exclusion mutuelle du prototype : `openEdit` ferme les filtres, `askDelete` ferme l'édition.
 
+### ⚠️ Deux pièges relevés en lisant le JSX v2
+
+**La grille de la table change.** `GCOLS` passe de `58px 36px 62px 1fr 216px 122px` (v1) à
+**`58px 36px 62px 1fr 188px 168px`** (v2) : la colonne `tags` rétrécit de 28px et la colonne
+`added` s'élargit d'autant pour loger les trois boutons d'action. `paddingRight` passe de 14 à 12,
+`gap` de 10 à 8. Reprendre la v1 casserait l'alignement.
+
+**Le glyphe de suppression est `⌧`, pas `⌫`.** Le README §10 écrit `⌫`, le JSX utilise `⌧`. Le
+README désigne lui-même `screens-graphite.jsx` comme « source de vérité de la structure » : c'est
+donc `⌧` qui gagne.
+
 ### Styles associés (`themes.css`, lignes 369-379 + responsive 432-446)
 
 `.gr-acts` (conteneur, `opacity:0` → `1` au survol de `.gr-tr`) · `.gr-act` (bouton-glyphe 22px,
@@ -74,7 +86,7 @@ rayon 6 ; **26px et toujours visible en mobile**) · `.gr-act.danger:hover` → 
 
 ## 2. Inventaire : écrans du handoff vs. existant
 
-`design_handoff_graphite 2/screens-graphite.jsx` — **les numéros de ligne ont tous bougé en v2** :
+`design_handoff_graphite/screens-graphite.jsx` — **les numéros de ligne ont tous bougé en v2** :
 
 | # | Fonction handoff | Ligne | Écran existant bkmk | État |
 |---|---|---|---|---|
@@ -123,9 +135,14 @@ nécessaires.
 
 ### Ruptures attendues, Next 13 → 16
 
-- **`pages/` → `app/`.** pfa est intégralement en App Router avec les groupes de routes
-  `(public)` / `(private)`. Adopter son organisation implique cette migration — c'est le point le
-  plus risqué du lot (voir §8, question 1).
+- **`pages/` → `app/` — ✅ décidé, on migre.** pfa est intégralement en App Router avec les groupes
+  de routes `(public)` / `(private)` ; adopter son organisation impliquait cette migration. C'est le
+  point le plus risqué du lot : `_app.tsx` devient `app/layout.tsx` + `app/providers.tsx`, les
+  providers (react-query, AuthContext) passent en composant client explicite, `useRouter` vient de
+  `next/navigation`, `getServerSideProps` disparaît, et le garde de session `(private)` se joue côté
+  serveur (`auth/server/getServerSession.ts` chez pfa). Les 12 routes existantes sont remappées :
+  `(public)` → login, signup, about ; `(private)` → index, bookmarks/[id], create, upload,
+  reminders. `pages/logout/` et `pages/bookmarks/edit/[id]/` disparaissent.
 - `next/font` remplace l'`@import` Google Fonts (IBM Plex Mono).
 - `next lint` est retiré → `biome check ./src`.
 - Turbopack par défaut ; pfa fixe `turbopack.root: __dirname` pour éviter l'avertissement multi-lockfile.
@@ -323,19 +340,17 @@ clé `bkmk-token`).
 
 ## 8. Questions ouvertes — à trancher demain avant de coder
 
-Trois des six questions d'hier sont **résolues** : l'édition est une modale (handoff §9), shadcn
-est adopté, Tailwind passe en v4.
+**Tranché :** édition en modale (handoff §9) · shadcn adopté · Tailwind v4 · **App Router** ·
+Biome partout, eslint et prettier retirés (front **et** back) · ancien dossier de handoff et zip
+supprimés.
 
-1. **App Router.** Adopter l'organisation pfa (`src/app/(public)|(private)`) implique de migrer
-   `pages/` → `app/`. C'est le plus gros risque du lot plateforme. Alternative : Next 16 en gardant
-   `pages/`, et on s'écarte de pfa sur ce point précis. **Recommandation : migrer** — l'écart
-   d'organisation serait permanent, et la refonte réécrit de toute façon chaque écran.
-2. **Métadonnées décoratives** — `uptime 04:12`, `sync 12s`, `IDX/2.4.1`, `build 2.4.1 · tls on` :
+Il reste :
+
+1. **Métadonnées décoratives** — `uptime 04:12`, `sync 12s`, `IDX/2.4.1`, `build 2.4.1 · tls on` :
    vraies valeurs (endpoints à créer) ou chrome statique ?
-3. **Champs manquants** (`hash`, `log`, `related`) — migration MySQL maintenant, ou écrans livrés
+2. **Champs manquants** (`hash`, `log`, `related`) — migration MySQL maintenant, ou écrans livrés
    avec ces blocs masqués et remplis au lot DATA ?
-4. **Ancien dossier de handoff** — je supprime `design_handoff_graphite/` (obsolète) ?
-5. **Périmètre visuel** — la refonte remplace intégralement l'UI ; pas de mode « ancien thème ».
+3. **Périmètre visuel** — la refonte remplace intégralement l'UI ; pas de mode « ancien thème ».
    Confirmé ?
 
 ---
@@ -379,11 +394,11 @@ COS-313 (doc design system)
 
 | Quoi | Où |
 |---|---|
-| Spec design (autorité) | `design_handoff_graphite 2/README.md` |
-| Structure des écrans (autorité) | `design_handoff_graphite 2/screens-graphite.jsx` |
-| CSS GRAPHITE | `design_handoff_graphite 2/themes.css`, `.theme-graphite` **ligne 292**, actions/danger **369-379** et **432-446** |
-| Maquettes | ouvrir `design_handoff_graphite 2/bkmk redesign.html` |
-| State du prototype | `design_handoff_graphite 2/bkmk-context.jsx` |
+| Spec design (autorité) | `design_handoff_graphite/README.md` |
+| Structure des écrans (autorité) | `design_handoff_graphite/screens-graphite.jsx` |
+| CSS GRAPHITE | `design_handoff_graphite/themes.css`, `.theme-graphite` **ligne 292**, actions/danger **369-379** et **432-446** |
+| Maquettes | ouvrir `design_handoff_graphite/bkmk redesign.html` |
+| State du prototype | `design_handoff_graphite/bkmk-context.jsx` |
 | Versions & deps | `~/dev/pfa/front/package.json` |
 | Organisation & conventions | `~/dev/pfa/front/src/`, `~/dev/pfa/front/docs/design-system.md`, `~/dev/pfa/front/.design-sync/conventions.md` |
 | Configs | `~/dev/pfa/biome.json`, `~/dev/pfa/front/biome.json`, `next.config.js`, `postcss.config.js`, `tsconfig.json`, `components.json` |
