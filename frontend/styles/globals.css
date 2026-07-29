@@ -5,12 +5,17 @@
  * Les polices ne sont pas importées ici : next/font les auto-héberge depuis
  * src/app/layout.tsx.
  *
- * DS 01 (COS-290) ajoutera ./tokens/breakpoints.css et ./tokens/radius.css,
- * DS 03 (COS-292) ./components/chrome.css — chacun avec son import. */
+ * DS 01 (COS-290) ajoutera ./tokens/breakpoints.css, DS 03 (COS-292)
+ * ./components/chrome.css — chacun avec son import. */
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Sans ça, `dark:` suivrait la préférence système. shadcn et pfa le font piloter par la
+ * classe `.dark`, seule façon d'imposer le thème sombre de GRAPHITE. */
+@custom-variant dark (&:is(.dark *));
+
 @import './tokens/colors.css';
+@import './tokens/radius.css';
 @import './tokens/typography.css';
 @import './tokens/elevation.css';
 
