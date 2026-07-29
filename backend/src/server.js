@@ -3,7 +3,7 @@ const app = express();
 const cors = require("cors");
 const helmet = require("helmet");
 const OS = require("os");
-const cronMysql = require('./cron/cron-mysql');
+const cronMysql = require("./cron/cron-mysql");
 
 process.env.UV_THREADPOOL_SIZE = OS.cpus().length;
 

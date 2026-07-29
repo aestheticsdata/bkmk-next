@@ -1,6 +1,6 @@
-import { useRouter } from "next/navigation";
 import { useAuthStore } from "@auth/store/authStore";
 import { useUserStore } from "@auth/store/userStore";
+import { useRouter } from "next/navigation";
 
 const useCredentials = () => {
   const router = useRouter();
@@ -16,6 +16,6 @@ const useCredentials = () => {
   return {
     setCredentials,
   };
-}
+};
 
 export default useCredentials;

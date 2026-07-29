@@ -2,7 +2,6 @@ import adjustFontColor from "@components/common/helpers/adjustFontColor";
 
 import type { Category } from "@components/bookmarks/interfaces/bookmark";
 
-
 const getCategoryComponent = (item: Category) => {
   return (
     <div
@@ -17,7 +16,5 @@ const getCategoryComponent = (item: Category) => {
     </div>
   );
 };
-
-
 
 export default getCategoryComponent;

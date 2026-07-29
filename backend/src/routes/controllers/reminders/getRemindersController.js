@@ -1,5 +1,5 @@
-const dbConnection = require('../../../db/dbinitmysql');
-const differenceInDays = require('date-fns/differenceInDays');
+const dbConnection = require("../../../db/dbinitmysql");
+const differenceInDays = require("date-fns/differenceInDays");
 
 module.exports = async (req, res) => {
   const sql = `
@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   `;
 
   const conn = await dbConnection();
-  let bookmarksToNotify = [];
+  const bookmarksToNotify = [];
 
   try {
     const [result] = await conn.execute(sql);

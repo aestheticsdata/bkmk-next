@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { COLUMN_WIDTH } from "@components/shared/config/constants";
+import Cell from "@components/shared/sortBar/Cell";
 import { useRouter } from "next/navigation";
 import queryString from "query-string";
-import Cell from "@components/shared/sortBar/Cell";
-import { COLUMN_WIDTH } from "@components/shared/config/constants";
+import { useState } from "react";
 
 const SortBar = () => {
   const router = useRouter();
@@ -12,7 +12,7 @@ const SortBar = () => {
 
   const onClick = (property: string) => {
     setPropertyActive(property);
-    let search = queryString.parse(window.location.search);
+    const search = queryString.parse(window.location.search);
     let qs: string;
 
     if (!search.sort) {
@@ -41,17 +41,70 @@ const SortBar = () => {
 
   return (
     <div className="flex w-full mt-24 bg-grey0 text-xxs select-none">
-      <Cell width={COLUMN_WIDTH.linkIcon} label="link" value="link" onClick={onClick} displayLabel={false} propertyActive={propertyActive} />
-      <Cell width={COLUMN_WIDTH.title} label="title" value="title" onClick={onClick} propertyActive={propertyActive} />
-      <Cell width={COLUMN_WIDTH.stars} label="stars" value="stars" onClick={onClick} propertyActive={propertyActive} />
-      <Cell width={COLUMN_WIDTH.notes} label="notes" value="notes" onClick={onClick} propertyActive={propertyActive} />
-      <Cell width={COLUMN_WIDTH.priority} label="priority" value="priority" onClick={onClick} propertyActive={propertyActive} />
+      <Cell
+        width={COLUMN_WIDTH.linkIcon}
+        label="link"
+        value="link"
+        onClick={onClick}
+        displayLabel={false}
+        propertyActive={propertyActive}
+      />
+      <Cell
+        width={COLUMN_WIDTH.title}
+        label="title"
+        value="title"
+        onClick={onClick}
+        propertyActive={propertyActive}
+      />
+      <Cell
+        width={COLUMN_WIDTH.stars}
+        label="stars"
+        value="stars"
+        onClick={onClick}
+        propertyActive={propertyActive}
+      />
+      <Cell
+        width={COLUMN_WIDTH.notes}
+        label="notes"
+        value="notes"
+        onClick={onClick}
+        propertyActive={propertyActive}
+      />
+      <Cell
+        width={COLUMN_WIDTH.priority}
+        label="priority"
+        value="priority"
+        onClick={onClick}
+        propertyActive={propertyActive}
+      />
       <div className={`flex ${COLUMN_WIDTH.categories}`} />
-      <Cell width={COLUMN_WIDTH.screenshot} label="screenshot" value="screenshot" justify="justify-start" textSmall={true} onClick={onClick} propertyActive={propertyActive} />
-      <Cell width={COLUMN_WIDTH.alarm} label="alarm" value="alarm" justify="justify-start" textSmall={true} onClick={onClick} propertyActive={propertyActive} />
-      <Cell width={COLUMN_WIDTH.dateAdded} label="date added" value="date" onClick={onClick} propertyActive={propertyActive} />
+      <Cell
+        width={COLUMN_WIDTH.screenshot}
+        label="screenshot"
+        value="screenshot"
+        justify="justify-start"
+        textSmall={true}
+        onClick={onClick}
+        propertyActive={propertyActive}
+      />
+      <Cell
+        width={COLUMN_WIDTH.alarm}
+        label="alarm"
+        value="alarm"
+        justify="justify-start"
+        textSmall={true}
+        onClick={onClick}
+        propertyActive={propertyActive}
+      />
+      <Cell
+        width={COLUMN_WIDTH.dateAdded}
+        label="date added"
+        value="date"
+        onClick={onClick}
+        propertyActive={propertyActive}
+      />
     </div>
-  )
-}
+  );
+};
 
 export default SortBar;

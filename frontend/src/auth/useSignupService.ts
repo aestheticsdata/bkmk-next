@@ -3,23 +3,22 @@ import Swal from "sweetalert2";
 
 import type { LoginValues } from "@components/shared/sharedLoginForm/interfaces";
 
-
 const useSignupService = () => {
   const { request } = useRequestHelper();
 
   const signupService = async (user: LoginValues) => {
     const { email, password } = user;
     try {
-      const res = await request('/users/add', {
-        method: 'POST',
+      const res = await request("/users/add", {
+        method: "POST",
         data: {
-          name: email!.split('@')[0],
+          name: email!.split("@")[0],
           email,
           password,
           registerDate: new Date(),
           baseCurrency: "EUR",
           language: "fr",
-        }
+        },
       });
       return res.data;
     } catch (err) {
@@ -31,13 +30,13 @@ const useSignupService = () => {
       return {
         token: null,
         user: null,
-      }
+      };
     }
-  }
+  };
 
   return {
     signupService,
-  }
-}
+  };
+};
 
 export default useSignupService;

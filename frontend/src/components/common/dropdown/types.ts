@@ -1,4 +1,4 @@
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 export interface Dropdown {
   // React 19 : `ReactElement` par défaut porte des props `unknown`, ce qui empêche

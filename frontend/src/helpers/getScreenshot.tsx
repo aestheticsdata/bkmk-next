@@ -1,8 +1,5 @@
-import {
-  useEffect,
-  useState
-} from "react";
 import useRequestHelper from "@helpers/useRequestHelper";
+import { useEffect, useState } from "react";
 
 const useGetScreenshot = (bookmark: any) => {
   const { privateRequest } = useRequestHelper();
@@ -12,11 +9,13 @@ const useGetScreenshot = (bookmark: any) => {
   const getScreenshot = async (bookmark: any) => {
     setIsLoading(true);
     if (bookmark.screenshot) {
-      const res = await privateRequest(`/bookmarks/upload/${bookmark.id}?screenshotFilename=${bookmark.screenshot}&userID=${bookmark.user_id}`);
+      const res = await privateRequest(
+        `/bookmarks/upload/${bookmark.id}?screenshotFilename=${bookmark.screenshot}&userID=${bookmark.user_id}`,
+      );
       setImageUrl(res.data);
     }
     setIsLoading(false);
-  }
+  };
 
   useEffect(() => {
     if (bookmark) {
@@ -28,6 +27,6 @@ const useGetScreenshot = (bookmark: any) => {
     imageUrl,
     isLoading,
   };
-}
+};
 
 export default useGetScreenshot;

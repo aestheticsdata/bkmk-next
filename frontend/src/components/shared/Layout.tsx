@@ -1,6 +1,6 @@
-import NavBar from "@src/components/shared/navBar/NavBar";
-import ToolsBar from "@components/shared/toolsBar/ToolsBar";
 import SortBar from "@components/shared/sortBar/SortBar";
+import ToolsBar from "@components/shared/toolsBar/ToolsBar";
+import NavBar from "@src/components/shared/navBar/NavBar";
 
 interface LayoutProps {
   isLogin?: boolean;
@@ -26,7 +26,7 @@ const Layout = ({
   return (
     <div className={`flex flex-col ${isLogin ? "items-center" : "items-start"} bg-grey1`}>
       <NavBar />
-      {displayTools &&
+      {displayTools && (
         <>
           <div className="">
             <ToolsBar
@@ -38,7 +38,7 @@ const Layout = ({
           </div>
           {sortbar && <SortBar />}
         </>
-      }
+      )}
       {children}
     </div>
   );

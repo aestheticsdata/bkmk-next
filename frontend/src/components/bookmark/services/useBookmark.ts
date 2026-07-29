@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
-import {
-  useQuery,
-} from "@tanstack/react-query";
-import useRequestHelper from "@helpers/useRequestHelper";
 import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
+import useRequestHelper from "@helpers/useRequestHelper";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 
@@ -38,6 +36,6 @@ const useBookmark = (bookmarkID: string) => {
     isLoading,
     bookmark,
   };
-}
+};
 
 export default useBookmark;

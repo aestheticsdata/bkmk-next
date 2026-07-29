@@ -1,22 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faAngleLeft,
-  faPencilAlt,
-  faTrashAlt,
-} from "@fortawesome/free-solid-svg-icons";
-import Pagination from "@components/shared/toolsBar/pagination/Pagination";
-import Filters from "@components/shared/toolsBar/filters/Filters";
-import DeleteConfirm from "@components/common/deleteConfirm/DeleteConfirm";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
-import {
-  PAGES,
-  ROUTES
-} from "@components/shared/config/constants";
+import DeleteConfirm from "@components/common/deleteConfirm/DeleteConfirm";
+import { PAGES, ROUTES } from "@components/shared/config/constants";
+import Filters from "@components/shared/toolsBar/filters/Filters";
+import Pagination from "@components/shared/toolsBar/pagination/Pagination";
 import ToolbarButton from "@components/shared/toolsBar/ToolbarButton";
+import { faAngleLeft, faPencilAlt, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface ToolBarProps {
   backButton: boolean;
@@ -37,52 +30,58 @@ const ToolsBar = ({ backButton, editButton = false, deleteButton = false, filter
       {backButton ? (
         <>
           <ToolbarButton
-            onClick={() => { router.back() }}
+            onClick={() => {
+              router.back();
+            }}
           >
             <>
               <FontAwesomeIcon icon={faAngleLeft} />
               <div>Back</div>
             </>
           </ToolbarButton>
-          {editButton &&
+          {editButton && (
             <ToolbarButton
-              onClick={() => {router.push(`${ROUTES.bookmarksEdition.path}/${params.id}`)}}
+              onClick={() => {
+                router.push(`${ROUTES.bookmarksEdition.path}/${params.id}`);
+              }}
             >
               <>
                 <FontAwesomeIcon icon={faPencilAlt} />
                 <div>Edit</div>
               </>
             </ToolbarButton>
-          }
-          {deleteButton &&
-            displayDeleteConfirm ?
+          )}
+          {deleteButton && displayDeleteConfirm ? (
             <DeleteConfirm
-              closeCB={() => { setDisplayDeleteConfirm(false) }}
-              deleteCB={() => { deleteBookmark.mutate(Number(params.id)) }}
+              closeCB={() => {
+                setDisplayDeleteConfirm(false);
+              }}
+              deleteCB={() => {
+                deleteBookmark.mutate(Number(params.id));
+              }}
               invertHover={true}
             />
-            :
+          ) : (
             <ToolbarButton
-              onClick={() => {setDisplayDeleteConfirm(true)}}
+              onClick={() => {
+                setDisplayDeleteConfirm(true);
+              }}
             >
               <>
                 <FontAwesomeIcon icon={faTrashAlt} />
                 <div>Delete</div>
               </>
             </ToolbarButton>
-          }
+          )}
         </>
-      )
-      :
+      ) : (
         <div className="flex">
           <Pagination />
-          {filters &&
-           <Filters />
-          }
+          {filters && <Filters />}
         </div>
-      }
+      )}
     </div>
-  )
-}
+  );
+};
 
 export default ToolsBar;

@@ -7,6 +7,6 @@ const useIsWindowResponsive = () => {
   }, []);
 
   return isWindowResponsive;
-}
+};
 
 export default useIsWindowResponsive;

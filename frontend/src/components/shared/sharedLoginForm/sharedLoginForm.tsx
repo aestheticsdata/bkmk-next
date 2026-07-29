@@ -1,25 +1,27 @@
-import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import type { SharedLoginFormProps } from "@src/components/shared/sharedLoginForm/interfaces";
 
-const SharedLoginForm = ({
-  onSubmit,
-  buttonTitle,
-  displayEmailField,
-  displayPasswordField,
-}: SharedLoginFormProps) => {
+const SharedLoginForm = ({ onSubmit, buttonTitle, displayEmailField, displayPasswordField }: SharedLoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
-  const { register, handleSubmit, formState: { errors, isDirty, isValid } } = useForm({ mode: "onChange" });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isDirty, isValid },
+  } = useForm({ mode: "onChange" });
 
   return (
     <div className="flex w-full flex-col items-center space-y-8 text-formsGlobalColor">
       <div className="text-4xl font-thin">Bookmark Advanced</div>
 
-      <form className="flex w-full flex-col items-center space-y-8" onSubmit={handleSubmit(onSubmit)}>
+      <form
+        className="flex w-full flex-col items-center space-y-8"
+        onSubmit={handleSubmit(onSubmit)}
+      >
         {displayEmailField && (
           <div className="relative w-11/12 flex flex-col justify-center">
             <input
@@ -29,9 +31,7 @@ const SharedLoginForm = ({
               outline-hidden focus:border-b-2"
               {...register("email", { required: true })}
             />
-            {errors.email &&
-              <div className="flex text-red-500 justify-start">Email obligatoire</div>
-            }
+            {errors.email && <div className="flex text-red-500 justify-start">Email obligatoire</div>}
           </div>
         )}
         {displayPasswordField && (
@@ -48,19 +48,12 @@ const SharedLoginForm = ({
                 className="bottom-1 cursor-pointer"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? (
-                  <FontAwesomeIcon icon={faEyeSlash} />
-                ) : (
-                  <FontAwesomeIcon icon={faEye} />
-                )}
+                {showPassword ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
               </div>
             </div>
-            {errors.password &&
-              <div className="flex text-red-500 justify-start">password obligatoire</div>
-            }
+            {errors.password && <div className="flex text-red-500 justify-start">password obligatoire</div>}
           </div>
         )}
-
 
         <button
           disabled={!isDirty || !isValid}
@@ -70,8 +63,6 @@ const SharedLoginForm = ({
         >
           {buttonTitle}
         </button>
-
-
       </form>
     </div>
   );

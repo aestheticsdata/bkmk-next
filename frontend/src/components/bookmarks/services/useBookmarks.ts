@@ -1,18 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-import queryString from "query-string";
-import useRequestHelper from "@helpers/useRequestHelper";
 import { useUserStore } from "@auth/store/userStore";
 import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
 import { PAGES, ROWS_BY_PAGE } from "@components/shared/config/constants";
 import { usePageStore } from "@components/shared/pageStore";
+import useRequestHelper from "@helpers/useRequestHelper";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import queryString from "query-string";
+import { useEffect, useRef, useState } from "react";
 
 import type { UserStore } from "@auth/store/userStore";
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
@@ -49,7 +45,7 @@ const useBookmarks = (from: string = "") => {
       const hasSortChanged = searchParams.get("sort") !== previousSearchParams.current.get("sort");
       let invalidated = false;
 
-      if (Array.from(searchParams.keys()).filter(k => k !== "page").length > 0) {
+      if (Array.from(searchParams.keys()).filter((k) => k !== "page").length > 0) {
         queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BOOKMARKS] });
         invalidated = true;
       }
@@ -100,7 +96,7 @@ const useBookmarks = (from: string = "") => {
     return privateRequest("/bookmarks", {
       method: "POST",
       data: bookmark,
-      headers: {"Content-Type": "multipart/form-data"},
+      headers: { "Content-Type": "multipart/form-data" },
     });
   };
 
@@ -111,10 +107,12 @@ const useBookmarks = (from: string = "") => {
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.REMINDERS] });
       router.push(`/${PAGES.BOOKMARKS}?page=${pageNumberSaved}`);
     },
-    onError: ((e) => {console.log("error creating bookmark", e)}),
+    onError: (e) => {
+      console.log("error creating bookmark", e);
+    },
   });
 
-  const deleteBookmarkService = async (id: number ) => {
+  const deleteBookmarkService = async (id: number) => {
     return privateRequest(`/bookmarks/${id}`, {
       method: "DELETE",
     });
@@ -131,16 +129,18 @@ const useBookmarks = (from: string = "") => {
         router.push(`/${PAGES.BOOKMARKS}?page=0`);
       }
     },
-    onError: ((e) => {console.log("error deleting bookmark", e)}),
+    onError: (e) => {
+      console.log("error deleting bookmark", e);
+    },
   });
 
   const editBookmarkService = async (bookmark: Bookmark) => {
     return privateRequest("/bookmarks", {
       method: "PUT",
       data: bookmark,
-      headers: {"Content-Type": "multipart/form-data"},
-    })
-  }
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  };
   const editBookmark = useMutation({
     mutationFn: (bookmark: Bookmark) => editBookmarkService(bookmark),
     onSuccess: async () => {
@@ -150,25 +150,28 @@ const useBookmarks = (from: string = "") => {
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CATEGORIES] });
       router.push(`/${PAGES.BOOKMARKS}?page=${pageNumberSaved}`);
     },
-    onError: ((e) => {console.log("error editing bookmark : ", e)}),
+    onError: (e) => {
+      console.log("error editing bookmark : ", e);
+    },
   });
 
-
   const uploadBookmarksService = async (f: any) => {
-    return privateRequest("/bookmarks/upload",  {
+    return privateRequest("/bookmarks/upload", {
       method: "POST",
       data: f,
-      headers: {"Content-Type": "multipart/form-data"},
-    })
-  }
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  };
   const uploadBookmarks = useMutation({
     mutationFn: (bookmarkFile: any) => uploadBookmarksService(bookmarkFile),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BOOKMARKS] });
       router.push(`/${PAGES.BOOKMARKS}?page=0`);
     },
-    onError: ((e) => {console.log("error uploading bookmark file : ", e)}),
-  })
+    onError: (e) => {
+      console.log("error uploading bookmark file : ", e);
+    },
+  });
 
   return {
     bookmarks,
@@ -178,6 +181,6 @@ const useBookmarks = (from: string = "") => {
     editBookmark,
     uploadBookmarks,
   };
-}
+};
 
 export default useBookmarks;

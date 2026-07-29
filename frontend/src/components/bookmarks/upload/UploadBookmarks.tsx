@@ -1,7 +1,7 @@
 "use client";
 
-import { useForm } from "react-hook-form";
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
+import { useForm } from "react-hook-form";
 
 import type { FieldValues } from "react-hook-form";
 
@@ -41,7 +41,11 @@ Ageism in Software | Prime Reacts;https://www.youtube.com/watch?v=I9c4mGAhg4U
 `;
 
 const UploadBookmarks = () => {
-  const { register, handleSubmit, formState: { isDirty, isSubmitted } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { isDirty, isSubmitted },
+  } = useForm();
   const { uploadBookmarks } = useBookmarks();
 
   const onSubmit = (e: FieldValues) => {
@@ -50,21 +54,23 @@ const UploadBookmarks = () => {
     const entries = formData.entries();
     const data = Object.fromEntries(entries);
     uploadBookmarks.mutate(data);
-  }
+  };
 
   return (
     <div className="flex flex-col w-full pt-14 m-2 text-sm space-y-2">
-      <div className="italic font-bold text-base">Le format doit être un fichier .txt exporté par le plugin Chrome Session Buddy ou sous forme d'un fichier .csv dont le format est indiqué ci-dessous :</div>
+      <div className="italic font-bold text-base">
+        Le format doit être un fichier .txt exporté par le plugin Chrome Session Buddy ou sous forme d'un fichier .csv
+        dont le format est indiqué ci-dessous :
+      </div>
       <a
         className="hover:text-white italic"
         href="https://chrome.google.com/webstore/detail/session-buddy/edacconmaakjimmfgnblocblbcdcpbko"
         target="_blank"
+        rel="noopener"
       >
         https://chrome.google.com/webstore/detail/session-buddy/edacconmaakjimmfgnblocblbcdcpbko
       </a>
-      <pre className="text-tiny leading-3">
-        {doc}
-      </pre>
+      <pre className="text-tiny leading-3">{doc}</pre>
       <form
         className="flex flex-col space-y-2"
         onSubmit={handleSubmit(onSubmit)}
@@ -89,9 +95,7 @@ const UploadBookmarks = () => {
           Send
         </button>
       </form>
-      {isSubmitted &&
-        <div>uploading...</div>
-      }
+      {isSubmitted && <div>uploading...</div>}
     </div>
   );
 };

@@ -1,5 +1,5 @@
-const { format } = require('date-fns');
-const dbConnection = require('../../../db/dbinitmysql');
+const { format } = require("date-fns");
+const dbConnection = require("../../../db/dbinitmysql");
 
 module.exports = async (req, res) => {
   const conn = await dbConnection();
@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
   `;
 
   const sqlInactiveDate = `
-    UPDATE bookmark SET date_inactive="${format(new Date(), 'yyyy-MM-dd')}" WHERE id=${id};
+    UPDATE bookmark SET date_inactive="${format(new Date(), "yyyy-MM-dd")}" WHERE id=${id};
   `;
 
   try {

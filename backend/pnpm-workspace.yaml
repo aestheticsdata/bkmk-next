@@ -1,0 +1,8 @@
+allowBuilds:
+  # ssh2 compile ses liaisons natives de crypto ; il fonctionne en JS pur sans elles,
+  # mais autant les avoir puisque le back s'en sert pour le transfert des captures.
+  ssh2: true
+  # Dépendance optionnelle de ssh2, purement une optimisation (détection des jeux
+  # d'instructions du CPU). Elle échoue à compiler sur pas mal de machines et ssh2
+  # s'en passe très bien.
+  cpu-features: false
