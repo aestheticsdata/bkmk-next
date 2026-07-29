@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useParams, useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faAngleLeft,
@@ -26,6 +28,7 @@ interface ToolBarProps {
 
 const ToolsBar = ({ backButton, editButton = false, deleteButton = false, filters = false }: ToolBarProps) => {
   const router = useRouter();
+  const params = useParams<{ id?: string }>();
   const { deleteBookmark } = useBookmarks(PAGES.BOOKMARKS);
   const [displayDeleteConfirm, setDisplayDeleteConfirm] = useState<boolean>(false);
 
@@ -43,7 +46,7 @@ const ToolsBar = ({ backButton, editButton = false, deleteButton = false, filter
           </ToolbarButton>
           {editButton &&
             <ToolbarButton
-              onClick={() => {router.push(`${ROUTES.bookmarksEdition.path}/${router.query.id}`)}}
+              onClick={() => {router.push(`${ROUTES.bookmarksEdition.path}/${params.id}`)}}
             >
               <>
                 <FontAwesomeIcon icon={faPencilAlt} />
@@ -55,7 +58,7 @@ const ToolsBar = ({ backButton, editButton = false, deleteButton = false, filter
             displayDeleteConfirm ?
             <DeleteConfirm
               closeCB={() => { setDisplayDeleteConfirm(false) }}
-              deleteCB={() => { deleteBookmark.mutate(+router.query.id!) }}
+              deleteCB={() => { deleteBookmark.mutate(Number(params.id)) }}
               invertHover={true}
             />
             :

@@ -1,0 +1,5 @@
+allowBuilds:
+  # Dépendance optionnelle de Next pour l'optimisation d'images. `next/image` n'est
+  # pas utilisé aujourd'hui, mais autoriser son build évite une erreur en production
+  # le jour où il le sera.
+  sharp: true

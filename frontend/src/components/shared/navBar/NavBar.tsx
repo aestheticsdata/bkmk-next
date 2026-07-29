@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookBookmark } from "@fortawesome/free-solid-svg-icons";
 // import DatePickerWrapper from "@components/datePickerWrapper/DatePickerWrapper";
@@ -14,10 +16,14 @@ import type { AuthType } from "@auth/store/authStore";
 const NavBar = () => {
   const token = useAuthStore((state: AuthType) => state.token);
   // const { isCalendarVisible } = useGlobalStore();
-  const router = useRouter();
+  const pathname = usePathname();
   const isWindowResponsive = useIsWindowResponsive();
 
-  const getActivePath = (route: string) => route === router.pathname ? "bg-spendingItemHover rounded text-blueNavy" : "";
+  // `trailingSlash: true` fait finir les chemins par "/", et ROUTES.bookmarks porte
+  // sa query string : on compare des chemins normalisés des deux côtés.
+  const normalize = (path: string) => path.split("?")[0].replace(/\/+$/, "") || "/";
+  const getActivePath = (route: string) =>
+    normalize(route) === normalize(pathname ?? "") ? "bg-spendingItemHover rounded text-blueNavy" : "";
   const getLinkItem = (route: any) => {
     return (
       <a href={route.path}>

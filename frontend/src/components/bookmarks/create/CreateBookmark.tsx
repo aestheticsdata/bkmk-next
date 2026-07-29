@@ -1,5 +1,7 @@
-// @ts-nocheck
-import { useRouter } from "next/router";
+// @ts-nocheck — doit rester le tout premier commentaire du fichier, avant la directive
+"use client";
+
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";

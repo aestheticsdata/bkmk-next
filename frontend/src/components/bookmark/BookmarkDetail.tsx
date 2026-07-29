@@ -1,3 +1,5 @@
+"use client";
+
 import fr from "date-fns/locale/fr";
 import format from "date-fns/format";
 import useBookmark from "@components/bookmark/services/useBookmark";

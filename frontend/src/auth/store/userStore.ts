@@ -12,9 +12,9 @@ export interface UserStore {
   setUser: (u: User | null) => void;
 }
 
-export const useUserStore = create<any>( // to avoid any see https://github.com/pmndrs/zustand/issues/638
+export const useUserStore = create<UserStore>()(
   persist(
-    (set, _) => ({
+    (set) => ({
       user: null,
       setUser: (u: User | null) => set({ user: u }),
     }),

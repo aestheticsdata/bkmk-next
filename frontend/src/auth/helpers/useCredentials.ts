@@ -1,4 +1,4 @@
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@auth/store/authStore";
 import { useUserStore } from "@auth/store/userStore";
 

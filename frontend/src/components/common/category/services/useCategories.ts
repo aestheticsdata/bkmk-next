@@ -23,7 +23,9 @@ const useCategories = () => {
     }
   };
 
-  const { data, isLoading } = useQuery([QUERY_KEYS.CATEGORIES], getCategories, {
+  const { data, isLoading } = useQuery({
+    queryKey: [QUERY_KEYS.CATEGORIES],
+    queryFn: getCategories,
     retry: false,
     ...QUERY_OPTIONS,
   });
