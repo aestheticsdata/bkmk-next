@@ -1,4 +1,5 @@
 import useRequestHelper from "@helpers/useRequestHelper";
+import { AuthResponseSchema } from "@src/schemas/auth";
 import Swal from "sweetalert2";
 
 const useLoginService = () => {
@@ -13,7 +14,8 @@ const useLoginService = () => {
           password,
         },
       });
-      return result.data;
+      // La frontière : rien n'entre dans l'app sans être passé par un schéma.
+      return AuthResponseSchema.parse(result.data);
     } catch (e) {
       await Swal.fire({
         title: `login error: ${e}`,

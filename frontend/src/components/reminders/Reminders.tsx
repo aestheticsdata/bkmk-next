@@ -5,7 +5,7 @@ import useReminders from "@components/reminders/services/useReminders";
 import { ROUTES } from "@components/shared/config/constants";
 import { useRouter } from "next/navigation";
 
-import type { BookmarkAndAlarm } from "@components/bookmarks/interfaces/bookmark";
+import type { Reminder } from "@src/schemas/reminders";
 
 const Reminders = () => {
   const router = useRouter();
@@ -14,9 +14,9 @@ const Reminders = () => {
   return (
     <>
       {!isLoading ? (
-        data?.data.length > 0 ? (
+        data && data.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 p-2 mt-20">
-            {data!.data.map((bookmark: BookmarkAndAlarm) => (
+            {data.map((bookmark: Reminder) => (
               <div
                 key={bookmark.id}
                 className="

@@ -1,6 +1,7 @@
 import { useUserStore } from "@auth/store/userStore";
 import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
 import useRequestHelper from "@helpers/useRequestHelper";
+import { CategoryListSchema } from "@src/schemas/categories";
 import {
   useQuery,
   // useMutation,
@@ -16,11 +17,9 @@ const useCategories = () => {
   const [categories, setCategories] = useState<any>([]);
 
   const getCategories = async () => {
-    try {
-      return privateRequest(`/categories?userID=${userID}`);
-    } catch (e) {
-      console.log("get categories error", e);
-    }
+    const response = await privateRequest(`/categories?userID=${userID}`);
+    // La frontière : le service rend des catégories validées, pas une réponse axios.
+    return CategoryListSchema.parse(response.data);
   };
 
   const { data, isLoading } = useQuery({
@@ -32,7 +31,7 @@ const useCategories = () => {
 
   useEffect(() => {
     if (data) {
-      const { data: categoriesTmp } = data;
+      const categoriesTmp: any[] = [...data];
       categoriesTmp.forEach((category: any) => {
         category.label = category.name;
         category.value = category.id;

@@ -5,18 +5,18 @@ import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constant
 import { PAGES, ROWS_BY_PAGE } from "@components/shared/config/constants";
 import { usePageStore } from "@components/shared/pageStore";
 import useRequestHelper from "@helpers/useRequestHelper";
+import { BookmarkListSchema } from "@src/schemas/bookmarks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import queryString from "query-string";
 import { useEffect, useRef, useState } from "react";
 
 import type { UserStore } from "@auth/store/userStore";
+// Les mutations gardent l'ancienne interface : leur charge utile part en multipart, où
+// `categories` est déjà une chaîne JSON et les nombres des chaînes. La décrire vraiment
+// (`CreateBookmarkPayloadSchema`) appartient au lot DATA, avec le formulaire qui l'émet.
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
-
-interface BookmarkResponse {
-  rows: Bookmark[];
-  total_count: number;
-}
+import type { BookmarkList } from "@src/schemas/bookmarks";
 
 const useBookmarks = (from: string = "") => {
   const queryClient = useQueryClient();
@@ -26,7 +26,7 @@ const useBookmarks = (from: string = "") => {
   const searchParams = useSearchParams();
   const userID = useUserStore((state: UserStore) => state.user?.id);
   const { privateRequest } = useRequestHelper();
-  const [bookmarks, setBookmarks] = useState<BookmarkResponse>();
+  const [bookmarks, setBookmarks] = useState<BookmarkList>();
   const [page, setPage] = useState(-1);
 
   // zustand v5 : sélectionner une valeur, jamais un objet littéral — sinon la
@@ -71,11 +71,9 @@ const useBookmarks = (from: string = "") => {
   const getBookmarks = async () => {
     const parsed = queryString.parse(location.search);
     const stringified = queryString.stringify(parsed);
-    try {
-      return privateRequest(`/bookmarks?rows=${ROWS_BY_PAGE}&userID=${userID}&${stringified}`);
-    } catch (e) {
-      console.log("get bookmarks error : ", e);
-    }
+    const response = await privateRequest(`/bookmarks?rows=${ROWS_BY_PAGE}&userID=${userID}&${stringified}`);
+    // La frontière : le service rend une page validée, pas une réponse axios.
+    return BookmarkListSchema.parse(response.data);
   };
 
   const { data, isLoading } = useQuery({
@@ -88,7 +86,7 @@ const useBookmarks = (from: string = "") => {
 
   useEffect(() => {
     if (data) {
-      setBookmarks(data.data);
+      setBookmarks(data);
     }
   }, [data]);
 
