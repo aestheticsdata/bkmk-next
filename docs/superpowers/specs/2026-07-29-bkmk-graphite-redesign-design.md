@@ -36,7 +36,8 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | PLAT 03 | COS-316 — Biome | ✅ mergé (PR #5) |
 | PLAT 04 | COS-317 — shadcn/ui | ✅ mergé (PR #6) |
 | PLAT 05 | COS-318 — zod | ✅ mergé (PR #7) |
-| DS 01 | COS-290 — tokens GRAPHITE | en cours |
+| DS 01 | COS-290 — tokens GRAPHITE | ✅ mergé (PR #8) |
+| DS 02 | COS-291 — primitives de composants | en cours |
 
 **Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
 validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
@@ -464,12 +465,65 @@ produisent **aucun token** :
 
 **Ce qui reste volontairement legacy** : 15 couleurs, 2 ombres, 3 tailles et 3 familles de police,
 plus le fond de page de `base.css` et la police du `body`. Ils tiennent en vie les écrans que le
-lot UI n'a pas encore refaits et partent avec eux, écran par écran. `components/chrome.css` — dont
-la classe qui porte le filet clair `inset 0 1px 0` — appartient à DS 03 (COS-292).
+lot UI n'a pas encore refaits et partent avec eux, écran par écran. `components/chrome.css` — les
+classes du shell — appartient à DS 03 (COS-292).
+
+> Le filet clair, lui, n'attend pas DS 03 : DS 02 en a fait un token, `inset-shadow-gr-hair`.
+> Tailwind v4 garde `inset-shadow-*` sur une couche distincte de `shadow-*`, donc les deux se
+> composent — `shadow-gr-1 inset-shadow-gr-hair` — et aucune classe écrite à la main n'est
+> nécessaire.
 
 Ajouté au passage : `styles/animations.css` (`bkmk-blink`, `bkmk-pop`, `bkmk-fade` + un bloc
 `prefers-reduced-motion`) et **IBM Plex Mono** chargée par `next/font` sous
 `--font-plex-mono-face`.
+
+### Ce qui a été posé (COS-291, le 2026-07-29)
+
+Le détail est dans **`frontend/docs/design-system.md` §8**, qui fait autorité. Ici, seulement les
+décisions.
+
+**La question qui range chaque composant : shadcn le fournit-il déjà ?** Le ticket liste `Button`,
+`Field`, `Modal` et `Meter` parmi les primitives *et* interdit de réimplémenter ce que shadcn
+donne. Les deux se contredisent sur ces quatre-là, et c'est la règle qui gagne :
+
+- **`ui/` restylé** : `button` (4 variantes GRAPHITE + 3 tailles), `input`, `textarea`, `progress`,
+  `dialog`, `alert-dialog`.
+- **`ds/` créé** : les 14 primitives que GRAPHITE a et qu'aucun registre ne livre.
+
+Le restyle de `ui/` est **additif là où ça compte** : les six variantes shadcn du bouton restent en
+place, inutilisées. C'est ce qui garde `shadcn add button` régénérable — la raison d'être du
+layering de PLAT 04.
+
+**Deux composites dans `ds/`, qui ne sont pas des réimplémentations.** `Field` lie un `Overline` à
+un `ui/input` par un `htmlFor` — le handoff écrit la légende et le champ en frères sans relation,
+ce qui donne un champ sans nom accessible. `MiniButton` est un préréglage nommé sur `ui/button`.
+
+**Trois écarts assumés par rapport au handoff :**
+
+- **La priorité a quatre niveaux, pas trois.** La maquette montre `high / med / low` ; `schemas/`
+  valide `low / medium / high / highest`, et c'est ce que la base stocke. Le schéma gagne : trois
+  barres ne sauraient pas distinguer `high` de `highest`. La chaîne vide est un état réel, rendu
+  en quatre barres éteintes.
+- **`Segment` n'est pas `Tabs`.** Un onglet choisit une vue et une seule ; un segment est une case
+  à cocher déguisée en pilule, plusieurs sont actifs à la fois, et il change une requête. Radix
+  Tabs lui donnerait le mauvais modèle clavier et le mauvais rôle ARIA. C'est un
+  `<button aria-pressed>`.
+- **La zone de dépôt est à 12, pas à 10.** Le résumé du ticket regroupe « slot/dropzone 10 » ;
+  `themes.css` dit `.gr-slot` 10 et `.gr-drop` 12. Le CSS fait foi : le slot descend à 8 (arbitrage
+  DS 01), la dropzone reste à 12, native.
+
+**Deux trous de DS 01 refermés :** DS 01 avait tokenisé les quatre teintes d'oxyde et oublié leur
+miroir teal (`gr-teal-from/to/border/fg`), sans lequel le bouton primaire inline quatre littéraux ;
+et le voile des modales (`gr-scrim`) n'existait pas.
+
+**Le filet clair n'attend plus DS 03.** Trois tokens `inset-shadow-*` — `hair`, `sunk`, `mark` —
+sur la couche que Tailwind v4 tient séparée de `shadow-*`. `chrome.css` reste pour les classes du
+shell.
+
+**Ce qui n'est volontairement pas fait :** `alert-dialog` n'est restylé qu'en surface (voile, coque,
+titre, description). Sa mise en page shadcn — slot média, variantes de taille — est réécrite par
+UI 11 (COS-320), qui décide de la composition réelle de la confirmation de suppression. La toucher
+ici serait deviner à sa place.
 
 ---
 

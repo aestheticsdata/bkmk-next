@@ -77,6 +77,7 @@
   --color-gr-hair: rgb(255 255 255 / 0.45); /* 1px light edge along the top of surfaces */
   --color-gr-ring: rgb(29 91 79 / 0.26); /* focus ring, 3px */
   --color-gr-selection: rgb(29 91 79 / 0.2);
+  --color-gr-scrim: rgb(28 30 27 / 0.4); /* modal backdrop, blurred 3px */
 
   /* Delete flow — the v2 handoff's oxide hues. Tokens rather than literals, so UI 11
    * (COS-305) does not have to copy them screen by screen. */
@@ -84,6 +85,14 @@
   --color-gr-oxide-to: #763512;
   --color-gr-oxide-border: #5f2a0e;
   --color-gr-oxide-fg: #f4ece6;
+
+  /* Affirmative fill — the primary button and the selected segment. Its exact mirror on
+   * the teal side of the oxide four above; DS 01 tokenised the oxide set and missed
+   * this one, so the primary action would have had to inline four literals. */
+  --color-gr-teal-from: #256b5c;
+  --color-gr-teal-to: #1b5449;
+  --color-gr-teal-border: #174740;
+  --color-gr-teal-fg: #e9efeb;
 }
 
 /* ═══ shadcn SEMANTIC TOKENS — `neutral` base, registry defaults ═══════════════════

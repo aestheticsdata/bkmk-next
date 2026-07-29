@@ -62,8 +62,13 @@ has **no** radius token at all and only **two** text-size tokens.
 | `gr-ring` | `rgb(29 91 79 / 0.26)` | focus ring, 3px |
 | `gr-selection` | `rgb(29 91 79 / 0.20)` | text selection |
 
-The delete flow has its four oxide hues: `gr-oxide-from` `#8d4018`, `gr-oxide-to` `#763512`,
-`gr-oxide-border` `#5f2a0e`, `gr-oxide-fg` `#f4ece6`.
+| `gr-scrim` | `rgb(28 30 27 / 0.4)` | modal backdrop, blurred 3px |
+
+Two fills come as sets of four, because a gradient needs both stops, a border and a foreground.
+**Affirmative** — primary button, selected segment: `gr-teal-from` `#256b5c`, `gr-teal-to`
+`#1b5449`, `gr-teal-border` `#174740`, `gr-teal-fg` `#e9efeb`. **Destructive** — the delete flow:
+`gr-oxide-from` `#8d4018`, `gr-oxide-to` `#763512`, `gr-oxide-border` `#5f2a0e`, `gr-oxide-fg`
+`#f4ece6`.
 
 ---
 
@@ -156,10 +161,26 @@ or as `var(--shadow-gr-*)`.
 | `shadow-gr-2` | button hover, auth card |
 | `shadow-gr-modal` | the modal — carries its own hair line |
 | `shadow-gr-primary` | primary action, with the teal glow |
+| `shadow-gr-oxide` | destructive action — the same shape in oxide |
 
-**The system's signature: every light surface carries `inset 0 1px 0 var(--color-gr-hair)`.** It is
-baked into `shadow-gr-modal` and `shadow-gr-primary`; elsewhere it has to be added, which gives
-unreadable classes — DS 03 (COS-292) will turn it into a class in `components/chrome.css`.
+**The system's signature: every light surface carries `inset 0 1px 0 var(--color-gr-hair)`.**
+
+Tailwind v4 keeps `inset-shadow-*` on its own layer, so it composes with `shadow-*` instead of
+replacing it. That is the whole answer, and it is why there is no hand-written class:
+
+```
+shadow-gr-1 inset-shadow-gr-hair    →  the card at rest, plus its light top edge
+hover:shadow-gr-2                   →  only the outer half grows; the hair line stays put
+```
+
+| Token | Usage |
+|---|---|
+| `inset-shadow-gr-hair` | the 1px light edge — cards, command bars, buttons, the selected row |
+| `inset-shadow-gr-sunk` | sunken surfaces — fields, code blocks, drop zone, image slots, the meter |
+| `inset-shadow-gr-mark` | the selected row's 3px teal left edge |
+
+`shadow-gr-modal` and `shadow-gr-primary` already contain their own hair line, so they never take
+`inset-shadow-gr-hair` as well.
 
 ---
 
@@ -199,7 +220,68 @@ width of the app screen, not the window.
 
 ---
 
-## 8. What is still legacy
+## 8. The primitives
+
+Established by **COS-291 (DS 02)**. Two directories, and which one a component lands in is decided
+by one question: **does shadcn already provide it?**
+
+- **`components/ui/`** — shadcn components restyled onto these tokens. Regenerable: the styling
+  rides in `className` and cva entries, never in a changed signature, so re-running `shadcn add`
+  stays a merge you can accept.
+- **`components/ds/`** — what GRAPHITE has and no registry ships.
+
+| `ds/` | Handoff | Notes |
+|---|---|---|
+| `Card` | `.gr-card` | the panel everything sits on |
+| `CommandBar` · `PagerBar` | `.gr-cmd` · `.gr-pager` | the strips at a card's top and bottom |
+| `Field` | — | composite: `Overline` bound to a `ui/input` |
+| `Segment` | `.gr-seg` | a toggle, not a tab — see below |
+| `Chip` | `.gr-chip` | the dot's hue comes from the data |
+| `Overline` | `.gr-lab` | the most-used label in the system |
+| `Stars` | `GStars` | `role="img"`, reads "3 out of 5" |
+| `PriorityBars` | `GPri` | **four levels**, not the handoff's three |
+| `Led` | `.gr-led` | decorative, `aria-hidden` |
+| `KeyValueTable` | `.gr-kv` | a real `<dl>` |
+| `DropZone` · `ShotSlot` | `.gr-drop` · `.gr-slot` | sunken dashed, two sizes |
+| `BlinkCursor` | `.gr-caret` | `animate-gr-caret` |
+| `RowActions` · `RowAction` | `.gr-acts` · `.gr-act` | needs `group/row` on the row |
+| `MiniButton` | `.gr-mini` | preset over `ui/button` |
+
+| `ui/`, restyled | Handoff |
+|---|---|
+| `button` | `.gr-btn`, `.pri`, `.danger`, `.danger.solid`, `.gr-pagebtn`, `.gr-mini` |
+| `input` · `textarea` | `.gr-in` |
+| `progress` | `.gr-meter` |
+| `dialog` · `alert-dialog` | `.gr-modal` |
+
+### The button
+
+`variant` carries the fill, `size` carries the geometry, exactly as the handoff splits `.gr-btn`
+from `.pri` / `.danger`. The common call is `<Button variant="chrome" size="chrome">`.
+
+Variants: `chrome` (default surface) · `primary` (teal) · `danger` (outline oxide) ·
+`danger-solid` (filled oxide). Sizes: `chrome` (30px) · `page` (26px, not uppercase) ·
+`mini` (20px). shadcn's six stock variants are still there and unused — leaving them is what keeps
+the file regenerable.
+
+### Three things worth knowing before writing a screen
+
+**`Segment` is not `Tabs`.** They look alike, and Radix Tabs is the wrong primitive: a tab picks
+one of several views, a segment is a checkbox wearing a pill and several are on at once. It is a
+`<button aria-pressed>`, the toggle-button pattern.
+
+**`RowActions` needs `group/row` on the row.** The glyphs are revealed by the row's hover, and the
+group is named because the index has other group ancestors. They also appear on `focus-within` —
+opacity-0 is still tabbable — and stay visible below `@3xl`, where there is no hover at all.
+
+**Priority has four levels, not three.** The handoff shows `high / med / low`; `schemas/` validates
+`low / medium / high / highest`, which is what the database stores. The schema wins — three bars
+could not tell `high` from `highest`. The empty string is a real, distinct state and renders as
+four dim bars.
+
+---
+
+## 9. What is still legacy
 
 Three files still carry tokens from the old UI, marked as such: **15 colours** in `colors.css`,
 **2 shadows** in `elevation.css`, **3 sizes and 3 families** in `typography.css`. They are not this

@@ -18,6 +18,25 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+
+        /* ─── GRAPHITE (COS-291) ────────────────────────────────────────────────────
+         * Added beside the stock variants rather than replacing them, so re-running
+         * `shadcn add button` keeps regenerating cleanly. The six above render in the
+         * neutral filler palette and no bkmk surface uses them.
+         *
+         * The lift on hover is the whole interaction: `translateY(-1px)` plus the outer
+         * shadow growing from step 1 to step 2, while the hair line stays put — which
+         * is exactly what the separate inset-shadow layer buys us. */
+        chrome:
+          "border border-gr-border-2 bg-linear-to-b from-white/26 to-white/6 text-gr-fg shadow-gr-1 inset-shadow-gr-hair hover:-translate-y-px hover:shadow-gr-2",
+        primary:
+          "border border-gr-teal-border bg-linear-to-b from-gr-teal-from to-gr-teal-to text-gr-teal-fg shadow-gr-primary hover:-translate-y-px",
+        /* Outline oxide: destructive, but not yet destroying anything. */
+        danger:
+          "border border-gr-accent-2/50 bg-linear-to-b from-white/20 to-white/4 text-gr-accent-2 shadow-gr-1 inset-shadow-gr-hair hover:bg-gr-accent-2/12 hover:-translate-y-px hover:shadow-gr-2",
+        /* Filled oxide: the button that actually deletes. One per screen, never two. */
+        "danger-solid":
+          "border border-gr-oxide-border bg-linear-to-b from-gr-oxide-from to-gr-oxide-to text-gr-oxide-fg shadow-gr-oxide hover:-translate-y-px",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -28,6 +47,25 @@ const buttonVariants = cva(
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",
         "icon-lg": "size-10",
+
+        /* ─── GRAPHITE geometry (COS-291) ───────────────────────────────────────────
+         * Split from the variants above on purpose: the handoff's `.gr-btn` carries the
+         * geometry and `.pri` / `.danger` only recolour it, so `variant` and `size` stay
+         * orthogonal. The common call is `variant="chrome" size="chrome"`.
+         *
+         * Radius 9 → `rounded-lg` (8) per the DS 01 snapping table.
+         *
+         * Each also repoints the focus ring at the GRAPHITE teal. It rides here rather
+         * than in the base string because the base is shared with the six stock variants,
+         * which stay on the neutral filler tokens. */
+        chrome:
+          "h-7.5 gap-1.75 rounded-lg px-3.25 text-3xs uppercase tracking-widest focus-visible:border-gr-accent focus-visible:ring-gr-ring @max-3xl:h-8.5",
+        /* `.gr-pagebtn` — the pager arrows: shorter, and the only GRAPHITE button whose
+         * label is not uppercase, because it is a glyph or a number. */
+        page: "h-6.5 gap-1.75 rounded-lg px-2.5 text-xs normal-case tracking-normal focus-visible:border-gr-accent focus-visible:ring-gr-ring",
+        /* `.gr-mini` — the in-row confirm/cancel pair. Its own fill lives in the variant;
+         * this only sets the geometry. */
+        mini: "h-5 gap-1.5 rounded-md px-2 text-3xs uppercase tracking-widest focus-visible:border-gr-accent focus-visible:ring-gr-ring",
       },
     },
     defaultVariants: {
