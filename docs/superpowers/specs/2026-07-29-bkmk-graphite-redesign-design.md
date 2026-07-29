@@ -38,7 +38,8 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | PLAT 05 | COS-318 — zod | ✅ mergé (PR #7) |
 | DS 01 | COS-290 — tokens GRAPHITE | ✅ mergé (PR #8) |
 | DS 02 | COS-291 — primitives de composants | ✅ mergé (PR #9) |
-| DS 03 | COS-292 — shell applicatif | en cours |
+| DS 03 | COS-292 — shell applicatif | ✅ mergé (PR #10) |
+| AUTH 01 | COS-293 — session Redis + cookie httpOnly | en cours |
 
 **Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
 validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
@@ -738,6 +739,63 @@ clé `bkmk-token`).
 
 **Au passage** : requêtes SQL paramétrées — `signInController.js` concatène aujourd'hui l'email de
 `req.body` dans le SQL, sur une route non authentifiée.
+
+### Ce qui a été posé (COS-293, le 2026-07-30)
+
+Deux fichiers : `backend/src/redisService.js` (nouveau) et `backend/src/server.js` (réécrit).
+
+**Ce ticket ne change aucun comportement, et c'est voulu.** `saveUninitialized: false` n'écrit une
+session que lorsqu'une route pose quelque chose sur `req.session`, et aucune ne le fait encore :
+aucun cookie n'est émis, le chemin JWT est intact. AUTH 02 (COS-294) est ce qui fait créer la session
+à la connexion. Les quatre tickets AUTH arrivent un par un et l'application doit marcher entre chaque
+— même règle que le `/logout` et la barre d'outils du shell.
+
+**`server.js` devient un `bootstrap()` async.** Le client Redis doit être connecté avant que le store
+ne voie une requête — node-redis rejette toute commande émise sur un client non connecté — et un
+module CommonJS n'a pas de `await` au niveau racine. Même forme que le `main.ts` de pfa, sans Nest.
+L'échec sort en `process.exit(1)` : un Redis injoignable doit faire remonter l'app en `errored` chez
+pm2, pas laisser tourner un serveur incapable d'authentifier.
+
+**L'environnement vit dans `ecosystem.config.js` / `ecosystem.config.prod.js`, pas dans `.env` — écart
+à la lettre du ticket.** Ces deux fichiers sont **ignorés par git** (`.gitignore`) et portent déjà
+tous les secrets du back ; c'est aussi là que pfa met exactement ces variables. `SESSION_SECRET`
+(32 octets base64, **valeur différente en dev et en prod** pour qu'un secret de dev qui fuite ne
+forge pas de session de prod), `REDIS_URL`, `FRONTEND_URL` (`http://localhost:3100` en dev,
+`https://bkmk.1991computer.com` en prod). `COOKIE_SECURE` n'est pas posée : elle ne sert qu'à
+*renoncer* au `Secure` sur un hôte de prod sans HTTPS, et bkmk est derrière HTTPS.
+⚠️ Corollaire : ces fichiers n'étant pas suivis, **la liste des variables requises n'existe nulle part
+ailleurs que dans ce paragraphe**. Un `pm2 restart ecosystem.config.js --env dev` est nécessaire pour
+qu'elles soient relues — pm2 garde l'environnement du démarrage à travers les redémarrages de `watch`.
+Au passage : `backend/.env` (`PORT`, `CORS_ORIGIN`) est mort — pas de `dotenv` dans les dépendances,
+rien ne le lit.
+
+**`cors()` grand ouvert devient une origine nommée avec `credentials: true`.** Le joker et les
+requêtes créditées s'excluent d'après la spec CORS : c'est le prix du cookie de session. En prod le
+front et l'API partagent `bkmk.1991computer.com` (le proxy mappe `/api`), donc en pratique cette
+option ne porte que la paire de dev, front 3100 / API 3101.
+
+**`clearSessionsForUser` : port fidèle, à un écart nécessaire près.** `KEYS` est conservé bien qu'il
+balaie tout l'espace de clés en bloquant le serveur — il tourne une fois par connexion sur une
+poignée de sessions de dix minutes, et le Redis de la box est partagé, d'où le préfixe `bkmk:`.
+**En revanche les identifiants sont comparés en chaînes** : celui de pfa est une chaîne, celui de bkmk
+est un `INT(11)` MySQL, et un nombre d'un côté du `===` ferait échouer la comparaison en silence —
+aucune erreur, aucune suppression, et la garantie « une seule session active par utilisateur »
+disparue sans bruit.
+
+**Un garde-fou ajouté :** `SESSION_SECRET` absente lève une erreur qui nomme la variable et le fichier
+où la poser, au lieu de la trace d'express-session — l'environnement de bkmk étant dans un fichier non
+suivi, une trace ne dirait pas où aller.
+
+**QA faite en local** (Redis 6379, API 3101, sonde temporaire montée puis retirée) : cookie
+`bkmk.sid; Path=/; HttpOnly; SameSite=Lax`, sans `Secure` en dev ; clé `bkmk:<sid>` avec un TTL de
+600 s ; `rolling` vérifié en forçant le TTL à 100 puis en rejouant une requête (retour à 600) ;
+deux sessions du même utilisateur effacées par `clearSessionsForUser(1)` ; en-têtes CORS crédités sur
+`http://localhost:3100`, préflight 204 ; route JWT existante toujours servie ; **aucun `Set-Cookie` ni
+aucune clé `bkmk:*` en fonctionnement normal.**
+
+**Relevé au passage, pour AUTH 02 :** `checkToken` répond aujourd'hui **200** avec
+`{ success: false }` quand le jeton manque, au lieu de 401. Le `sessionAuthMiddleware` qui le remplace
+doit renvoyer 401 — l'intercepteur de `useRequestHelper` en dépend.
 
 ---
 
