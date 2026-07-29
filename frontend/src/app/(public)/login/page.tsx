@@ -12,8 +12,11 @@ export default function LoginPage() {
   const { setCredentials } = useCredentials();
 
   const onSubmit = async (values: LoginValues) => {
-    const { token, user } = await loginService(values.email!, values.password!);
-    await setCredentials(token, user);
+    // `loginService` avale l'erreur et rend `undefined` : sans ce garde, un échec de
+    // connexion planterait ici au lieu d'afficher son message.
+    const auth = await loginService(values.email!, values.password!);
+    if (!auth) return;
+    await setCredentials(auth.token, auth.user);
   };
 
   return (

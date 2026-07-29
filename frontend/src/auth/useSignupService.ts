@@ -1,4 +1,5 @@
 import useRequestHelper from "@helpers/useRequestHelper";
+import { AuthResponseSchema } from "@src/schemas/auth";
 import Swal from "sweetalert2";
 
 import type { LoginValues } from "@components/shared/sharedLoginForm/interfaces";
@@ -20,7 +21,8 @@ const useSignupService = () => {
           language: "fr",
         },
       });
-      return res.data;
+      // La frontière : rien n'entre dans l'app sans être passé par un schéma.
+      return AuthResponseSchema.parse(res.data);
     } catch (err) {
       await Swal.fire({
         title: "Erreur lors de la création de compte",

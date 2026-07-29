@@ -1,21 +1,21 @@
 import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
 import useRequestHelper from "@helpers/useRequestHelper";
+import { BookmarkDetailResponseSchema } from "@src/schemas/bookmarks";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
+import type { BookmarkDetail } from "@src/schemas/bookmarks";
 
 const useBookmark = (bookmarkID: string) => {
   // const userID = useUserStore((state: UserStore) => state.user!.id);
   const { privateRequest } = useRequestHelper();
-  const [bookmark, setBookmark] = useState<Bookmark>();
+  const [bookmark, setBookmark] = useState<BookmarkDetail>();
 
   const getBookmark = async () => {
-    try {
-      return privateRequest(`/bookmarks/${bookmarkID}`);
-    } catch (e) {
-      console.log("get bookmark error : ", e);
-    }
+    const response = await privateRequest(`/bookmarks/${bookmarkID}`);
+    // Le contrôleur renvoie le résultat de la requête tel quel, donc un tableau d'une
+    // ligne. La frontière valide le tableau ; la fiche prend la ligne.
+    return BookmarkDetailResponseSchema.parse(response.data);
   };
 
   const { data, isLoading } = useQuery({
@@ -28,7 +28,7 @@ const useBookmark = (bookmarkID: string) => {
 
   useEffect(() => {
     if (data) {
-      setBookmark(data.data[0]);
+      setBookmark(data[0]);
     }
   }, [data]);
 

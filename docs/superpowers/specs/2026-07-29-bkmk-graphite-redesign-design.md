@@ -34,7 +34,8 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | PLAT 01 | COS-314 — Next 16 + App Router | ✅ mergé (PR #2) |
 | PLAT 02 | COS-315 — Tailwind 4 | ✅ mergé (PR #3) |
 | PLAT 03 | COS-316 — Biome | ✅ mergé (PR #5) |
-| PLAT 04 | COS-317 — shadcn/ui | en cours |
+| PLAT 04 | COS-317 — shadcn/ui | ✅ mergé (PR #6) |
+| PLAT 05 | COS-318 — zod | en cours |
 
 **Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
 validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
@@ -450,6 +451,67 @@ analysées + résumé), `primitives.ts`, `fieldLimits.ts`.
 
 Côté Express, les mêmes schémas servent à valider les entrées — c'est le sens de « qui serviront
 aussi de validation de l'api ».
+
+### Ce qui a été posé (COS-318, le 2026-07-29)
+
+Les huit schémas existent dans `frontend/src/schemas/`, et **cinq services parsent désormais à la
+frontière** : connexion, inscription, liste des bookmarks, fiche, catégories, rappels. Les services
+ne rendent plus une réponse axios mais la donnée validée, ce qui a fait tomber les `data.data` chez
+leurs consommateurs.
+
+**Quatre points à connaître avant de toucher à ces fichiers :**
+
+- **`csrfToken` est optionnel, volontairement.** Le back ne l'émet pas encore ; le rendre
+  obligatoire maintenant casserait la connexion. AUTH 02 (COS-294) l'émet et le rend obligatoire
+  dans le même mouvement.
+- **La nullabilité est volontairement large.** bkmk n'a ni migrations ni DDL versionné —
+  `dbinitmysql.js` ouvre juste une connexion — donc rien ne dit quelle colonne est `NOT NULL`.
+  Tout ce que le code ne prouve pas est `.nullish()`. Resserrer se fera sur des fixtures réelles,
+  au lot DATA. Même réserve pour `fieldLimits.ts`, dont les valeurs sont **déduites, pas lues** :
+  seule la troncature à 120 de l'import est écrite quelque part.
+- **Les catégories traversent l'API sous deux formes.** `GET /categories` rend les lignes de la
+  table (`id` entier) ; celles embarquées dans un bookmark sortent d'un `GROUP_CONCAT` recomposé
+  par `marshallCategories` (`id` en chaîne, pas de `user_id`). D'où deux schémas, et
+  `numberLikeSchema` pour absorber l'écart.
+- **Les rappels n'ont pas de catégories** et aliasent la date d'alarme en `alarm_added` là où la
+  fiche l'appelle `alarm_date_added`. Ce n'est pas une coquille des schémas, c'est ce qu'écrivent
+  les deux requêtes SQL. DATA 03 (COS-308) les alignera.
+
+`filters.ts` et la partie « entrées analysées / résumé » de `import.ts` ne sont branchés nulle
+part : ils décrivent ce que UI 08 (COS-304) et la modale de filtres devront produire. Les payloads
+d'écriture non plus — le formulaire part en multipart, où `categories` est déjà une chaîne JSON ;
+le décrire vraiment appartient au lot DATA, avec le formulaire qui l'émet.
+
+### Validation côté Express
+
+`backend/src/middlewares/validate.js`, utilisé en nommant les parties à valider :
+
+```js
+router.get("/", checkToken, validate({ query: listBookmarksQuerySchema }), catchAsync(controller));
+```
+
+Deux décisions qui méritent d'être connues :
+
+- **Les schémas du back sont un miroir, pas un partage.** Il y a deux copies : le front est en
+  TypeScript, le back en CommonJS, sans paquet commun. Et elles ne peuvent pas être identiques —
+  le formulaire envoie `stars: 3`, multipart le transforme en `"3"`, donc le back a besoin de
+  `z.coerce` là où le front n'en a pas. Coût : changer une borne dans l'un oblige à la changer à
+  la main dans l'autre, et rien ne le vérifie.
+
+  ⚠️ **Cette duplication est un pis-aller, pas un choix.** Elle disparaît quand le back passe à
+  Nest : même langage des deux côtés, un paquet partagé, un seul schéma. Ne pas la consolider en
+  bâtissant dessus.
+- **Le middleware ne remplace pas `req.body` ni `req.query`.** Le résultat validé va dans
+  `req.validated`, et les contrôleurs continuent de lire les objets d'origine. `z.object` retire
+  les clés inconnues : écraser `req.body` ferait disparaître sans bruit un champ qu'un contrôleur
+  hérité lit encore. La migration vers `req.validated` se fait contrôleur par contrôleur.
+
+⚠️ **Ça ne ferme pas l'injection SQL.** Contraindre `userID` à un entier retire le vecteur le plus
+direct de la liste, mais les autres filtres restent interpolés. Les requêtes préparées restent le
+travail de COS-295.
+
+Effet de bord assumé : un `sort` inconnu répond maintenant **400** au lieu de tomber
+silencieusement dans le `default` du contrôleur et de ne rien trier.
 
 ---
 

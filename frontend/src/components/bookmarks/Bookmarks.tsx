@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
+import type { Bookmark } from "@src/schemas/bookmarks";
 
 const Bookmarks = () => {
   const { bookmarks, deleteBookmark, isLoading } = useBookmarks(PAGES.BOOKMARKS);
@@ -70,7 +70,7 @@ const Bookmarks = () => {
                 </div>
                 <div
                   className={`${COLUMN_WIDTH.notes} truncate`}
-                  title={bookmark.notes && decodeURIComponent(bookmark.notes)}
+                  title={bookmark.notes ? decodeURIComponent(bookmark.notes) : undefined}
                 >
                   {bookmark.notes && decodeURIComponent(bookmark.notes)}
                 </div>

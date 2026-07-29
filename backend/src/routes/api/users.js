@@ -1,11 +1,13 @@
 const router = require("express").Router();
+const validate = require("../../middlewares/validate");
+const { signInBodySchema, signUpBodySchema } = require("../../schemas/auth");
 const signInController = require("../controllers/users/signInController");
 const addUserController = require("../controllers/users/addUserController");
 // const resetPasswordController = require('../controllers/users/resetPasswordController');
 const catchAsync = require("../../utils/catchAsync");
 
-router.post("/", catchAsync(signInController));
-router.post("/add", catchAsync(addUserController));
+router.post("/", validate({ body: signInBodySchema }), catchAsync(signInController));
+router.post("/add", validate({ body: signUpBodySchema }), catchAsync(addUserController));
 // router.post('/resetpassword', catchAsync(resetPasswordController));
 
 module.exports = router;
