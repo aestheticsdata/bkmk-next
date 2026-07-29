@@ -19,7 +19,9 @@
       "@src/*": ["./src/*"],
       "@components/*": ["./src/components/*"],
       "@auth/*": ["./src/auth/*"],
-      "@helpers/*": ["./src/helpers/*"]
+      "@helpers/*": ["./src/helpers/*"],
+      "@lib/*": ["./src/lib/*"],
+      "@text/*": ["./src/text/*"]
     },
     "plugins": [{ "name": "next" }],
     "incremental": true
