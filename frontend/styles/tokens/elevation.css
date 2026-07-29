@@ -1,0 +1,11 @@
+/* ⚠️ Ombres héritées — TEMPORAIRE, remplacées par DS 01 (COS-290), qui porte les
+ * quatre élévations de GRAPHITE (--e1, --e2, l'ombre de modale et celle du bouton
+ * primaire) ainsi que le filet `inset 0 1px 0 var(--hair)` que porte chaque surface
+ * claire du thème.
+ *
+ * Les trois ombres inutilisées du codemod (spendingDaySelected, categories,
+ * charttooltip) ont été supprimées. */
+@theme {
+  --shadow-login: 0 0 1px 1px rgb(10, 10, 10);
+  --shadow-dashboard: 1px 4px 21px 6px rgba(0, 0, 0, 0.54);
+}

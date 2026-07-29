@@ -1,0 +1,30 @@
+/* ⚠️ TEMPORAIRE — Tailwind v4 a changé la couleur de bordure par défaut, qui vaut
+ * désormais `currentcolor` et non plus `gray-200`. Sans ce rappel, toutes les
+ * bordures de l'ancienne UI changeraient de couleur d'un coup.
+ *
+ * GRAPHITE ne s'appuiera pas là-dessus : ses bordures sont explicites
+ * (`var(--border)`, `var(--hair)`). Ce bloc part avec le dernier écran hérité. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@layer base {
+  html {
+    @apply bg-grey1;
+  }
+}
+
+/* Le fond jaune que Chrome force sur les champs auto-remplis.
+ * https://webagility.com/posts/the-ultimate-list-of-hacks-for-chromes-forced-yellow-background-on-autocompleted-inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-transition-delay: 9999s;
+}

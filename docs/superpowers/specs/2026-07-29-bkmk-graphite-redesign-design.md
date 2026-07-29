@@ -336,6 +336,37 @@ frontend/
 - **Aucune mémoïsation à la main : ni `useMemo`, ni `useCallback`, ni `React.memo`.** Le
   compilateur React s'en charge, et mieux. Si un rendu coûte trop cher, chercher la vraie cause
   (clé react-query instable, sélecteur zustand qui renvoie un objet littéral, état mal placé).
+- **Normaliser puis snapper sur l'échelle Tailwind** — voir ci-dessous.
+
+### Normalisation et snapping des tokens
+
+Règle du DS de pfa, à appliquer à GRAPHITE. Le handoff est une maquette dessinée à l'œil : six
+graduations de texte réparties sur 3px, huit rayons dont trois séparés d'un pixel. **On ne recopie
+pas ces valeurs.** Deux temps, dans cet ordre :
+
+1. **Normaliser** — fusionner ce qui ne se distingue pas à l'œil. Une différence d'un pixel entre
+   deux rayons n'est pas une décision de design, c'est du bruit.
+2. **Snapper** — si l'échelle Tailwind native a le pas, **on prend le pas natif et on ne crée
+   aucun token**. Un token ne s'ajoute que là où le natif n'a réellement rien. pfa part de
+   l'échelle native et ne l'étend que de quatre tokens.
+
+Corollaire, déjà la règle chez pfa : **un token, jamais une valeur brute** — pas de
+`text-[12.5px]`, pas de `rounded-[7px]`, pas de `p-[14px]`.
+
+**L'espacement, les hauteurs et les gaps restent sur l'échelle numérotée**, demi-pas compris
+(`p-3.5` = 14px, `py-4.5` = 18px, `px-5.5` = 22px). Tout le chrome de GRAPHITE y tombe déjà :
+ligne de table 30px = `7.5`, chrome 38px = `9.5`, barre de statut 26px = `6.5`, barre de commande
+46px = `11.5`. **Aucun token d'espacement nommé** — pfa l'interdit explicitement.
+
+Les **couleurs** échappent à la règle : ce sont des teintes choisies, jamais la palette Tailwind
+stock (`gray-400`, `emerald-700`…).
+
+⚠️ **Piège à ne pas reproduire.** pfa a fini avec deux échelles de rayon aux noms identiques et
+aux valeurs différentes (`--r-lg` = 14px en CSS, `rounded-lg` = 10px en utilitaire) ; c'est dans
+ses « known rough edges ». Ici : **une seule échelle**, celle de `@theme`.
+
+Le détail, avec les premiers tableaux de correspondance et les arbitrages restants, est dans
+COS-290.
 
 ---
 

@@ -8,7 +8,7 @@ const DeleteConfirm = ({ closeCB, deleteCB, invertHover = false }: DeleteConfirm
   return (
     <div className="flex w-[100px] space-x-1 text-xxxs">
       <div
-        className={`flex items-center outline outline-1 outline-grey3 rounded cursor-pointer px-1 ${invertHover ? "hover:bg-grey1" : "hover:bg-grey01"} uppercase`}
+        className={`flex items-center outline-solid outline-1 outline-grey3 rounded-sm cursor-pointer px-1 ${invertHover ? "hover:bg-grey1" : "hover:bg-grey01"} uppercase`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -19,7 +19,7 @@ const DeleteConfirm = ({ closeCB, deleteCB, invertHover = false }: DeleteConfirm
         confirm
       </div>
       <div
-        className={`flex items-center outline outline-1 outline-grey3 rounded cursor-pointer px-1 ${invertHover ? "hover:bg-grey1" : "hover:bg-grey01"} uppercase`}
+        className={`flex items-center outline-solid outline-1 outline-grey3 rounded-sm cursor-pointer px-1 ${invertHover ? "hover:bg-grey1" : "hover:bg-grey01"} uppercase`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

@@ -65,7 +65,7 @@ const Pagination = () => {
         <div>{page}</div>
         <div>/</div>
         <div
-          className="hover:text-white cursor-pointer rounded hover:bg-grey1 px-0.5"
+          className="hover:text-white cursor-pointer rounded-sm hover:bg-grey1 px-0.5"
           onClick={() => {
             router.push(`?page=${lastPage}`);
             setPage(lastPage);
