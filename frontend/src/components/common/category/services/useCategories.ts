@@ -18,7 +18,7 @@ const useCategories = () => {
 
   const getCategories = async () => {
     const response = await privateRequest(`/categories?userID=${userID}`);
-    // La frontière : le service rend des catégories validées, pas une réponse axios.
+    // The boundary: the service returns validated categories, not an axios response.
     return CategoryListSchema.parse(response.data);
   };
 

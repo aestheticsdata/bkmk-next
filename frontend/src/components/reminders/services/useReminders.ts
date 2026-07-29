@@ -12,7 +12,7 @@ const useReminders = () => {
 
   const getReminders = async () => {
     const response = await privateRequest(`/reminders?userID=${userID}`);
-    // La frontière : le service rend des rappels validés, pas une réponse axios.
+    // The boundary: the service returns validated reminders, not an axios response.
     return ReminderListSchema.parse(response.data);
   };
 

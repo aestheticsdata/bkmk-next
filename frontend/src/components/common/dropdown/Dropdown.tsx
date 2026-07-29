@@ -16,9 +16,9 @@ const DropDown = ({ children, displayCaret = true }: Dropdown) => {
   const handleClickOutside = () => {
     setIsOpen(false);
   };
-  // `use-onclickoutside` s'arrête à React 18 : ses types ignorent le `| null` que
-  // React 19 ajoute aux refs. Le comportement, lui, est identique.
-  // DS 02 remplace ce Dropdown et la dépendance part avec lui.
+  // `use-onclickoutside` stops at React 18: its types ignore the `| null` React 19 adds
+  // to refs. The behaviour itself is unchanged.
+  // DS 02 replaces this Dropdown and the dependency leaves with it.
   useOnClickOutside(ref as React.RefObject<HTMLElement>, handleClickOutside);
 
   const close = () => {

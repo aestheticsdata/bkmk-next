@@ -2,17 +2,17 @@ const { z } = require("zod");
 const { FIELD_LIMITS } = require("./fieldLimits");
 const { categoriesJSONSchema, idSchema, prioritySchema, queryFlagSchema, starsSchema } = require("./primitives");
 
-/* Entrées des routes bookmarks (COS-318).
+/* Inputs of the bookmarks routes (COS-318).
  *
- * Rappel de lecture : après multer, un corps multipart n'a que des chaînes. Ces schémas
- * décrivent donc le fil, pas l'objet logique du formulaire — voir l'en-tête de
+ * A reading reminder: after multer, a multipart body holds nothing but strings. These
+ * schemas therefore describe the wire, not the form's logical object — see the header of
  * `primitives.js`. */
 
-/** `GET /bookmarks` — pagination, tri et filtres, tous dans la query string.
+/** `GET /bookmarks` — pagination, sorting and filters, all in the query string.
  *
- * `userID` est interpolé tel quel dans le SQL du contrôleur. Le contraindre à un entier
- * ici retire le vecteur d'injection le plus direct de la liste, mais ne remplace pas les
- * requêtes préparées de COS-295 : les autres filtres restent interpolés. */
+ * `userID` is interpolated straight into the controller's SQL. Constraining it to an
+ * integer here removes the list's most direct injection vector, but it does not replace
+ * COS-295's prepared statements: the other filters are still interpolated. */
 const listBookmarksQuerySchema = z.object({
   userID: idSchema,
   rows: z.coerce.number().int().positive().max(500),
@@ -21,15 +21,15 @@ const listBookmarksQuerySchema = z.object({
   screenshot: queryFlagSchema.optional(),
   url: queryFlagSchema.optional(),
   notes: queryFlagSchema.optional(),
-  /** Liste d'identifiants jointe par des virgules. */
+  /** A comma-joined list of identifiers. */
   categories_id: z
     .string()
     .regex(/^\d+(,\d+)*$/, "categories_id must be a comma-separated list of integers")
     .optional(),
   reminder: z.coerce.number().int().positive().optional(),
   stars: starsSchema.optional(),
-  /** Les huit colonnes du `switch` du contrôleur, préfixées d'un `-` pour l'ordre
-   *  descendant. Toute autre valeur y tombait silencieusement dans le `default`. */
+  /** The eight columns from the controller's `switch`, prefixed with `-` for descending
+   *  order. Any other value used to fall silently into its `default`. */
   sort: z
     .enum([
       "link",
@@ -61,11 +61,12 @@ const screenshotQuerySchema = z.object({
 
 const bookmarkBodyShape = {
   title: z.string().min(1).max(FIELD_LIMITS.title),
-  /** Le formulaire n'envoie le champ que s'il est rempli, d'où l'`optional`. */
+  /** The form only sends the field when it is filled in, hence the `optional`. */
   url: z.string().max(FIELD_LIMITS.url).optional(),
-  /** Le formulaire passe les notes par `encodeURIComponent` et la base les stocke ainsi.
-   *  D'où la borne triplée : un caractère encodé occupe jusqu'à trois octets (`%C3%A9`),
-   *  et c'est la chaîne encodée qui traverse. La vraie limite est celle du front. */
+  /** The form runs notes through `encodeURIComponent` and the database stores them that
+   *  way. Hence the tripled bound: an encoded character takes up to three bytes
+   *  (`%C3%A9`), and it is the encoded string that travels. The real limit is the
+   *  front's. */
   notes: z
     .string()
     .max(FIELD_LIMITS.notes * 3)
@@ -81,11 +82,11 @@ const createBookmarkBodySchema = z.object(bookmarkBodyShape);
 const updateBookmarkBodySchema = z.object({
   ...bookmarkBodyShape,
   id: idSchema,
-  /** Le formulaire envoie la chaîne `"delete"`, jamais un booléen. */
+  /** The form sends the string `"delete"`, never a boolean. */
   deleteScreenshot: z.string().optional(),
 });
 
-/** `GET /categories` et `GET /reminders` ne prennent que l'identifiant d'utilisateur. */
+/** `GET /categories` and `GET /reminders` take nothing but the user identifier. */
 const userScopedQuerySchema = z.object({ userID: idSchema });
 
 module.exports = {

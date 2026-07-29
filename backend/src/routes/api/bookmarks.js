@@ -21,7 +21,7 @@ const catchAsync = require("../../utils/catchAsync");
 
 router.get("/", checkToken, validate({ query: listBookmarksQuerySchema }), catchAsync(getBookmarksController));
 router.get("/:id", checkToken, validate({ params: bookmarkIdParamsSchema }), catchAsync(getBookmarkController));
-// `validate` après multer : c'est lui qui remplit `req.body` sur du multipart.
+// `validate` after multer: multer is what fills `req.body` on multipart requests.
 router.post(
   "/",
   [checkToken, upload.single("screenshot"), validate({ body: createBookmarkBodySchema })],
@@ -33,8 +33,8 @@ router.put(
   catchAsync(editBookmarkController),
 );
 router.delete("/:id", checkToken, validate({ params: bookmarkIdParamsSchema }), catchAsync(deleteBookmarkController));
-// Pas de schéma de corps ici : la charge utile est le fichier lui-même, que multer sort
-// de `req.body`. Son analyse vit dans le contrôleur — voir `schemas/import.ts` côté front.
+// No body schema here: the payload is the file itself, which multer keeps out of
+// `req.body`. Parsing it lives in the controller — see `schemas/import.ts` on the front.
 router.post("/upload", checkToken, upload.single("bookmark_file"), catchAsync(uploadBookmarksControoler));
 router.get(
   "/upload/:id",

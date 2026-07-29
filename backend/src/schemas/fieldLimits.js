@@ -1,10 +1,11 @@
 /**
- * Miroir de `frontend/src/schemas/fieldLimits.ts` (COS-318). Les deux tables doivent
- * bouger ensemble ; il n'y a rien pour le vérifier automatiquement, contrairement à pfa
- * qui adosse la sienne à `schema.prisma`.
+ * Mirror of `frontend/src/schemas/fieldLimits.ts` (COS-318). The two tables must move
+ * together; nothing checks that automatically, unlike pfa, which backs its own with
+ * `schema.prisma`.
  *
- * ⚠️ Comme côté front, ces valeurs sont **déduites, pas lues** : bkmk n'a ni migrations
- * ni DDL versionné. DATA 01 (COS-306) doit les confronter aux colonnes réelles.
+ * ⚠️ As on the front, these values are **inferred, not read**: bkmk has neither
+ * migrations nor versioned DDL. DATA 01 (COS-306) must check them against the real
+ * columns.
  */
 const FIELD_LIMITS = {
   title: 120,

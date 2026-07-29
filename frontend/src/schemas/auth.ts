@@ -2,14 +2,13 @@ import { FIELD_LIMITS } from "@src/schemas/fieldLimits";
 import { numberLikeSchema } from "@src/schemas/primitives";
 import { z } from "zod";
 
-/* La frontière d'authentification (COS-318). `POST /users` (connexion) et
- * `POST /users/add` (inscription) répondent tous les deux par `signInHelper`, donc
- * exactement la même forme. */
+/* The authentication boundary (COS-318). `POST /users` (sign in) and `POST /users/add`
+ * (sign up) both answer through `signInHelper`, so the shape is identical. */
 
 export const AuthUserSchema = z.object({
-  /** `user.id` est un `INT` : il arrive en nombre, alors que le store le typait en
-   *  chaîne. C'est le store qui avait tort — il sert à construire `?userID=`, où les
-   *  deux passaient sans que personne ne le voie. */
+  /** `user.id` is an `INT`, so it arrives as a number — while the store typed it as a
+   *  string. The store was wrong: it only feeds `?userID=`, where either passed
+   *  unnoticed. */
   id: numberLikeSchema,
   name: z.string(),
   email: z.string(),
@@ -18,20 +17,20 @@ export const AuthUserSchema = z.object({
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 
 export const AuthResponseSchema = z.object({
-  /** JWT signé pour 10 h par `signInHelper`. AUTH 01 (COS-293) le sort du corps de la
-   *  réponse pour le poser dans un cookie `httpOnly` — ce champ disparaîtra alors. */
+  /** JWT signed for 10 hours by `signInHelper`. AUTH 01 (COS-293) moves it out of the
+   *  response body and into an `httpOnly` cookie — this field disappears then. */
   token: z.string(),
   user: AuthUserSchema,
-  /** Pas encore émis par le back. Optionnel **volontairement** : le rendre obligatoire
-   *  maintenant casserait la connexion. AUTH 02 (COS-294) l'émet et le rend obligatoire
-   *  ici dans le même mouvement. */
+  /** Not emitted by the backend yet. Optional **on purpose**: making it required now
+   *  would break login. AUTH 02 (COS-294) emits it and makes it required here in the
+   *  same move. */
   csrfToken: z.string().optional(),
 });
 
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
 
-/* Payloads envoyés. Ce sont eux qui portent les bornes de `fieldLimits` : c'est la seule
- * validation de longueur qui existe aujourd'hui, côté serveur comme côté client. */
+/* Outgoing payloads. These carry the `fieldLimits` bounds: they are the only length
+ * validation that exists today, on either side. */
 
 export const SignInPayloadSchema = z.object({
   email: z.email().max(FIELD_LIMITS.email),
@@ -44,7 +43,7 @@ export const SignUpPayloadSchema = z.object({
   name: z.string().min(1).max(FIELD_LIMITS.userName),
   email: z.email().max(FIELD_LIMITS.email),
   password: z.string().min(1),
-  /** Le front envoie une date, `addUserController` la reformate en `yyyy-MM-dd`. */
+  /** The front sends a date; `addUserController` reformats it to `yyyy-MM-dd`. */
   registerDate: z.union([z.string(), z.date()]),
 });
 

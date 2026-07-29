@@ -2,40 +2,39 @@ import { FIELD_LIMITS } from "@src/schemas/fieldLimits";
 import { starsSchema } from "@src/schemas/primitives";
 import { z } from "zod";
 
-/* L'objet de filtres de l'index (COS-318).
+/* The index's filter object (COS-318).
  *
- * Il n'a pas de frontière réseau à lui : il vit dans la **query string**, la modale
- * l'écrit et `useBookmarks` le relit pour le repasser tel quel au back. C'est donc une
- * frontière quand même — celle de l'URL, où tout est chaîne et où n'importe qui peut
- * écrire n'importe quoi.
+ * It has no network boundary of its own: it lives in the **query string**, the modal
+ * writes it and `useBookmarks` reads it back to hand it straight to the backend. Which
+ * makes it a boundary all the same — the URL's, where everything is a string and anyone
+ * can write anything.
  *
- * Deux formes, et il faut les deux : celle du formulaire, typée, et celle de l'URL, où
- * les booléens sont des `1` et les listes des chaînes jointes par des virgules. */
+ * Two shapes, and both are needed: the form's, typed, and the URL's, where booleans are
+ * `1` and lists are comma-joined strings. */
 
-/** Les valeurs telles que la modale les manipule. */
+/** The values as the modal manipulates them. */
 export const FiltersSchema = z.object({
-  /** Recherche plein texte sur le titre. Le back en fait un `LIKE` en remplaçant les
-   *  virgules par des `%`, si bien qu'une suite de mots devient une recherche « dans cet
-   *  ordre, avec du texte entre ». */
+  /** Full-text search on the title. The backend turns it into a `LIKE` by replacing
+   *  commas with `%`, so a sequence of words becomes "in this order, with anything in
+   *  between". */
   title: z.string().max(FIELD_LIMITS.title).optional(),
-  /** Présence, pas valeur : « seulement ceux qui ont une capture ». Idem pour les trois
-   *  suivants — le back teste `IS NOT NULL`. */
+  /** Presence, not value: "only those with a screenshot". Same for the next two — the
+   *  backend tests `IS NOT NULL`. */
   screenshot: z.boolean().optional(),
   url: z.boolean().optional(),
   notes: z.boolean().optional(),
   categories_id: z.array(z.coerce.number().int()).optional(),
-  /** Fréquence de rappel exacte, en jours. */
+  /** Exact reminder frequency, in days. */
   reminder: z.coerce.number().int().positive().optional(),
-  /** Nombre d'étoiles exact, pas un minimum : le back compare avec `=`. */
+  /** An exact star count, not a minimum: the backend compares with `=`. */
   stars: starsSchema.optional(),
 });
 
 export type Filters = z.infer<typeof FiltersSchema>;
 
-/** La même chose vue depuis l'URL. Tout est chaîne, les drapeaux valent `"1"`, et les
- *  catégories arrivent jointes par des virgules. `catch` plutôt que `optional` sur les
- *  champs numériques : une query string trafiquée doit être ignorée, pas faire échouer
- *  le rendu de la page. */
+/** The same thing seen from the URL. Everything is a string, flags are `"1"`, and
+ *  categories arrive comma-joined. `catch` rather than `optional` on the numeric fields:
+ *  a tampered query string should be ignored, not fail the page render. */
 export const FiltersQuerySchema = z.object({
   page: z.coerce.number().int().min(0).catch(0),
   title: z.string().optional(),
@@ -48,9 +47,9 @@ export const FiltersQuerySchema = z.object({
     .optional(),
   reminder: z.coerce.number().int().positive().optional().catch(undefined),
   stars: starsSchema.optional().catch(undefined),
-  /** Colonne de tri, préfixée d'un `-` pour l'ordre descendant. La liste est celle du
-   *  `switch` de `getBookmarksController` : toute autre valeur y tombe dans le `default`
-   *  et ne trie rien. */
+  /** Sort column, prefixed with `-` for descending order. The list is the one in
+   *  `getBookmarksController`'s `switch`: any other value fell into its `default` and
+   *  sorted nothing. */
   sort: z
     .enum(["link", "title", "stars", "notes", "priority", "screenshot", "alarm", "date"])
     .or(z.enum(["-link", "-title", "-stars", "-notes", "-priority", "-screenshot", "-alarm", "-date"]))

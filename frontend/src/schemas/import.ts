@@ -1,19 +1,19 @@
 import { FIELD_LIMITS } from "@src/schemas/fieldLimits";
 import { z } from "zod";
 
-/* L'import de favoris (COS-318) — `POST /bookmarks/upload`.
+/* Bookmark import (COS-318) — `POST /bookmarks/upload`.
  *
- * Le fichier part en `multipart/form-data` sous le champ `bookmark_file`, et c'est le
- * back qui l'analyse : soit un CSV `titre;lien`, soit l'export Netscape des navigateurs,
- * dont il saute les deux premières lignes puis lit par paires.
+ * The file goes out as `multipart/form-data` under the `bookmark_file` field, and the
+ * backend is what parses it: either a `title;link` CSV, or the browsers' Netscape export,
+ * whose first two lines it skips before reading in pairs.
  *
- * Le front ne voit donc **aucune entrée analysée** aujourd'hui : la réponse est un
- * `{ msg }`, et en cas d'échec le back ajoute la ligne fautive. Les schémas d'entrées et
- * de résumé ci-dessous décrivent ce que UI 08 (COS-304) doit afficher — un aperçu avant
- * envoi, et un compte rendu après — et ce que le back devra renvoyer pour cela. Ils ne
- * sont branchés nulle part tant que ce ticket n'a pas déplacé l'analyse. */
+ * So the front sees **no parsed entry** today: the response is a `{ msg }`, and on failure
+ * the backend adds the offending line. The entry and summary schemas below describe what
+ * UI 08 (COS-304) has to show — a preview before upload, a report after — and what the
+ * backend will have to return for it. They are wired nowhere until that ticket moves the
+ * parsing. */
 
-/** Une ligne du fichier, telle que l'analyseur la produit. */
+/** One line of the file, as the parser produces it. */
 export const ImportEntrySchema = z.object({
   title: z.string().min(1).max(FIELD_LIMITS.title),
   link: z.string().min(1).max(FIELD_LIMITS.url),
@@ -23,7 +23,7 @@ export type ImportEntry = z.infer<typeof ImportEntrySchema>;
 
 export const ImportEntryListSchema = z.array(ImportEntrySchema);
 
-/** Le compte rendu d'un import. */
+/** The report of an import run. */
 export const ImportSummarySchema = z.object({
   parsed: z.number().int().min(0),
   imported: z.number().int().min(0),
@@ -33,8 +33,8 @@ export const ImportSummarySchema = z.object({
 
 export type ImportSummary = z.infer<typeof ImportSummarySchema>;
 
-/** Ce que le back renvoie **réellement** aujourd'hui : un message, et sur erreur l'URL ou
- *  le titre qui a fait échouer l'insertion. */
+/** What the backend **actually** returns today: a message, plus on failure the url or
+ *  title whose insert blew up. */
 export const ImportResponseSchema = z.object({
   msg: z.string(),
   url: z.string().optional(),

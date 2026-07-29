@@ -12,9 +12,9 @@ import queryString from "query-string";
 import { useEffect, useRef, useState } from "react";
 
 import type { UserStore } from "@auth/store/userStore";
-// Les mutations gardent l'ancienne interface : leur charge utile part en multipart, où
-// `categories` est déjà une chaîne JSON et les nombres des chaînes. La décrire vraiment
-// (`CreateBookmarkPayloadSchema`) appartient au lot DATA, avec le formulaire qui l'émet.
+// The mutations keep the old interface: their payload goes out as multipart, where
+// `categories` is already a JSON string and the numbers are strings. Describing it
+// properly (`CreateBookmarkPayloadSchema`) belongs to the DATA lot, with the form.
 import type { Bookmark } from "@components/bookmarks/interfaces/bookmark";
 import type { BookmarkList } from "@src/schemas/bookmarks";
 
@@ -29,18 +29,18 @@ const useBookmarks = (from: string = "") => {
   const [bookmarks, setBookmarks] = useState<BookmarkList>();
   const [page, setPage] = useState(-1);
 
-  // zustand v5 : sélectionner une valeur, jamais un objet littéral — sinon la
-  // référence change à chaque rendu et le composant boucle.
+  // zustand v5: select a value, never an object literal — otherwise the reference
+  // changes on every render and the component loops.
   const pageNumberSaved = usePageStore((state: any) => state.pageNumberSaved);
 
   const previousSearchParams = useRef(searchParams);
   useEffect(() => {
-    // ce hook est appelé depuis la page bookmark et la page pagination
-    // il y a 4 cas:
-    // une url sans query string
-    // une url avec sort
-    // une url avec des filtres
-    // une url avec sort et des filtres
+    // this hook is called from both the bookmark page and the pagination
+    // four cases:
+    // a url with no query string
+    // a url with sort
+    // a url with filters
+    // a url with both sort and filters
     if (from === PAGES.BOOKMARKS) {
       const hasSortChanged = searchParams.get("sort") !== previousSearchParams.current.get("sort");
       let invalidated = false;
@@ -72,7 +72,7 @@ const useBookmarks = (from: string = "") => {
     const parsed = queryString.parse(location.search);
     const stringified = queryString.stringify(parsed);
     const response = await privateRequest(`/bookmarks?rows=${ROWS_BY_PAGE}&userID=${userID}&${stringified}`);
-    // La frontière : le service rend une page validée, pas une réponse axios.
+    // The boundary: the service returns a validated page, not an axios response.
     return BookmarkListSchema.parse(response.data);
   };
 
@@ -122,7 +122,7 @@ const useBookmarks = (from: string = "") => {
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BOOKMARKS] });
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.REMINDERS] });
       await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.CATEGORIES] });
-      // `usePathname` rend l'URL réelle : on quitte la fiche seulement si on y est.
+      // `usePathname` gives the real URL: only leave the record screen if we are on it.
       if (/^\/bookmarks\/\d+\/?$/.test(pathname ?? "")) {
         router.push(`/${PAGES.BOOKMARKS}?page=0`);
       }

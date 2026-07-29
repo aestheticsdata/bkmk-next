@@ -7,23 +7,23 @@ import { useEffect, useState } from "react";
 import type { AuthType } from "@auth/store/authStore";
 
 /**
- * Garde de session **temporaire**, héritée de l'ancien `pages/_app.tsx` : elle lit le
- * JWT persisté en localStorage par le store zustand.
+ * **Temporary** session guard, inherited from the old `pages/_app.tsx`: it reads the JWT
+ * the zustand store persists in localStorage.
  *
- * ⚠️ Elle attend la fin de la **réhydratation** du store avant de décider quoi que ce
- * soit. Sans cette attente, un rechargement de page décide sur un token encore `null` :
- * le serveur rend forcément « pas de token » (il n'a pas de localStorage), et tout ce
- * qui s'exécute avant la réhydratation croit la session absente. Deux dégâts possibles,
- * la redirection vers /login, et — plus sournois — les enfants qui se montent et lancent
- * leurs requêtes sans en-tête `Authorization`, ce qui renvoie un 401 que
- * `useRequestHelper` traduit en passage par /logout, lequel **vide le store**.
+ * ⚠️ It waits for the store to finish **rehydrating** before deciding anything. Without
+ * that wait, a page reload decides on a token that is still `null`: the server can only
+ * ever render "no token" (it has no localStorage), so everything running before
+ * rehydration believes the session is gone. Two ways that hurts — the redirect to
+ * /login, and, more insidiously, children mounting and firing their requests with no
+ * `Authorization` header, which returns a 401 that `useRequestHelper` turns into a trip
+ * through /logout, which **empties the store**.
  *
- * Le rendu est volontairement identique côté serveur et au premier rendu client
- * (`hydrated` démarre à `false` des deux côtés) : pas de divergence d'hydratation.
+ * Server output and the first client render are deliberately identical (`hydrated`
+ * starts `false` on both sides), so there is no hydration mismatch.
  *
- * AUTH 04 (COS-296) remplace tout ceci par un contrôle **serveur** dans
- * `app/(private)/layout.tsx`, sur le modèle de `pfa/front/src/auth/server/getServerSession.ts`.
- * Le token disparaît du localStorage avec AUTH 01.
+ * AUTH 04 (COS-296) replaces all of this with a **server-side** check in
+ * `app/(private)/layout.tsx`, modelled on `pfa/front/src/auth/server/getServerSession.ts`.
+ * The token leaves localStorage with AUTH 01.
  */
 const RequireAuth = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -31,8 +31,8 @@ const RequireAuth = ({ children }: { children: React.ReactNode }) => {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    // La réhydratation peut être déjà terminée quand cet effet s'exécute — auquel cas
-    // `onFinishHydration` ne se déclenchera plus jamais.
+    // Rehydration may already be finished by the time this effect runs — in which case
+    // `onFinishHydration` will never fire again.
     if (useAuthStore.persist.hasHydrated()) {
       setHydrated(true);
       return;

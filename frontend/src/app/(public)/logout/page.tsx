@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 /**
- * Écran de déconnexion **transitoire**. Avec l'auth par session (AUTH 04, COS-296)
- * la déconnexion devient un `POST /users/logout` déclenché depuis le bouton
- * `sign out` de l'écran About : c'est ce ticket-là qui supprimera cette route.
+ * **Transitional** logout screen. Once auth moves to sessions (AUTH 04, COS-296),
+ * logging out becomes a `POST /users/logout` fired from the `sign out` button on the
+ * About screen, and that ticket is the one that removes this route.
  */
 export default function LogoutPage() {
   const router = useRouter();
