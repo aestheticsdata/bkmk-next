@@ -74,7 +74,7 @@ const BookmarkDetail = ({ id } : { id: string }) => {
           {bookmark.screenshot && !isScreenshotLoading &&
             <div className="py-2">
               <img
-                className="border-8 rounded border-grey2"
+                className="border-8 rounded-sm border-grey2"
                 src={imageUrl}
                 width="50%"
                 alt="screenshot"

@@ -156,7 +156,7 @@ const CreateBookmark = ({ id }) => {
               type="text"
               placeholder="title"
               className="w-full border-b border-b-formsGlobalColor bg-transparent px-2 text-sm placeholder-grey2
-                outline-none focus:border-b-2"
+                outline-hidden focus:border-b-2"
               {...register("title", { required: true })}
             />
           </Row>
@@ -171,7 +171,7 @@ const CreateBookmark = ({ id }) => {
               type="text"
               placeholder="url"
               className="w-full border-b border-b-formsGlobalColor bg-transparent px-2 text-sm placeholder-grey2
-                outline-none focus:border-b-2"
+                outline-hidden focus:border-b-2"
               {...register("url")}
             />
           </Row>
@@ -205,7 +205,7 @@ const CreateBookmark = ({ id }) => {
               cols={80}
               rows={10}
               className="bg-transparent border rounded border-formsGlobalColor
-                outline-gray-600 focus:outline-none focus:outline-formsGlobalColorHover
+                outline-gray-600 focus:outline-hidden focus:outline-formsGlobalColorHover
                 focus:border-none"
               {...register("notes")}
             />
@@ -302,7 +302,7 @@ const CreateBookmark = ({ id }) => {
                       }
                       {!isScreenshotLoading &&
                         <img
-                          className="border-8 rounded border-grey2"
+                          className="border-8 rounded-sm border-grey2"
                           src={imageUrl}
                           width="50%"
                         />
@@ -335,7 +335,7 @@ const CreateBookmark = ({ id }) => {
                 disabled={!id && (!isDirty || !isValid)}
                 className={`h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                   font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
-                  hover:shadow-login focus:outline-none p-1
+                  hover:shadow-login focus:outline-hidden p-1
                   ${!id && (!isDirty || !isValid) && "pointer-events-none text-grey01 border-grey01"}`
                 }
               >
@@ -345,7 +345,7 @@ const CreateBookmark = ({ id }) => {
                 <button
                   className="h-8 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                     font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
-                    hover:shadow-login focus:outline-none p-1"
+                    hover:shadow-login focus:outline-hidden p-1"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();

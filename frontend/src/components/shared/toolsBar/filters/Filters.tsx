@@ -66,7 +66,7 @@ const Filters = () => {
       </div>
 
       {isOpen &&
-        <div className="absolute w-[800px] top-[30px] p-4 bg-grey01 rounded shadow-dashboard text-xs space-y-2">
+        <div className="absolute w-[800px] top-[30px] p-4 bg-grey01 rounded-sm shadow-dashboard text-xs space-y-2">
           <form
             className="flex flex-col"
             onSubmit={handleSubmit(onSubmit)}
@@ -101,7 +101,7 @@ const Filters = () => {
                     type="text"
                     placeholder="title contains"
                     className="w-full border-b border-b-formsGlobalColor bg-transparent pl-0.5 text-xs placeholder-grey2
-                      outline-none focus:border-b-2"
+                      outline-hidden focus:border-b-2"
                     {...register("title")}
                   />
                 </Row>
@@ -191,7 +191,7 @@ const Filters = () => {
                   <div className="flex w-[240px] space-x-4">
                     <button type="submit" className="h-6 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                             font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
-                            hover:shadow-login focus:outline-none px-1">
+                            hover:shadow-login focus:outline-hidden px-1">
                       Filter
                     </button>
                     <button
@@ -214,7 +214,7 @@ const Filters = () => {
                       className="
                         h-6 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-sm
                         font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
-                        hover:shadow-login focus:outline-none px-1"
+                        hover:shadow-login focus:outline-hidden px-1"
                     >
                       Reset
                     </button>

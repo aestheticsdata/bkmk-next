@@ -80,7 +80,7 @@ const UploadBookmarks = () => {
             w-[80px] h-8 rounded border border-formsGlobalColor bg-grey01alpha text-sm
             font-medium uppercase text-formsGlobalColor transition-all
             ${isDirty ? "hover:text-formsGlobalColorHover hover:shadow-login" : "cursor-not-allowed"}
-            focus:outline-none p-1
+            focus:outline-hidden p-1
             ${isSubmitted && "pointer-events-none text-grey01 border-grey01"}
           `}
           type="submit"

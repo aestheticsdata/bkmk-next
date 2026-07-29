@@ -26,7 +26,7 @@ const SharedLoginForm = ({
               type="email"
               placeholder="email"
               className="w-full border-b border-b-formsGlobalColor bg-transparent px-2 text-xl placeholder-grey2
-              outline-none focus:border-b-2"
+              outline-hidden focus:border-b-2"
               {...register("email", { required: true })}
             />
             {errors.email &&
@@ -41,7 +41,7 @@ const SharedLoginForm = ({
                 type={showPassword ? "text" : "password"}
                 placeholder="password"
                 className="w-full border-b border-b-formsGlobalColor bg-transparent px-2 text-xl placeholder-grey2
-                outline-none focus:border-b-2"
+                outline-hidden focus:border-b-2"
                 {...register("password", { required: true })}
               />
               <div
@@ -66,7 +66,7 @@ const SharedLoginForm = ({
           disabled={!isDirty || !isValid}
           className="h-8 w-11/12 rounded border border-formsGlobalColor bg-transparent bg-grey01alpha text-2xl
             font-medium uppercase text-formsGlobalColor transition-all hover:text-formsGlobalColorHover
-            hover:shadow-login focus:outline-none"
+            hover:shadow-login focus:outline-hidden"
         >
           {buttonTitle}
         </button>

@@ -1,0 +1,32 @@
+/* ⚠️ PALETTE HÉRITÉE — TEMPORAIRE.
+ *
+ * Ces couleurs viennent de l'ancien tailwind.config.js, lui-même copié du vieux pfa :
+ * d'où des noms qui ne parlent que de finance personnelle (`spendingItemHover`…) sur
+ * un gestionnaire de favoris. Elles ne sont là que pour que l'ancienne UI garde ses
+ * couleurs pendant la refonte.
+ *
+ * DS 01 (COS-290) ajoute les vrais tokens GRAPHITE à côté. Chaque écran refait vide
+ * sa part de ce fichier, qui doit avoir disparu quand le lot UI est terminé.
+ *
+ * Le codemod Tailwind en avait recopié 45 ; les 30 qui n'étaient utilisées nulle part
+ * dans bkmk ont été supprimées ici. Il en reste 15. */
+@theme {
+  --color-grey0: rgb(227, 227, 227);
+  --color-grey01: rgb(200, 200, 200);
+  --color-grey01alpha: rgba(200, 200, 200, 0.1);
+  --color-grey1: rgb(161, 161, 161);
+  --color-grey2: rgb(110, 110, 110);
+  --color-grey3: rgb(60, 60, 60);
+  --color-grey4: rgb(40, 40, 40);
+
+  --color-formsGlobalColor: rgb(73, 73, 73);
+  --color-formsGlobalColorHover: rgb(12, 12, 12);
+
+  --color-blueNavy: rgb(59, 71, 85);
+  --color-menuItem: rgb(155, 220, 255);
+  --color-spendingItemHover: rgb(198, 255, 165);
+  --color-spendingActionHover: rgb(42, 112, 164);
+
+  --color-generalWarning: rgb(247, 8, 8);
+  --color-generalWarningBackground: rgb(255, 255, 0);
+}

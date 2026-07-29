@@ -1,0 +1,18 @@
+/* ⚠️ Échelle et familles héritées — TEMPORAIRE, remplacées par DS 01 (COS-290).
+ * GRAPHITE n'a qu'une police, IBM Plex Mono, et sa propre échelle
+ * (9.5 / 10.5 / 11 / 11.5 / 12 / 12.5 / 21 / 24 / 26 px). */
+@theme {
+  --text-xxxs: 0.6rem;
+  --text-xxs: 0.7rem;
+  --text-tiny: 0.5rem;
+}
+
+/* `inline` est nécessaire : sans lui, la valeur `var(--font-*-face)` serait figée à
+ * la définition du thème au lieu d'être résolue sur l'élément. Les trois variables
+ * `-face` sont produites par next/font dans src/app/layout.tsx — d'où le suffixe,
+ * un token de thème `--font-poppins` qui se référencerait lui-même serait circulaire. */
+@theme inline {
+  --font-poppins: var(--font-poppins-face), sans-serif;
+  --font-smooch: var(--font-smooch-face), sans-serif;
+  --font-ubuntu: var(--font-ubuntu-face), sans-serif;
+}

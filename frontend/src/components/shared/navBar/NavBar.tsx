@@ -23,11 +23,11 @@ const NavBar = () => {
   // sa query string : on compare des chemins normalisés des deux côtés.
   const normalize = (path: string) => path.split("?")[0].replace(/\/+$/, "") || "/";
   const getActivePath = (route: string) =>
-    normalize(route) === normalize(pathname ?? "") ? "bg-spendingItemHover rounded text-blueNavy" : "";
+    normalize(route) === normalize(pathname ?? "") ? "bg-spendingItemHover rounded-sm text-blueNavy" : "";
   const getLinkItem = (route: any) => {
     return (
       <a href={route.path}>
-        <p className={`outline-hidden p-1 ${getActivePath(route.path)} hover:cursor-pointer hover:bg-spendingItemHover hover:text-blueNavy hover:rounded`}>
+        <p className={`outline-hidden p-1 ${getActivePath(route.path)} hover:cursor-pointer hover:bg-spendingItemHover hover:text-blueNavy hover:rounded-sm`}>
           {route.label}
         </p>
       </a>
