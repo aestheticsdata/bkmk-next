@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import queryString from "query-string";
 import Select from "react-select";
@@ -43,11 +45,11 @@ const Filters = () => {
     // go to /?page=0 before applying filters //////
     const search = queryString.parse(window.location.search);
     if (Object.keys(search).length === 1 && Number(search.page) > 0) {
-      router.push({ query: { page: 0 } });
+      router.push("?page=0");
     }
     // //////////////////////////////////////////////
 
-    router.push({ query: filters});
+    router.push(`?${queryString.stringify(filters)}`);
     setIsOpen(false);
   }
 

@@ -1,0 +1,610 @@
+/* ===================================================================
+   bkmk redesign 2026 — themes
+   3 directions, all monospace, all dense, all dev-flavored
+   =================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&family=Inconsolata:wght@300;400;600;700&display=swap');
+
+/* ============ Base — every artboard ============ */
+.bkmk-screen{
+  width:100%;
+  height:100%;
+  font-family:var(--font, 'IBM Plex Mono', monospace);
+  font-feature-settings:"calt" 1, "ss01" 1;
+  font-size:var(--size, 13px);
+  line-height:1.45;
+  color:var(--fg);
+  background:var(--bg);
+  position:relative;
+  overflow:hidden;
+  letter-spacing:-0.005em;
+}
+.bkmk-screen *{box-sizing:border-box;margin:0;padding:0;font-family:inherit}
+.bkmk-screen a{color:inherit;text-decoration:none}
+.bkmk-screen button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.bkmk-screen input,.bkmk-screen textarea,.bkmk-screen select{font:inherit;color:inherit;background:transparent;border:0;outline:0;letter-spacing:inherit}
+
+/* ============ PHOSPHOR — green CRT terminal ============ */
+.theme-phosphor{
+  --font: 'IBM Plex Mono', monospace;
+  --bg: #050a06;
+  --bg-2: #0a140b;
+  --bg-3: #0f1d10;
+  --panel: #0a140b;
+  --fg: #8fdc8f;
+  --fg-2: #5fff85;          /* phosphor green primary */
+  --fg-3: #4f8a55;          /* dim */
+  --fg-4: #2e4a2e;          /* very dim */
+  --accent: #00ff99;        /* mint */
+  --accent-2: #b4ff5f;      /* lime accent */
+  --danger: #ff5577;
+  --good: #aaff66;
+  --border: rgba(95,255,133,0.18);
+  --border-2: rgba(95,255,133,0.4);
+  --selection: rgba(95,255,133,0.22);
+  --size: 13px;
+}
+.theme-phosphor.bkmk-screen{
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(95,255,133,0.07), transparent 60%),
+    #050a06;
+}
+.theme-phosphor.bkmk-screen::after{
+  /* scanlines */
+  content:"";
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(0,0,0,0.18) 2px,
+    rgba(0,0,0,0.18) 3px
+  );
+  pointer-events:none;
+  mix-blend-mode:multiply;
+  z-index:99;
+}
+.theme-phosphor.bkmk-screen::before{
+  /* vignette */
+  content:"";
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.45) 100%);
+  pointer-events:none;
+  z-index:98;
+}
+.theme-phosphor ::selection{background:var(--selection);color:#e8ffe0}
+
+/* ============ PAPERWHITE — cream paper-terminal ============ */
+.theme-paperwhite{
+  --font: 'JetBrains Mono', monospace;
+  --bg: #efe9dc;
+  --bg-2: #e6dfce;
+  --bg-3: #d9d0bb;
+  --panel: #f5f0e3;
+  --fg: #1a1612;
+  --fg-2: #1a1612;
+  --fg-3: #6b6357;
+  --fg-4: #a39884;
+  --accent: #b8410b;       /* rust */
+  --accent-2: #2c5530;     /* forest */
+  --danger: #b8410b;
+  --good: #2c5530;
+  --border: rgba(26,22,18,0.15);
+  --border-2: rgba(26,22,18,0.4);
+  --selection: rgba(184,65,11,0.18);
+  --size: 13px;
+}
+.theme-paperwhite.bkmk-screen{
+  background:
+    linear-gradient(180deg, #f0eadd 0%, #ebe3d2 100%);
+}
+.theme-paperwhite.bkmk-screen::before{
+  /* very subtle paper texture via noise */
+  content:"";
+  position:absolute;inset:0;
+  background-image:
+    radial-gradient(circle at 13% 27%, rgba(26,22,18,0.025) 0.5px, transparent 1px),
+    radial-gradient(circle at 67% 73%, rgba(26,22,18,0.02) 0.5px, transparent 1px),
+    radial-gradient(circle at 88% 41%, rgba(26,22,18,0.018) 0.5px, transparent 1px);
+  background-size: 8px 8px, 12px 12px, 17px 17px;
+  pointer-events:none;
+  z-index:1;
+}
+.theme-paperwhite ::selection{background:var(--selection);color:var(--fg)}
+
+/* ============ NEON — synthwave navy + magenta/cyan ============ */
+.theme-neon{
+  --font: 'Space Mono', monospace;
+  --bg: #0b0820;
+  --bg-2: #14102e;
+  --bg-3: #1d1740;
+  --panel: #110c2a;
+  --fg: #e8e6ff;
+  --fg-2: #ffffff;
+  --fg-3: #8580b5;
+  --fg-4: #524a85;
+  --accent: #ff2bd6;        /* magenta */
+  --accent-2: #00f0ff;      /* cyan */
+  --accent-3: #b76eff;
+  --danger: #ff4a8b;
+  --good: #6ef8c8;
+  --border: rgba(183,110,255,0.22);
+  --border-2: rgba(255,43,214,0.45);
+  --selection: rgba(255,43,214,0.3);
+  --size: 13px;
+}
+.theme-neon.bkmk-screen{
+  background:
+    radial-gradient(ellipse at 80% -10%, rgba(255,43,214,0.18), transparent 50%),
+    radial-gradient(ellipse at 0% 110%, rgba(0,240,255,0.14), transparent 55%),
+    linear-gradient(180deg, #0b0820 0%, #0a0618 100%);
+}
+.theme-neon.bkmk-screen::before{
+  /* grid floor */
+  content:"";
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(to right, rgba(255,43,214,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,240,255,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events:none;
+  z-index:1;
+}
+.theme-neon ::selection{background:var(--selection);color:#fff}
+.theme-neon .glow{text-shadow:0 0 8px currentColor, 0 0 18px currentColor}
+.theme-neon .glow-sm{text-shadow:0 0 6px currentColor}
+
+/* ============ DUSK — warm dark, paper-on-slate ============ */
+.theme-dusk{
+  --font: 'JetBrains Mono', monospace;
+  --bg: #1a1815;
+  --bg-2: #211e1a;
+  --bg-3: #2a2620;
+  --panel: #1f1c18;
+  --fg: #c8bfa9;
+  --fg-2: #ede2c6;
+  --fg-3: #7e7561;
+  --fg-4: #4a4334;
+  --accent: #d4a358;          /* muted ochre */
+  --accent-2: #8fa87b;        /* dusty sage */
+  --danger: #c97560;
+  --good: #8fa87b;
+  --border: rgba(200,191,169,0.12);
+  --border-2: rgba(200,191,169,0.28);
+  --selection: rgba(212,163,88,0.22);
+  --size: 13px;
+}
+.theme-dusk.bkmk-screen{
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(212,163,88,0.04), transparent 60%),
+    #1a1815;
+}
+.theme-dusk ::selection{background:var(--selection);color:var(--fg-2)}
+/* dusk: tag uses Paperwhite's bracketed-square style but adapted */
+.theme-dusk .tag{
+  color:var(--fg-2);
+  font-weight:500;
+  padding:0;
+  text-transform:lowercase;
+  letter-spacing:0.04em;
+  font-size:0.8em;
+}
+.theme-dusk .tag::before{
+  content:"";
+  display:inline-block;
+  width:6px;height:6px;
+  background:hsl(var(--th, 40), 38%, 55%);
+  margin-right:5px;
+  position:relative;top:0px;
+}
+.theme-dusk .stars{color:var(--accent)}
+.theme-dusk .field{background:transparent;border:0;border-bottom:1px solid var(--border-2);padding:6px 0}
+.theme-dusk .field:focus{border-bottom-color:var(--accent);background:transparent}
+.theme-dusk .btn{
+  background:var(--accent);color:var(--bg);border-color:var(--accent);border-radius:0;
+  font-weight:600;
+}
+.theme-dusk .btn:hover{background:transparent;color:var(--accent)}
+.theme-dusk .btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.theme-dusk .btn.primary:hover{background:transparent;color:var(--accent)}
+.theme-dusk .bkmk-topbar .nav a.active{color:var(--fg-2)}
+.theme-dusk .bkmk-topbar .nav a.active::before{content:"› ";color:var(--accent)}
+.theme-dusk mark{background:rgba(212,163,88,0.18);color:var(--accent);padding:0 2px}
+
+/* ============ DUSK (override) — gray bg, keep phosphor green & ASCII feel ============
+   Applied as wrapper class on top of theme-phosphor screens. We just remap
+   the CSS variables (cooler grays instead of near-black), kill the CRT
+   scanlines + vignette, and dial down the glow. The Phosphor layout/structure
+   stays intact: same green, same ASCII markers, same dense terminal feel.
+*/
+.dusk-override{ width:100%; height:100%; }
+.dusk-override .theme-phosphor.bkmk-screen{
+  --bg: #26292c;
+  --bg-2: #2e3236;
+  --bg-3: #383c40;
+  --panel: #2a2e32;
+  --fg: #b8cdc0;
+  --fg-2: #6dff95;
+  --fg-3: #7a8a82;
+  --fg-4: #50574f;
+  --accent: #5fff85;
+  --accent-2: #b4ff5f;
+  --border: rgba(95,255,133,0.14);
+  --border-2: rgba(95,255,133,0.30);
+  --selection: rgba(95,255,133,0.18);
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(95,255,133,0.035), transparent 60%),
+    #26292c !important;
+}
+/* kill scanlines + vignette */
+.dusk-override .theme-phosphor.bkmk-screen::after,
+.dusk-override .theme-phosphor.bkmk-screen::before{ display:none !important; }
+/* dial down glow — keep a whisper, drop the CRT bloom */
+.dusk-override .theme-phosphor .bright{ text-shadow: 0 0 4px rgba(95,255,133,0.30); }
+.dusk-override .theme-phosphor .accent{ text-shadow: 0 0 4px rgba(95,255,133,0.35); }
+.dusk-override .theme-phosphor .accent-2{ text-shadow: none; }
+.dusk-override .theme-phosphor .tag{ text-shadow: none; }
+/* dusk tag — Paperwhite's colored square + Neon's outlined pill, no glow.
+   Each tag is a thin-bordered chip with a dusty colored dot up front. */
+.dusk-override .theme-phosphor .tag{
+  color: hsl(var(--th, 40), 38%, 74%);
+  text-shadow: none;
+  padding: 1px 8px;
+  border: 1px solid hsla(var(--th, 40), 32%, 50%, 0.55);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+  font-size: 0.76em;
+  font-weight: 500;
+}
+.dusk-override .theme-phosphor .tag::before{
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: hsl(var(--th, 40), 42%, 58%);
+  margin-right: 0;
+  opacity: 1;
+  position: relative;
+  top: 0;
+}
+.dusk-override .theme-phosphor:not(.bkmk-screen){
+  --bg: #26292c;
+  --bg-2: #2e3236;
+  --bg-3: #383c40;
+  --fg: #b8cdc0;
+  --fg-2: #6dff95;
+  --fg-3: #7a8a82;
+  --fg-4: #50574f;
+  --accent: #5fff85;
+  --border: rgba(95,255,133,0.14);
+  --border-2: rgba(95,255,133,0.30);
+  background: #26292c !important;
+  box-shadow: 0 0 0 1px #26292c, 0 24px 60px rgba(0,0,0,0.5) !important;
+}
+
+/* ============ GRAPHITE — flat instrument grey, 2026 material ============
+   Flat solid grey desk (no texture, no gradient) with layered panels:
+   soft elevation, hairline highlight edges, recessed inputs, 10-12px radii.
+   Technical density like Phosphor/Dusk; no glow, no scanlines. */
+.theme-graphite{
+  --font:'IBM Plex Mono', monospace;
+  --bg:#a3a4a0;
+  --bg-2:#b3b4af;
+  --bg-3:#9b9c97;
+  --panel:#adaea9;
+  --panel-2:#b4b5b0;
+  --sunk:#9a9b96;
+  --fg:#161715;
+  --fg-2:#0c0d0c;
+  --fg-3:#474944;
+  --fg-4:#6a6c66;
+  --accent:#1d5b4f;
+  --accent-2:#7d3714;
+  --danger:#8a3512;
+  --good:#1d5b4f;
+  --border:rgba(22,23,21,0.16);
+  --border-2:rgba(22,23,21,0.32);
+  --hair:rgba(255,255,255,0.45);
+  --ring:rgba(29,91,79,0.26);
+  --e1:0 1px 2px rgba(20,21,19,0.10), 0 3px 8px -2px rgba(20,21,19,0.10);
+  --e2:0 2px 4px rgba(20,21,19,0.12), 0 18px 40px -12px rgba(20,21,19,0.30);
+  --selection:rgba(29,91,79,0.20);
+  --size:12.5px;
+}
+.theme-graphite.bkmk-screen{background:#a3a4a0;container-type:inline-size}
+.theme-graphite .gr-mobrail{display:none}
+.theme-graphite .gr-tabbar{display:none}
+.theme-graphite ::selection{background:var(--selection);color:var(--fg-2)}
+.theme-graphite ::placeholder{color:var(--fg-4)}
+.theme-graphite .gr-lab{font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg-3)}
+/* top chrome */
+.theme-graphite .gr-strip{display:flex;align-items:center;gap:18px;height:38px;padding:0 16px;background:var(--panel-2);border-bottom:1px solid var(--border-2);box-shadow:inset 0 1px 0 var(--hair), 0 1px 3px rgba(20,21,19,0.10);flex:0 0 auto;position:relative;z-index:5}
+.theme-graphite .gr-tab{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-3);padding:0 11px;height:24px;border-radius:7px}
+.theme-graphite .gr-tab:hover{background:rgba(255,255,255,0.22);color:var(--fg)}
+.theme-graphite .gr-tab.on{color:var(--fg-2);background:var(--panel);box-shadow:var(--e1), inset 0 1px 0 var(--hair);border:1px solid var(--border)}
+.theme-graphite .gr-tab .dot{width:6px;height:6px;border-radius:50%;background:var(--fg-4)}
+.theme-graphite .gr-tab.on .dot{background:var(--accent);box-shadow:0 0 0 3px var(--ring)}
+.theme-graphite .gr-led{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--ring)}
+/* desk + cards */
+.theme-graphite .gr-desk{flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;gap:12px}
+.theme-graphite .gr-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:var(--e1), inset 0 1px 0 var(--hair);overflow:hidden;min-height:0}
+.theme-graphite .gr-cmd{display:flex;align-items:center;gap:12px;min-height:46px;padding:0 14px;border-bottom:1px solid var(--border);background:var(--panel-2);box-shadow:inset 0 1px 0 var(--hair);flex:0 0 auto}
+.theme-graphite .gr-q{display:flex;align-items:center;gap:4px;min-width:300px;padding:7px 11px;font-size:11.5px;color:var(--fg-3);background:var(--sunk);border:1px solid var(--border);border-radius:9px;box-shadow:inset 0 1px 2px rgba(22,23,21,0.14)}
+.theme-graphite .gr-rail{padding:16px 14px;overflow:auto}
+.theme-graphite .gr-railrow{display:flex;justify-content:space-between;padding:4px 8px;border-radius:7px;font-size:11.5px;color:var(--fg-3)}
+.theme-graphite .gr-railrow:hover{background:rgba(255,255,255,0.20);color:var(--fg)}
+.theme-graphite .gr-railrow.on{background:rgba(255,255,255,0.34);color:var(--fg-2);font-weight:500;box-shadow:inset 0 1px 0 var(--hair)}
+/* table */
+.theme-graphite .gr-th{display:grid;align-items:center;height:28px;font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg-3);border-bottom:1px solid var(--border-2);background:var(--panel-2);flex:0 0 auto}
+.theme-graphite .gr-tr{display:grid;align-items:center;height:30px;border-bottom:1px solid var(--border);font-size:12px;font-variant-numeric:tabular-nums}
+.theme-graphite .gr-tr:hover{background:rgba(255,255,255,0.20)}
+.theme-graphite .gr-tr.on{background:rgba(255,255,255,0.36);box-shadow:inset 3px 0 0 var(--accent), inset 0 1px 0 var(--hair)}
+/* chips */
+.theme-graphite .gr-chip{display:inline-flex;align-items:center;gap:5px;height:18px;padding:0 7px;border-radius:6px;background:rgba(255,255,255,0.22);border:1px solid var(--border);font-size:10px;letter-spacing:0.04em;color:var(--fg);white-space:nowrap}
+.theme-graphite .gr-chip i{width:5px;height:5px;border-radius:50%;background:hsl(var(--th,40),34%,32%);display:block;flex:0 0 auto}
+/* inputs */
+.theme-graphite .gr-in{width:100%;padding:8px 11px;font:inherit;color:var(--fg);background:var(--sunk);border:1px solid var(--border);border-radius:9px;box-shadow:inset 0 1px 2px rgba(22,23,21,0.14);transition:box-shadow .15s,border-color .15s}
+.theme-graphite .gr-in:focus{border-color:var(--accent);box-shadow:inset 0 1px 2px rgba(22,23,21,0.10), 0 0 0 3px var(--ring);outline:0}
+/* buttons */
+.theme-graphite .gr-btn{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 13px;border-radius:9px;border:1px solid var(--border-2);font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg);background:linear-gradient(180deg, rgba(255,255,255,0.26), rgba(255,255,255,0.06));box-shadow:var(--e1), inset 0 1px 0 var(--hair);cursor:pointer;transition:transform .12s, box-shadow .12s}
+.theme-graphite .gr-btn:hover{transform:translateY(-1px);box-shadow:var(--e2), inset 0 1px 0 var(--hair)}
+.theme-graphite .gr-btn.pri{background:linear-gradient(180deg,#256b5c,#1b5449);color:#e9efeb;border-color:#174740;box-shadow:0 1px 2px rgba(20,21,19,0.22), 0 8px 18px -8px rgba(23,71,64,0.75), inset 0 1px 0 rgba(255,255,255,0.20)}
+/* segmented options */
+.theme-graphite .gr-seg{display:inline-flex;align-items:center;height:24px;padding:0 11px;border-radius:8px;font-size:11px;letter-spacing:0.04em;color:var(--fg-3);background:rgba(255,255,255,0.18);border:1px solid var(--border);cursor:pointer}
+.theme-graphite .gr-seg:hover{color:var(--fg);background:rgba(255,255,255,0.30)}
+.theme-graphite .gr-seg.on{color:#e9efeb;background:linear-gradient(180deg,#256b5c,#1b5449);border-color:#174740;box-shadow:0 1px 2px rgba(20,21,19,0.20), inset 0 1px 0 rgba(255,255,255,0.18)}
+/* meters, slots, kv, status */
+.theme-graphite .gr-meter{display:inline-block;width:100%;height:6px;border-radius:999px;background:rgba(22,23,21,0.16);box-shadow:inset 0 1px 1px rgba(22,23,21,0.16);overflow:hidden}
+.theme-graphite .gr-meter i{display:block;height:100%;border-radius:999px;background:var(--accent)}
+.theme-graphite .gr-slot{border:1px dashed var(--border-2);border-radius:10px;background:var(--sunk);box-shadow:inset 0 1px 2px rgba(22,23,21,0.12);display:grid;place-items:center;color:var(--fg-4);font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.theme-graphite .gr-kv{display:grid;grid-template-columns:104px 1fr;gap:0 16px;font-size:12px}
+.theme-graphite .gr-kv > div{padding:7px 0;border-bottom:1px solid var(--border)}
+.theme-graphite .gr-bar{display:flex;align-items:center;gap:16px;height:26px;padding:0 18px 4px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-4);flex:0 0 auto}
+.theme-graphite .gr-caret::after{content:"\2588";display:inline-block;margin-left:1px;animation:bkmk-blink 1.05s steps(1) infinite}
+.theme-graphite .gr-open{opacity:0;color:var(--accent);padding:0 2px;transition:opacity .12s}
+.theme-graphite .gr-tr:hover .gr-open{opacity:1}
+.theme-graphite .gr-acts{display:inline-flex;gap:2px;opacity:0;transition:opacity .12s}
+.theme-graphite .gr-tr:hover .gr-acts{opacity:1}
+.theme-graphite .gr-act{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;color:var(--fg-3);font-size:12px;cursor:pointer;transition:background .12s,color .12s}
+.theme-graphite .gr-act:hover{background:rgba(255,255,255,0.34);color:var(--fg-2);box-shadow:inset 0 1px 0 var(--hair)}
+.theme-graphite .gr-act.danger:hover{color:var(--accent-2)}
+.theme-graphite .gr-mini{height:20px;padding:0 8px;border-radius:6px;border:1px solid var(--border-2);font:inherit;font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg);background:rgba(255,255,255,0.24);box-shadow:inset 0 1px 0 var(--hair);cursor:pointer}
+.theme-graphite .gr-mini:hover{background:rgba(255,255,255,0.4)}
+.theme-graphite .gr-mini.danger{background:linear-gradient(180deg,#8d4018,#763512);border-color:#5f2a0e;color:#f4ece6}
+.theme-graphite .gr-btn.danger{color:var(--accent-2);border-color:rgba(125,55,20,0.5);background:linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.04))}
+.theme-graphite .gr-btn.danger:hover{background:rgba(125,55,20,0.12)}
+.theme-graphite .gr-btn.danger.solid{background:linear-gradient(180deg,#8d4018,#763512);border-color:#5f2a0e;color:#f4ece6;box-shadow:0 1px 2px rgba(20,21,19,0.22), 0 8px 18px -8px rgba(95,42,14,0.7), inset 0 1px 0 rgba(255,255,255,0.18)}
+.theme-graphite .gr-pager{display:flex;align-items:center;gap:14px;padding:9px 14px;border-top:1px solid var(--border);background:var(--panel-2);box-shadow:inset 0 1px 0 var(--hair);flex:0 0 auto}
+.theme-graphite .gr-pagebtn{height:26px;padding:0 10px;font-size:12px;letter-spacing:0}
+.theme-graphite .gr-drop{display:grid;justify-items:center;align-content:center;gap:9px;padding:26px;border:1px dashed var(--border-2);border-radius:12px;background:var(--sunk);box-shadow:inset 0 1px 3px rgba(22,23,21,0.12)}
+.theme-graphite .gr-sth{display:grid;align-items:center;height:26px;font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg-3);border-bottom:1px solid var(--border-2);background:var(--panel-2)}
+.theme-graphite .gr-srow{display:grid;align-items:center;border-bottom:1px solid var(--border);font-size:12px}
+.theme-graphite .gr-srow:last-child{border-bottom:0}
+.theme-graphite .gr-srow:hover{background:rgba(255,255,255,0.18)}
+.theme-graphite .gr-code{font:inherit;font-size:10.5px;line-height:1.55;color:var(--fg-3);background:var(--sunk);border:1px solid var(--border);border-radius:9px;padding:9px 11px;box-shadow:inset 0 1px 2px rgba(22,23,21,0.12);white-space:pre;overflow-x:auto}
+/* ---- GRAPHITE responsive: container queries on the screen itself, so the
+   same components serve a 1280 desktop artboard and a 390 phone artboard ---- */
+@container (max-width:720px){
+  .theme-graphite .gr-hide-sm{display:none !important}
+  .theme-graphite .gr-strip{height:48px;padding:0 14px;gap:12px}
+  .theme-graphite .gr-striptabs{display:none !important}
+  .theme-graphite .gr-desk{padding:8px;gap:8px}
+  .theme-graphite .gr-card{border-radius:14px}
+  .theme-graphite .gr-listgrid{grid-template-columns:1fr !important}
+  .theme-graphite .gr-rail{display:none !important}
+  .theme-graphite .gr-mobrail{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;background:var(--panel-2);border-bottom:1px solid var(--border);box-shadow:inset 0 1px 0 var(--hair);scrollbar-width:none;flex:0 0 auto}
+  .theme-graphite .gr-mobrail::-webkit-scrollbar{display:none}
+  .theme-graphite .gr-mobrail .gr-seg{height:32px;flex:0 0 auto}
+  .theme-graphite .gr-cmd{min-height:54px;padding:0 12px;gap:8px}
+  .theme-graphite .gr-q{min-width:0;flex:1;white-space:nowrap;overflow:hidden}
+  .theme-graphite .gr-btn{height:34px}
+  .theme-graphite .gr-th{display:none !important}
+  /* bookmark rows reflow into two-line cards */
+  .theme-graphite .gr-tr{height:auto !important;padding:12px 14px;grid-template-columns:auto auto 1fr !important;grid-template-areas:"t t t" "m s d" "g g g";row-gap:5px;column-gap:10px}
+  .theme-graphite .gr-tr > *:nth-child(1){grid-area:m;padding-left:0 !important;font-size:11px}
+  .theme-graphite .gr-tr > *:nth-child(2){display:none}
+  .theme-graphite .gr-tr > *:nth-child(3){grid-area:s}
+  .theme-graphite .gr-tr > *:nth-child(4){grid-area:t;flex-wrap:wrap;row-gap:3px;white-space:normal}
+  .theme-graphite .gr-tr > *:nth-child(4) > *:first-child{flex-basis:100%;white-space:normal !important;overflow:visible !important;line-height:1.35}
+  .theme-graphite .gr-tr > *:nth-child(4) > *:last-child{flex:1;min-width:0;overflow:hidden}
+  .theme-graphite .gr-tr > *:nth-child(5){grid-area:g;padding-top:1px}
+  .theme-graphite .gr-tr > *:nth-child(6){grid-area:d;padding-right:0 !important;text-align:right;font-size:11px}
+  /* reminder rows */
+  .theme-graphite .gr-rem{grid-template-columns:1fr auto !important;grid-template-areas:"t t" "c f" !important;padding:13px 14px}
+  .theme-graphite .gr-rem > *:nth-child(1){display:none}
+  .theme-graphite .gr-rem > *:nth-child(2){grid-area:t;display:block}
+  .theme-graphite .gr-rem > *:nth-child(3){grid-area:c;padding-right:0 !important}
+  .theme-graphite .gr-rem > *:nth-child(4){grid-area:f;text-align:right}
+  .theme-graphite .gr-rem > *:nth-child(5){display:none}
+  /* two-pane screens stack */
+  .theme-graphite .gr-split{grid-template-columns:1fr !important;overflow:auto}
+  .theme-graphite .gr-split > *{overflow:visible !important;padding:16px 14px !important}
+  .theme-graphite .gr-split > *:nth-child(2){border-left:0 !important;border-top:1px solid var(--border)}
+  .theme-graphite .gr-kv{grid-template-columns:88px 1fr}
+  .theme-graphite .gr-chart{min-height:118px}
+  .theme-graphite .gr-auth{width:100% !important}
+  /* bottom tab bar replaces the chrome tabs + keyboard hints */
+  .theme-graphite .gr-bar{height:20px;padding:0 14px 2px;font-size:9px}
+  .theme-graphite .gr-tabbar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px 8px 10px;background:var(--panel-2);border-top:1px solid var(--border-2);box-shadow:inset 0 1px 0 var(--hair);flex:0 0 auto}
+  .theme-graphite .gr-acts{display:inline-flex;gap:2px;opacity:0;transition:opacity .12s}
+.theme-graphite .gr-tr:hover .gr-acts{opacity:1}
+.theme-graphite .gr-act{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;color:var(--fg-3);font-size:12px;cursor:pointer;transition:background .12s,color .12s}
+.theme-graphite .gr-act:hover{background:rgba(255,255,255,0.34);color:var(--fg-2);box-shadow:inset 0 1px 0 var(--hair)}
+.theme-graphite .gr-act.danger:hover{color:var(--accent-2)}
+.theme-graphite .gr-mini{height:20px;padding:0 8px;border-radius:6px;border:1px solid var(--border-2);font:inherit;font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg);background:rgba(255,255,255,0.24);box-shadow:inset 0 1px 0 var(--hair);cursor:pointer}
+.theme-graphite .gr-mini:hover{background:rgba(255,255,255,0.4)}
+.theme-graphite .gr-mini.danger{background:linear-gradient(180deg,#8d4018,#763512);border-color:#5f2a0e;color:#f4ece6}
+.theme-graphite .gr-btn.danger{color:var(--accent-2);border-color:rgba(125,55,20,0.5);background:linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.04))}
+.theme-graphite .gr-btn.danger:hover{background:rgba(125,55,20,0.12)}
+.theme-graphite .gr-btn.danger.solid{background:linear-gradient(180deg,#8d4018,#763512);border-color:#5f2a0e;color:#f4ece6;box-shadow:0 1px 2px rgba(20,21,19,0.22), 0 8px 18px -8px rgba(95,42,14,0.7), inset 0 1px 0 rgba(255,255,255,0.18)}
+.theme-graphite .gr-pager{padding:9px 12px;gap:10px}
+  .theme-graphite .gr-open{opacity:1}
+  .theme-graphite .gr-acts{opacity:1;gap:4px}
+  .theme-graphite .gr-act{width:26px;height:26px}
+  .theme-graphite .gr-rem > *:nth-child(5){display:none}
+  .theme-graphite .gr-rem > *:nth-child(6){display:none}
+  .theme-graphite .gr-drop{padding:20px}
+  .theme-graphite .gr-srow{grid-template-columns:1fr 66px !important}
+  .theme-graphite .gr-srow > *:nth-child(2){display:none}
+  .theme-graphite .gr-tabbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:48px;border-radius:11px;font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg-3);cursor:pointer}
+  .theme-graphite .gr-tabbtn.on{color:var(--fg-2);background:var(--panel);border:1px solid var(--border);box-shadow:var(--e1), inset 0 1px 0 var(--hair)}
+}
+
+/* ============ shared building blocks ============ */
+.bkmk-screen .content{position:relative;z-index:10;width:100%;height:100%}
+.bkmk-screen .mono-caret::after{
+  content:"\2588"; /* full block */
+  display:inline-block;
+  margin-left:1px;
+  animation:bkmk-blink 1.05s steps(1) infinite;
+}
+@keyframes bkmk-blink{50%{opacity:0}}
+
+.bkmk-screen .ascii{white-space:pre;font-family:inherit}
+.bkmk-screen .uppercase{text-transform:uppercase;letter-spacing:0.04em}
+.bkmk-screen .dim{color:var(--fg-3)}
+.bkmk-screen .dim-2{color:var(--fg-4)}
+.bkmk-screen .accent{color:var(--accent)}
+.bkmk-screen .accent-2{color:var(--accent-2, var(--accent))}
+.bkmk-screen .bright{color:var(--fg-2)}
+.bkmk-screen .strong{font-weight:600}
+
+/* phosphor — soft glow on bright text */
+.theme-phosphor .bright{text-shadow:0 0 6px rgba(95,255,133,0.55)}
+.theme-phosphor .accent{text-shadow:0 0 8px rgba(0,255,153,0.7)}
+.theme-phosphor .accent-2{text-shadow:0 0 6px rgba(180,255,95,0.6)}
+
+/* ============ Tag pills — themed per direction ============ */
+.tag{
+  display:inline-flex;align-items:center;
+  font-size:0.78em;
+  font-weight:500;
+  letter-spacing:0.06em;
+  text-transform:lowercase;
+  white-space:nowrap;
+}
+
+/* phosphor: #dev with hue-tinted text on transparent */
+.theme-phosphor .tag{
+  color:hsl(var(--th, 40), 90%, 65%);
+  text-shadow:0 0 6px hsla(var(--th, 40), 90%, 55%, 0.6);
+  padding:1px 0;
+}
+.theme-phosphor .tag::before{content:"#";opacity:0.55;margin-right:1px}
+
+/* paperwhite: bracketed label with colored square */
+.theme-paperwhite .tag{
+  color:var(--fg);
+  font-weight:600;
+  padding:0;
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+}
+.theme-paperwhite .tag::before{
+  content:"";
+  display:inline-block;
+  width:7px;height:7px;
+  background:hsl(var(--th, 40), 55%, 45%);
+  margin-right:5px;
+  border-radius:1px;
+  position:relative;top:0px;
+}
+
+/* neon: glowing outlined pill */
+.theme-neon .tag{
+  padding:2px 8px;
+  border:1px solid hsl(var(--th, 40), 90%, 65%);
+  color:hsl(var(--th, 40), 95%, 75%);
+  border-radius:2px;
+  background:hsla(var(--th, 40), 90%, 50%, 0.08);
+  box-shadow:0 0 8px hsla(var(--th, 40), 90%, 55%, 0.25), inset 0 0 8px hsla(var(--th, 40), 90%, 55%, 0.1);
+  text-transform:uppercase;
+  font-size:0.7em;
+  letter-spacing:0.1em;
+}
+
+/* ============ Stars ============ */
+.stars{display:inline-flex;gap:1px;letter-spacing:0}
+.theme-phosphor .stars{color:var(--fg-2)}
+.theme-paperwhite .stars{color:var(--accent)}
+.theme-neon .stars{color:var(--accent)}
+.theme-neon .stars{text-shadow:0 0 6px currentColor}
+
+/* ============ Inputs ============ */
+.bkmk-screen .field{
+  width:100%;
+  padding:8px 10px;
+  background:var(--bg-2);
+  color:var(--fg);
+  border:1px solid var(--border);
+  font:inherit;
+  transition:border-color .15s, background .15s;
+}
+.bkmk-screen .field:focus{border-color:var(--border-2);background:var(--bg-3)}
+.theme-paperwhite .field{background:transparent;border:0;border-bottom:1px solid var(--border-2);padding:6px 0}
+.theme-paperwhite .field:focus{border-bottom-color:var(--accent);background:transparent}
+.theme-neon .field{border-color:var(--accent-2);box-shadow:0 0 8px rgba(0,240,255,0.1) inset}
+.theme-neon .field:focus{border-color:var(--accent);box-shadow:0 0 12px rgba(255,43,214,0.2) inset, 0 0 8px rgba(255,43,214,0.15)}
+
+/* ============ Buttons ============ */
+.bkmk-screen .btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;
+  border:1px solid var(--border-2);
+  color:var(--fg-2);
+  font:inherit;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+  background:var(--bg-2);
+  cursor:pointer;
+  transition:all .15s;
+}
+.bkmk-screen .btn:hover{background:var(--bg-3);border-color:var(--fg-2)}
+.bkmk-screen .btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.theme-paperwhite .btn{background:var(--fg);color:var(--bg);border-color:var(--fg);border-radius:0}
+.theme-paperwhite .btn:hover{background:transparent;color:var(--fg)}
+.theme-paperwhite .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.theme-paperwhite .btn.primary:hover{background:transparent;color:var(--accent)}
+.theme-neon .btn{border-color:var(--accent);color:var(--accent);background:transparent;box-shadow:0 0 8px rgba(255,43,214,0.2) inset}
+.theme-neon .btn:hover{background:rgba(255,43,214,0.12);box-shadow:0 0 14px rgba(255,43,214,0.4)}
+.theme-neon .btn.primary{background:var(--accent);color:#0b0820;box-shadow:0 0 16px rgba(255,43,214,0.5)}
+
+/* ============ Topbar / nav (shared) ============ */
+.bkmk-topbar{
+  display:flex;align-items:center;
+  padding:14px 22px;
+  border-bottom:1px solid var(--border);
+  gap:28px;
+  height:54px;
+}
+.bkmk-topbar .logo{
+  display:flex;align-items:center;gap:8px;
+  font-weight:700;letter-spacing:0.1em;
+  color:var(--accent);
+  font-size:14px;
+}
+.bkmk-topbar .nav{display:flex;gap:22px;flex:1;align-items:center}
+.bkmk-topbar .nav a{font-size:13px;color:var(--fg-3);transition:color .15s;display:flex;align-items:center;gap:6px}
+.bkmk-topbar .nav a:hover{color:var(--fg)}
+.bkmk-topbar .nav a.active{color:var(--fg-2)}
+.theme-phosphor .bkmk-topbar .nav a.active::before{content:"\203A ";color:var(--accent)}
+.theme-paperwhite .bkmk-topbar .nav a.active{border-bottom:2px solid var(--accent);padding-bottom:2px}
+.theme-neon .bkmk-topbar .nav a.active{color:var(--accent);text-shadow:0 0 8px currentColor}
+.bkmk-topbar .user{font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:8px}
+
+/* ============ ASCII box drawing helpers ============ */
+.asciiBox{
+  border:1px solid var(--border-2);
+  position:relative;
+}
+.theme-phosphor .asciiBox{
+  border-color:var(--fg-3);
+}
+
+/* ============ Density toggle ============ */
+.density-cozy{--size: 14px}
+.density-compact{--size: 12px}
+.density-tight{--size: 11.5px}

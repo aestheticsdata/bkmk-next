@@ -1,6 +1,6 @@
 interface RowProps {
   label: string;
-  children: JSX.Element;
+  children: React.JSX.Element;
   childrenWidth?: string;
 }
 

@@ -6,9 +6,9 @@ export interface PageStoreType {
   setPageNumberSaved: (page: number) => void;
 }
 
-export const usePageStore = create<any>( // to avoid any see https://github.com/pmndrs/zustand/issues/638
+export const usePageStore = create<PageStoreType>()(
   persist(
-    (set, _) => ({
+    (set) => ({
       pageNumberSaved: 0,
       setPageNumberSaved: (page: number) => set({ pageNumberSaved: page }),
     }),

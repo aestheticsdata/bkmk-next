@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import queryString from "query-string";
 import Cell from "@components/shared/sortBar/Cell";
 import { COLUMN_WIDTH } from "@components/shared/config/constants";
@@ -34,7 +36,7 @@ const SortBar = () => {
       }
     }
 
-    router.push({ query: qs });
+    router.push(`?${qs}`);
   };
 
   return (

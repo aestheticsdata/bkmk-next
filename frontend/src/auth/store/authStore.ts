@@ -6,9 +6,11 @@ export interface AuthType {
   setToken: (t: string | null) => void;
 }
 
-export const useAuthStore = create<any>( // to avoid any see https://github.com/pmndrs/zustand/issues/638
+// zustand v5 impose la forme curryfiée `create<T>()(...)` dès qu'un middleware
+// est utilisé — c'est ce qui permet de typer le store au lieu de le passer en `any`.
+export const useAuthStore = create<AuthType>()(
   persist(
-    (set, _) => ({
+    (set) => ({
       token: null,
       setToken: (t: string | null) => set({ token: t }),
     }),

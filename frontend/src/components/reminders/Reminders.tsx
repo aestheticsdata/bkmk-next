@@ -1,4 +1,6 @@
-import { useRouter } from "next/router";
+"use client";
+
+import { useRouter } from "next/navigation";
 import useReminders from "@components/reminders/services/useReminders";
 import BookmarkDetail from "@components/bookmark/BookmarkDetail";
 import { ROUTES } from "@components/shared/config/constants";

@@ -1,8 +1,10 @@
+"use client";
+
 import {
   useEffect,
   useState,
 } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import fr from "date-fns/locale/fr";
 import format from "date-fns/format";
@@ -65,10 +67,7 @@ const Bookmarks = () => {
             }
             <Link
               className="flex"
-              href={{
-                pathname: "/bookmarks/[id]",
-                query: { id: bookmark.id },
-              }}
+              href={`/bookmarks/${bookmark.id}`}
             >
               <div className="flex w-full py-1">
                 <div

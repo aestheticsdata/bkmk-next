@@ -1,5 +1,5 @@
 module.exports = {
-  content: ["./pages/**/*.{js,ts,jsx,tsx}", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: ["./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       boxShadow: {
@@ -15,9 +15,10 @@ module.exports = {
         "tiny": ".5rem",
       },
       fontFamily: {
-        smooch: ["Smooch Sans", "sans-serif"], // imported in styles/global.css
-        poppins: ["Poppins", "sans-serif"],
-        ubuntu: ["Ubuntu", "sans-serif"],
+        // auto-hébergées par next/font, déclarées dans src/app/layout.tsx
+        smooch: ["var(--font-smooch)", "sans-serif"],
+        poppins: ["var(--font-poppins)", "sans-serif"],
+        ubuntu: ["var(--font-ubuntu)", "sans-serif"],
       },
       colors: {
         spendingDayBackground: "rgb(255, 255, 255)",
