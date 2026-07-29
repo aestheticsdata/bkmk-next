@@ -5,8 +5,8 @@
  * Fonts are not imported here: next/font self-hosts them from src/app/layout.tsx.
  *
  * DS 03 (COS-292) will add ./components/chrome.css, with its own import. */
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 /* Keep the docs out of the scan. Tailwind walks the project for class-name candidates,
  * and `docs/design-system.md` lists utilities in its mapping tables — including the
@@ -19,11 +19,11 @@
  * bkmk surface carries `.dark`. */
 @custom-variant dark (&:is(.dark *));
 
-@import './tokens/breakpoints.css';
-@import './tokens/colors.css';
-@import './tokens/radius.css';
-@import './tokens/typography.css';
-@import './tokens/elevation.css';
+@import "./tokens/breakpoints.css";
+@import "./tokens/colors.css";
+@import "./tokens/radius.css";
+@import "./tokens/typography.css";
+@import "./tokens/elevation.css";
 
-@import './base.css';
-@import './animations.css';
+@import "./base.css";
+@import "./animations.css";

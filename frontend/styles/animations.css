@@ -4,6 +4,13 @@
  * Durations and easing stay at the point of use — a duration token buys nothing while a
  * single animation uses each value. */
 
+/* The composed shorthands, so the components name an animation instead of spelling one
+ * out in an arbitrary value. Only the caret needs one today — the other two keyframes
+ * are driven by shadcn's `tw-animate-css` classes at the point of use. */
+@theme {
+  --animate-gr-caret: bkmk-blink 1.05s steps(1) infinite;
+}
+
 /* The chrome's block caret (`.gr-caret` in the handoff): a solid square blinking at the
  * end of a line, the theme's terminal signature. `steps(1)` rather than a transition —
  * a terminal caret does not fade, it is either lit or dark. */

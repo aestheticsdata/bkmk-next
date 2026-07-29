@@ -6,20 +6,35 @@
  *
  * ⚠️ **The system's signature: every light surface carries `inset 0 1px 0` of the hair
  * line.** It is already baked into `--shadow-gr-modal` and `--shadow-gr-primary`;
- * elsewhere it has to be added, which produces unreadable utility classes. DS 03
- * (COS-292) will turn it into a class in `components/chrome.css` rather than repeat it
- * screen by screen. */
+ * everywhere else it composes through `inset-shadow-gr-hair`, Tailwind v4's separate
+ * inset-shadow layer, so `shadow-gr-1 inset-shadow-gr-hair` stacks the two without an
+ * arbitrary value and without a hand-written class. */
 @theme {
   /* Cards and buttons at rest. */
   --shadow-gr-1: 0 1px 2px rgb(20 21 19 / 0.1), 0 3px 8px -2px rgb(20 21 19 / 0.1);
   /* Button hover, auth card. */
   --shadow-gr-2: 0 2px 4px rgb(20 21 19 / 0.12), 0 18px 40px -12px rgb(20 21 19 / 0.3);
   /* The modal — carries its own hair line, unlike the two steps above. */
-  --shadow-gr-modal: 0 30px 70px -20px rgb(18 19 17 / 0.55), 0 2px 6px rgb(18 19 17 / 0.2), inset 0 1px 0
-    rgb(255 255 255 / 0.45);
+  --shadow-gr-modal:
+    0 30px 70px -20px rgb(18 19 17 / 0.55), 0 2px 6px rgb(18 19 17 / 0.2), inset 0 1px 0 rgb(255 255 255 / 0.45);
   /* The primary action: the teal glow lifts it off the rest of the chrome. */
-  --shadow-gr-primary: 0 1px 2px rgb(20 21 19 / 0.22), 0 8px 18px -8px rgb(23 71 64 / 0.75), inset 0 1px 0
-    rgb(255 255 255 / 0.2);
+  --shadow-gr-primary:
+    0 1px 2px rgb(20 21 19 / 0.22), 0 8px 18px -8px rgb(23 71 64 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.2);
+  /* The oxide fill of the destructive action, mirroring --shadow-gr-primary. */
+  --shadow-gr-oxide:
+    0 1px 2px rgb(20 21 19 / 0.22), 0 8px 18px -8px rgb(95 42 14 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+
+/* The hair line, on its own layer (COS-291). Tailwind v4 keeps `inset-shadow-*` separate
+ * from `shadow-*`, so the two compose: `shadow-gr-1 inset-shadow-gr-hair` produces the
+ * card's resting elevation *and* its light top edge, and hovering to `shadow-gr-2`
+ * changes only the outer half. */
+@theme {
+  --inset-shadow-gr-hair: inset 0 1px 0 var(--color-gr-hair);
+  /* Sunken surfaces — fields, code blocks, the drop zone, image slots. */
+  --inset-shadow-gr-sunk: inset 0 1px 2px rgb(22 23 21 / 0.14);
+  /* The selected table row's teal left edge. */
+  --inset-shadow-gr-mark: inset 3px 0 0 var(--color-gr-accent);
 }
 
 /* ─── Legacy — TEMPORARY ────────────────────────────────────────────────────────────
