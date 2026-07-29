@@ -270,6 +270,21 @@ pour que les deux projets restent cohérents à l'œil.
 - À désinstaller : `eslint`, `eslint-config-next`. Scripts : `"lint": "biome check ./src"`,
   `"lint:fix": "biome check --write ./src"`.
 
+⚠️ **`pnpm lint` du front sort en erreur, et c'est assumé** (décidé le 2026-07-29). Après les
+corrections sûres, il reste **57 erreurs**, toutes dans les composants hérités : pour l'essentiel
+des `div` cliquables sans équivalent clavier (`useKeyWithClickEvents`, `noStaticElementInteractions`),
+plus quelques `useButtonType` et `useAltText`. Aucune n'est corrigée : ces fichiers sont supprimés
+par le lot UI, les rendre accessibles serait du travail jeté.
+
+Deux conséquences à garder en tête. D'ici la fin du lot UI, `pnpm lint` ne dit rien d'utile sur le
+code neuf — il faut lire la sortie, pas le code de retour. Et la règle est vraie pour GRAPHITE
+aussi : la table de l'index a des **lignes cliquables**, elles devront porter leur gestion clavier
+dès UI 03, sans quoi on recréera la même dette.
+
+Le **back**, lui, est propre : `pnpm lint` y sort en 0 après reformatage. Il ne reste que des
+suggestions non sûres que Biome refuse d'appliquer seul (28 concaténations à passer en gabarits,
+`node:` sur les imports internes, quelques `parseInt` sans base).
+
 ### shadcn/ui
 
 `components.json` calqué sur pfa : style **new-york**, `rsc: true`, `tsx: true`,
