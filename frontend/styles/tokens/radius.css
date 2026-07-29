@@ -1,0 +1,11 @@
+/* shadcn dérive `rounded-sm/md/lg/xl` d'un `--radius` unique, par calc : 6/8/10/14px.
+ * Aucun de ces quatre pas n'existe dans Tailwind (4/6/8/12px) — la chaîne de calc invente
+ * des valeurs entre les pas natifs et leur reprend leurs noms. On ne la reprend pas :
+ * l'échelle Tailwind reste intacte, et `rounded-lg` vaut bien ce que la doc annonce.
+ *
+ * Ne reste que `--radius`, que shadcn lit dans un style inline (`ui/sonner.tsx`) là où
+ * `rounded-*` ne peut pas atteindre. Calé sur `rounded-lg`, pas sur le 10px hors grille
+ * du registre. DS 01 (COS-290) l'ajuste si GRAPHITE demande autre chose. */
+:root {
+  --radius: 0.5rem;
+}

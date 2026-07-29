@@ -27,17 +27,20 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 
 **Il n'y a donc plus qu'un seul chemin de handoff, sans espace.**
 
-### COS-314 (PLAT 01) — fait, **en attente de QA**, branche `feat/plat-01-next16-app-router`
+### Avancement
 
-`pnpm build` passe, les 11 routes sont générées, et les pages répondent 200 en `next start`
-(`/login/`, `/about/`, `/bookmarks/`).
+| Lot | Ticket | État |
+|---|---|---|
+| PLAT 01 | COS-314 — Next 16 + App Router | ✅ mergé (PR #2) |
+| PLAT 02 | COS-315 — Tailwind 4 | ✅ mergé (PR #3) |
+| PLAT 03 | COS-316 — Biome | ✅ mergé (PR #5) |
+| PLAT 04 | COS-317 — shadcn/ui | en cours |
 
-⚠️ **Rien n'est commité ni poussé** : le travail vit dans l'index de la branche. Le commit et le
-push se font **sur validation explicite, après la QA** — jamais avant.
+**Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
+validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
+conventionnels en anglais avec `(COS-XXX)`, PR en squash.
 
-Prochain ticket : **COS-315 (PLAT 02, Tailwind 4)**.
-
-**Ce qui a été fait**
+### COS-314 (PLAT 01) — ce qui a été fait
 - `package.json` : next 16.2.12, react/react-dom 19.2.3, ts 5.9.3, react-query ^5, zustand ^5,
   `babel-plugin-react-compiler`. Retirés : eslint, eslint-config-next, formik (mort), immer (mort).
   `@types/*` et `typescript` passés en devDependencies. `pnpm install` OK
@@ -303,6 +306,35 @@ l'intérieur d'un fichier `ui/*`, l'import namespace Radix (`import * as DialogP
 standard — le garder. Au niveau consommateur, les imports restent **plats**
 (`import { DialogContent }`), pour que re-lancer `shadcn add` régénère sans casse.
 
+**Cinq écarts constatés à l'installation** (COS-317, le 2026-07-29) :
+
+- **Radix arrive par le paquet unifié `radix-ui`**, pas par les `@radix-ui/react-*` individuels de
+  pfa : c'est ce que génère le CLI aujourd'hui (`import { Dialog as DialogPrimitive } from
+  "radix-ui"`). L'écart est assumé — s'en écarter casserait la régénération, qui est justement la
+  raison d'être du layering ci-dessus. pfa migrera quand il repassera le CLI.
+- **`button` s'ajoute tout seul**, tiré par `alert-dialog` : 14 composants, pas 13.
+- **Les tokens sémantiques sont posés à la main**, dans `tokens/colors.css` (`:root` / `.dark` /
+  `@theme inline`) et `tokens/radius.css`. Le CLI ne les écrit que pendant `shadcn init`, qu'on ne
+  lance pas puisque `components.json` est recopié de pfa. Valeurs du registre `neutral`, telles
+  quelles — DS 01 (COS-290) les repeint. `tokens/radius.css` est donc créé ici et non en DS 01,
+  contrairement à ce que disait l'en-tête de `globals.css`.
+- **Pas de règle `body { @apply bg-background text-foreground }`**, que `shadcn init` ajoute
+  d'ordinaire : elle repeindrait d'un coup toute l'ancienne UI, qui tient encore son fond de
+  `base.css`. C'est UI 01 (COS-297) qui bascule le fond de page.
+- **La chaîne de calc des rayons n'est pas reprise** — application directe de la règle de snapping.
+  shadcn dérive `rounded-sm/md/lg/xl` d'un `--radius` unique et sort 6/8/10/14px, quatre valeurs
+  qui n'existent nulle part dans Tailwind (4/6/8/12px) : elle invente des pas entre les pas natifs
+  et leur reprend leurs noms, si bien que `rounded-lg` ne vaut plus ce que la doc Tailwind annonce.
+  Le bloc `@theme inline` de `tokens/radius.css` est donc supprimé, l'échelle native reste intacte.
+  Il ne reste que `--radius`, calé sur `rounded-lg` (`0.5rem`) au lieu du 10px hors grille du
+  registre, parce que `ui/sonner.tsx` le lit dans un style inline où `rounded-*` ne peut pas
+  atteindre. C'est le piège que pfa a fini par documenter (§5 de son `docs/design-system.md`,
+  « Radius — read this, it has a trap ») ; bkmk ne l'hérite pas.
+
+`TooltipProvider` est monté dans `providers.tsx` : le `Tooltip` de shadcn lève à l'usage sans lui.
+Le `<Toaster />` de sonner, lui, n'est pas monté — aucun toast n'existe encore, c'est au lot UI de
+le câbler.
+
 ---
 
 ## 4. Organisation et conventions — le modèle pfa
@@ -339,6 +371,9 @@ frontend/
 - **Alias de chemins uniquement**, jamais `./` ni `../`, même à l'intérieur d'un module. bkmk a
   déjà `@pages/* @src/* @components/* @auth/* @helpers/*` — ajouter `@styles/* @app/* @lib/*
   @text/*` (bkmk n'a pas d'i18n : l'UI GRAPHITE est en anglais, `@i18n/*` est sans objet).
+  La règle vaut **pour le code neuf**. Les fichiers hérités gardent leurs imports relatifs et les
+  perdent au moment où le lot UI les réécrit : les convertir maintenant serait un diff massif sur
+  des fichiers voués à disparaître, exactement le travail jeté qu'on a refusé pour l'a11y.
 - Composants `PascalCase.tsx`, hooks et helpers `camelCase.ts`, un composant par fichier.
 - **Les hooks react-query vivent dans `<module>/services/`** et s'appellent `use<Chose>.ts`. Un
   hook = les queries **et** les mutations du domaine, avec sa fonction `invalidation()` locale.
