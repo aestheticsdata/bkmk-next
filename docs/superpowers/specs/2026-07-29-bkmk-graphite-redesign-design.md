@@ -1,7 +1,8 @@
 # bkmk — Refonte GRAPHITE, remise à niveau de la plateforme, auth sécurisée
 
 **Date :** 2026-07-29 (révisée le soir même — v2)
-**Statut :** ⚠️ BROUILLON — non validé. Reprendre à §8 (questions ouvertes) demain.
+**Statut :** ✅ VALIDÉ — les trois dernières questions de §8 sont tranchées, l'exécution commence
+par COS-314 (PLAT 01).
 **Projet Linear :** BKMK (`e386be48-060a-4e96-82a0-3a2e8c7bcd30`, équipe Cosmokaat / `COS`)
 
 ---
@@ -25,6 +26,76 @@ suffixe « 2 » n'était qu'un artefact de collision macOS). Avant suppression, 
 que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiques, aucune perte.
 
 **Il n'y a donc plus qu'un seul chemin de handoff, sans espace.**
+
+### COS-314 (PLAT 01) — fait, **en attente de QA**, branche `feat/plat-01-next16-app-router`
+
+`pnpm build` passe, les 11 routes sont générées, et les pages répondent 200 en `next start`
+(`/login/`, `/about/`, `/bookmarks/`).
+
+⚠️ **Rien n'est commité ni poussé** : le travail vit dans l'index de la branche. Le commit et le
+push se font **sur validation explicite, après la QA** — jamais avant.
+
+Prochain ticket : **COS-315 (PLAT 02, Tailwind 4)**.
+
+**Ce qui a été fait**
+- `package.json` : next 16.2.12, react/react-dom 19.2.3, ts 5.9.3, react-query ^5, zustand ^5,
+  `babel-plugin-react-compiler`. Retirés : eslint, eslint-config-next, formik (mort), immer (mort).
+  `@types/*` et `typescript` passés en devDependencies. `pnpm install` OK
+  (`CI=true` nécessaire — le vieux `node_modules` a été purgé).
+- `next.config.js` réécrit sur le modèle pfa : `reactCompiler`, `trailingSlash`, `turbopack.root`,
+  en-têtes CSP. **Volontairement pas repris de pfa :** `typescript.ignoreBuildErrors` — on veut
+  voir les erreurs de types pendant la migration.
+- `tsconfig.json` : es2022, `moduleResolution: bundler`, `jsx: react-jsx`, plugin next,
+  alias `@styles` et `@app` ajoutés, `@pages` supprimé, **`baseUrl` retiré** (obsolète : les
+  chemins des alias sont écrits en relatif, comme chez pfa).
+- `src/app/` : `layout.tsx` (next/font pour Poppins/Smooch/Ubuntu, metadata + favicon),
+  `providers.tsx` (react-query + réglage FontAwesome), `error.tsx`, les deux layouts de groupe,
+  et les 11 routes. `pages/` supprimé.
+- `src/auth/guards/RequireAuth.tsx` : garde **client** temporaire, reprise de `_app.tsx`.
+  AUTH 04 (COS-296) la remplacera par un contrôle serveur.
+- `next/router` → `next/navigation` dans les 12 fichiers concernés. `router.push({ query })`
+  n'existe plus : `Pagination`, `SortBar` et `Filters` construisent la query string et poussent
+  une URL relative.
+- react-query v4 → v5 (forme objet partout) et zustand v5 (forme curryfiée `create<T>()(...)`,
+  ce qui permet enfin de typer les trois stores au lieu de les passer en `any`).
+- React 19 : `JSX.Element` → `React.JSX.Element`, et `ReactElement` par défaut porte des props
+  `unknown` (cassait le `cloneElement` du Dropdown).
+
+**Pièges rencontrés, à ne pas re-découvrir**
+- `pnpm install` exige `CI=true` la première fois (purge du vieux `node_modules`), et
+  `pnpm-workspace.yaml` doit trancher `allowBuilds: sharp`.
+- `// @ts-nocheck` doit rester le **tout premier** commentaire du fichier, donc **avant**
+  `"use client"` — sinon il ne s'applique plus (cas de `CreateBookmark.tsx`).
+- zustand v5 fait **boucler** un composant si le sélecteur renvoie un objet littéral
+  (`s => ({ a: s.a })`) : sélectionner une valeur, ou passer par `useShallow`.
+- `use-onclickoutside` s'arrête à React 18 ; ses types ignorent le `| null` des refs React 19.
+  Un cast suffit, et la dépendance part avec le Dropdown à DS 02.
+
+**Décision de séquencement :** les deux routes que COS-314 annonçait supprimer sont **portées**
+plutôt que supprimées tout de suite — sinon l'ancienne UI perd l'édition et la déconnexion
+pendant plusieurs lots. Leurs destins diffèrent :
+
+- `logout` **disparaît** avec AUTH 04 (COS-296), remplacée par un `POST /users/logout`.
+- `bookmarks/edit/[id]` **reste** — voir ci-dessous.
+
+### La modale d'édition passe par les routes parallèles (décidé le 2026-07-29)
+
+La modale d'édition est **portée par une route** : slot `@modal` + route d'interception `(.)` +
+`default.tsx`, le motif Next 16 documenté pour les modales. Détail complet dans COS-319.
+
+Conséquence sur PLAT 01 : **la route d'édition ne meurt pas**, elle devient le **repli plein
+écran** rendu sur visite directe ou rechargement. Elle change seulement de forme —
+`/bookmarks/edit/42` → `/bookmarks/42/edit` — et ce déplacement appartient à COS-319.
+
+Ce qu'on y gagne : une URL partageable, le bouton retour qui ferme la modale au lieu de quitter
+l'index, et l'index qui garde ses filtres et sa page (ils vivent déjà dans la query string).
+
+Deux pièges notés dans COS-319 : la **profondeur du marqueur** (`(private)` et `@modal` ne
+comptent pas comme segments) et le `[...catchAll]/page.tsx` renvoyant `null`, sans lequel la
+modale reste collée à l'écran lors d'une navigation par `Link`.
+
+Les deux autres surfaces restent en état client : la confirmation de suppression est éphémère,
+et la modale de filtres n'a que son ouverture à porter.
 
 ---
 
@@ -262,6 +333,9 @@ frontend/
 - Les imports de type sont **séparés en fin de bloc** (`import type { … }`) — produit
   automatiquement par l'assist Biome.
 - La copie textuelle vit dans `src/text/`, pas en dur dans les composants.
+- **Aucune mémoïsation à la main : ni `useMemo`, ni `useCallback`, ni `React.memo`.** Le
+  compilateur React s'en charge, et mieux. Si un rendu coûte trop cher, chercher la vraie cause
+  (clé react-query instable, sélecteur zustand qui renvoie un objet littéral, état mal placé).
 
 ---
 
@@ -327,6 +401,7 @@ clé `bkmk-token`).
 ## 7. Ce que le handoff implique côté données
 
 - `hash`, `log` (événements horodatés), `related · same tags` — absents de `backend/src/db/bkmk.sql`.
+  **Reportés** (§8.2) : blocs masqués dans la fiche, aucune migration MySQL dans ce chantier.
 - Pagination **serveur** 22 lignes/page (`?page=`) ; aujourd'hui cliente.
 - Objet de filtres : `title`, `categories[]`, `stars`, `priority[]`, `reminder`, `contains{shot,notes,url}`.
 - File d'import : fichier + entrées analysées + doublons **avant** commit.
@@ -338,20 +413,26 @@ clé `bkmk-token`).
 
 ---
 
-## 8. Questions ouvertes — à trancher demain avant de coder
+## 8. Questions tranchées
 
 **Tranché :** édition en modale (handoff §9) · shadcn adopté · Tailwind v4 · **App Router** ·
 Biome partout, eslint et prettier retirés (front **et** back) · ancien dossier de handoff et zip
 supprimés.
 
-Il reste :
+Tranché le 2026-07-29, plus rien ne bloque :
 
-1. **Métadonnées décoratives** — `uptime 04:12`, `sync 12s`, `IDX/2.4.1`, `build 2.4.1 · tls on` :
-   vraies valeurs (endpoints à créer) ou chrome statique ?
-2. **Champs manquants** (`hash`, `log`, `related`) — migration MySQL maintenant, ou écrans livrés
-   avec ces blocs masqués et remplis au lot DATA ?
-3. **Périmètre visuel** — la refonte remplace intégralement l'UI ; pas de mode « ancien thème ».
-   Confirmé ?
+1. **Métadonnées décoratives** — `uptime 04:12`, `sync 12s`, `IDX/2.4.1`, `build 2.4.1 · tls on`
+   sont du **chrome statique**. Aucun endpoint à créer, aucun état à câbler. Elles vivent en
+   constantes dans `src/text/fr/` (la copie ne se met pas en dur, cf. §4) et se rendent telles
+   quelles. Corollaire : elles ne doivent **jamais** donner l'impression d'être vivantes —
+   pas d'`setInterval` qui incrémente `uptime`, pas de pastille « sync » qui clignote.
+2. **Champs manquants** (`hash`, `log`, `related`) — **plus tard**. Aucune migration MySQL dans
+   ce chantier. Les écrans sont livrés avec ces trois blocs **masqués** (pas de faux contenu,
+   pas de squelette permanent), et COS-309 les rallume au lot DATA quand le schéma les portera.
+   Concerne la fiche record (COS-301) : `hash`, `log`, `related · same tags`.
+3. **Périmètre visuel** — la refonte **remplace intégralement** l'UI. Pas de mode « ancien
+   thème », pas de sélecteur, pas de bascule : `.theme-graphite` est le seul thème et l'ancien
+   CSS part avec les écrans qu'il habillait.
 
 ---
 
