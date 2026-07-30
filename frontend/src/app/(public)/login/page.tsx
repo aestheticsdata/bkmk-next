@@ -45,6 +45,7 @@ export default function LoginPage() {
     <AuthShell hints={AUTH_TEXT.login.hints}>
       <div className="w-120 max-w-full">
         <Overline className="mb-1.5 block">{AUTH_TEXT.login.overline}</Overline>
+        {/* No nudge on this header either, and the sign-up screen's note says why. */}
         <h1 className="mb-5 text-2xl font-semibold tracking-snug text-gr-fg-2">
           {AUTH_TEXT.login.title}
           <BlinkCursor className="text-gr-accent" />
@@ -58,7 +59,7 @@ export default function LoginPage() {
         />
 
         {/* Aligned with spaces in the copy, so the whitespace has to survive. */}
-        <div className="mt-4 grid gap-0.75 text-2xs text-gr-fg-4">
+        <div className="mt-4 grid gap-1 text-2xs text-gr-fg-4">
           {AUTH_TEXT.facts.map((fact) => (
             <div
               key={fact}
@@ -69,12 +70,12 @@ export default function LoginPage() {
           ))}
         </div>
 
-        <Link
-          href={ROUTES.about.path}
-          className="mt-3.5 inline-block"
+        <Overline
+          asChild
+          className="mt-3.5 inline-block text-gr-accent hover:text-gr-fg-2"
         >
-          <Overline className="text-gr-accent hover:text-gr-fg-2">{AUTH_TEXT.about}</Overline>
-        </Link>
+          <Link href={ROUTES.about.path}>{AUTH_TEXT.about}</Link>
+        </Overline>
       </div>
     </AuthShell>
   );

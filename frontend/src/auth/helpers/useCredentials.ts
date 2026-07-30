@@ -16,18 +16,14 @@ import type { AuthResponse } from "@src/schemas/auth";
  *
  * `router.replace`, not `push`: the login screen has no business sitting in the history of a
  * signed-in visitor, where Back would land on a form that immediately bounces them forward
- * again.
- *
- * `destination` is what makes the sign-up screen's import checkbox real rather than decorative
- * (COS-298): ticked, registering lands on the import screen instead of the index. It defaults to
- * the index, which is where both screens went before and where sign-in still goes. */
+ * again. */
 const useCredentials = () => {
   const router = useRouter();
   const { setAuthState } = useAuth();
 
-  const setCredentials = (auth: AuthResponse, destination: string = ROUTES.bookmarks.path) => {
+  const setCredentials = (auth: AuthResponse) => {
     setAuthState(auth.user, auth.csrfToken);
-    router.replace(destination);
+    router.replace(ROUTES.bookmarks.path);
   };
 
   return {

@@ -18,12 +18,12 @@ import type { SignUpFormValues } from "@src/schemas/auth";
  *
  * UI 01 had already given this route the frame and the two-field card, because both were shared
  * and a lime form beside its GRAPHITE twin would have been worse than either. This is the rest:
- * the two-column key pair, the strength gauge, the import checkbox — and the recovery passphrase,
- * which the handoff has no field for because the decision came later.
+ * the two-column key pair, the strength gauge — and the recovery passphrase, which the handoff has
+ * no field for because the decision came later.
  *
- * **The import checkbox actually goes somewhere.** Ticked, registration lands on
- * `/bookmarks/upload` instead of the index. That screen is still the legacy one and UI 07 (COS-303)
- * will rebuild it, but the sequence is real from here on, which is what the ticket asked for.
+ * ⚠️ **No import checkbox**, though the handoff draws one. It was built, and dropped on the owner's
+ * call: registering and importing are two decisions, and tying the second to a checkbox on the first
+ * only buys a redirect to a screen the chrome already reaches.
  *
  * The refusal lives in `useState` rather than in the form: the form owns field validity, the screen
  * owns what the server said. Different failures with different lifetimes — one clears when you fix
@@ -36,8 +36,7 @@ export default function SignUpPage() {
   const onSubmit = async (values: SignUpFormValues) => {
     setError(null);
     try {
-      const auth = await signupService(values);
-      setCredentials(auth, values.importAfterSignup ? ROUTES.bookmarksBatchUpload.path : undefined);
+      setCredentials(await signupService(values));
     } catch (failure) {
       setError(readApiError(failure) ?? AUTH_TEXT.signup.failed);
     }
@@ -45,8 +44,20 @@ export default function SignUpPage() {
 
   return (
     <AuthShell hints={AUTH_TEXT.signup.hints}>
-      <div className="w-120 max-w-full">
+      {/* 576px, where sign-in keeps the handoff's 480 (COS-298). This card carries four secret
+          fields to sign-in's one, and at 480 the two-column pair had no room left for a validation
+          message beside `confirm key` — the label wrapped and the message landed on top of it. 576
+          is `36rem`, Tailwind's `xl` step, rather than "480 plus about a hundred". Below the fold
+          the pair stacks and the width is moot, so `max-w-full` is the whole mobile story. */}
+      <div className="w-144 max-w-full">
         <Overline className="mb-1.5 block">{AUTH_TEXT.signup.overline}</Overline>
+        {/* ⚠️ **The overline, the title and the card all start at exactly the same x — 432 measured
+            in a headless 1440px window — and no offset belongs here.** What is left is the font's own
+            left side bearing, the empty room IBM Plex Mono leaves before the ink: 0.45px at the
+            overline's 10px, 1.61px at this title's 24px. It is not one number to subtract, either —
+            the same title on the sign-in screen measures 1.30px, because the bearing belongs to the
+            first glyph (`c` here, `s` there). Any correction would be a constant per screen per
+            string, wrong the day the copy changes. The handoff has the same property. */}
         <h1 className="mb-5 text-2xl font-semibold tracking-snug text-gr-fg-2">
           {AUTH_TEXT.signup.title}
           <BlinkCursor className="text-gr-accent" />
@@ -60,7 +71,7 @@ export default function SignUpPage() {
         />
 
         {/* Aligned with spaces in the copy, so the whitespace has to survive. */}
-        <div className="mt-4 grid gap-0.75 text-2xs text-gr-fg-4">
+        <div className="mt-4 grid gap-1 text-2xs text-gr-fg-4">
           {AUTH_TEXT.facts.map((fact) => (
             <div
               key={fact}
@@ -71,12 +82,12 @@ export default function SignUpPage() {
           ))}
         </div>
 
-        <Link
-          href={ROUTES.about.path}
-          className="mt-3.5 inline-block"
+        <Overline
+          asChild
+          className="mt-3.5 inline-block text-gr-accent hover:text-gr-fg-2"
         >
-          <Overline className="text-gr-accent hover:text-gr-fg-2">{AUTH_TEXT.about}</Overline>
-        </Link>
+          <Link href={ROUTES.about.path}>{AUTH_TEXT.about}</Link>
+        </Overline>
       </div>
     </AuthShell>
   );

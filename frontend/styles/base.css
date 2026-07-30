@@ -22,7 +22,7 @@
 
 /* ═══ GRAPHITE RESETS ══════════════════════════════════════════════════════════════
  *
- * Two resets only, and both are safe: neither repaints anything in the old UI. Flipping
+ * Three resets, and all three are safe: none repaints anything in the old UI. Flipping
  * the page background and the body typeface belongs to UI 01 (COS-297) — doing it here
  * would strip every page before GRAPHITE has anything to put in its place. */
 @layer base {
@@ -36,13 +36,64 @@
   ::placeholder {
     color: var(--color-gr-fg-4);
   }
+
+  /* **A clickable thing shows a pointer. Always, and system-wide.**
+   *
+   * Tailwind v4 changed the default cursor on `<button>` from `pointer` to `default`, so
+   * every control in the app came out with an arrow: the chrome and primary buttons, the
+   * pager, `Segment`, `TabBar`, `RowAction`, the reveal toggle, the radix checkbox and
+   * select triggers — all of them are `<button>`. Fixing it here rather than adding a class
+   * to each is the difference between a rule and a habit: there is no component this should
+   * not be true of, and the next one written gets it for free.
+   *
+   * `[role="button"]` picks up the elements the legacy screens make clickable without being
+   * buttons. Anchors keep the browser's own pointer, which Tailwind never touched.
+   *
+   * `:disabled` / `aria-disabled` are excluded: a control that will not act must not invite
+   * the click. And this is in `@layer base`, so a `cursor-*` utility still wins wherever a
+   * screen wants something else — `cursor-grab` on a drag handle, `cursor-not-allowed`. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }
 
-/* The yellow background Chrome forces onto autofilled fields.
- * https://webagility.com/posts/the-ultimate-list-of-hacks-for-chromes-forced-yellow-background-on-autocompleted-inputs */
+/* ═══ AUTOFILL ═════════════════════════════════════════════════════════════════════
+ *
+ * The background Chrome forces onto an autofilled field, which made the sign-in inputs
+ * white while the sign-up ones stayed `gr-sunk` (COS-298). Nothing differed between the
+ * two screens: the sign-in fields are `autocomplete="email"` and `current-password`, so
+ * Chrome fills them, and sign-up's are `new-password`, so it does not.
+ *
+ * **The `transition-delay: 9999s` hack that used to sit here could not work.** It relies
+ * on Chrome applying the fill through a `background-color` transition, so a delay long
+ * enough never arrives — but `ui/input` transitions `border-color` and `box-shadow` only.
+ * With nothing to delay, the fill painted immediately.
+ *
+ * Two declarations do the work, and both are needed.
+ *
+ * `background-clip: text` stops the forced background being painted over the box at all —
+ * it is clipped to the glyphs, which `-webkit-text-fill-color` then paints over. Without
+ * it the fill still covers the **border box**, and since `border-gr-border` is a 16%
+ * black, whatever sits behind shows through it: the field read grey with a pale ring
+ * around it, which is the white border that replaced the white field.
+ *
+ * An inset shadow then repaints the field, because clipping the background to text
+ * removes the element's own `bg-gr-sunk` along with Chrome's. The sunk rule is listed
+ * **first** so it stays on top of that fill: box-shadows paint front-to-back, and
+ * reversing them would hide the field's inner edge.
+ *
+ * Unlayered on purpose. In an `@layer`, `bg-gr-sunk` and `inset-shadow-gr-sunk` from the
+ * utilities layer would win whatever this rule's specificity. */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-transition-delay: 9999s;
+  background-clip: text;
+  -webkit-background-clip: text;
+  box-shadow:
+    var(--inset-shadow-gr-sunk),
+    inset 0 0 0 100px var(--color-gr-sunk);
+  -webkit-text-fill-color: var(--color-gr-fg);
+  caret-color: var(--color-gr-fg);
 }

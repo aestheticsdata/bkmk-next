@@ -6,12 +6,16 @@
  * to render a screen with two fields. What the two genuinely share is the card, the action row and
  * the field-plus-error pair, and those are shared as components rather than as branches. */
 
-/** The bottom row of the card: the button, the way to the other screen, and the aside. */
+/** The bottom row of the card: the button and the way to the other screen.
+ *
+ *  **No aside.** The handoff ends this row with a line pushed to the right on each screen —
+ *  `keys stored locally` on sign-in, `self-hosted · no tracking` on sign-up. Both were built and
+ *  both were dropped on the owner's call: they are decoration, and one of them ("keys stored
+ *  locally") reads as a claim about the browser on a screen where nothing is stored in it at all. */
 export interface AuthActionCopy {
   submit: string;
   or: string;
   switchTo: string;
-  note: string;
 }
 
 export interface SignInCopy extends AuthActionCopy {
@@ -28,9 +32,9 @@ export interface SignUpCopy extends AuthActionCopy {
   strength: string;
   passphrase: string;
   passphraseHint: string;
+  confirmPassphrase: string;
   /** Why the field exists at all — there is no recovery email behind it. */
   passphraseNote: string;
   reveal: string;
   conceal: string;
-  importLabel: string;
 }

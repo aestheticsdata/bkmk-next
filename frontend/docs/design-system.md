@@ -40,6 +40,14 @@ has **no** radius token at all and only **two** text-size tokens.
 
 **No `dark:` variant.** GRAPHITE is a single light-grey theme.
 
+**A clickable thing shows a pointer.** Tailwind v4 changed the default cursor on `<button>` from
+`pointer` to `default`, which quietly gave every control in the app an arrow — chrome and primary
+buttons, the pager, `Segment`, `TabBar`, `RowAction`, the reveal toggle, the radix checkbox and select
+triggers are all `<button>`. `base.css` restores it once for `button` and `[role="button"]`, excluding
+`:disabled` and `aria-disabled`, rather than each component carrying a class: there is no component
+this should not be true of, and the next one written gets it for free. It sits in `@layer base`, so a
+`cursor-*` utility still wins where a screen needs something else.
+
 **Path aliases only**, never `./` or `../`, not even within a module.
 
 ---
@@ -202,7 +210,29 @@ hover:shadow-gr-2                   →  only the outer half grows; the hair lin
 
 ## 6. Spacing and heights
 
-No tokens: everything lands on the numbered scale, half-steps included.
+No tokens: everything lands on the numbered scale, **half-steps included and quarter-steps not**.
+
+Half-steps earn their place — a 38px chrome strip and a 30px button are real decisions, and `h-9.5`
+/ `h-7.5` say them exactly. Quarter-steps do not: an 11px padding beside a 12px one is not a
+decision, it is the mockup's rounding surviving into the code. Tailwind v4 computes any multiple of
+`--spacing`, so nothing stops you writing `px-2.75` — which is why the rule has to be written down
+rather than enforced by the tool.
+
+⚠️ **The rule had drifted, and COS-298 swept it.** Twenty quarter-steps had accumulated across DS
+01–03 — this table itself listed one of them — each rounded to the nearest half-step:
+
+| Was | Now | Where |
+|---|---|---|
+| `px-2.75` (11) | `px-3` (12) | `ui/input`, `ui/textarea`, `Segment`, `TopChrome` |
+| `gap-1.75` (7) | `gap-2` (8) | `ui/button` ×2, `TopChrome` ×2 |
+| `px-3.25` (13) | `px-3.5` (14) | `ui/button`, size `chrome` |
+| `gap-1.25` (5) | `gap-1.5` (6) | `Field`, `Chip` |
+| `gap-0.75` (3) | `gap-1` (4) | `TabBar`, both auth screens |
+| `gap-2.25` · `py-2.25` (9) | `gap-2` · `py-2` (8) | `DropZone`, `CommandBar` |
+| `py-1.75` · `px-1.75` (7) | `py-2` · `px-2` (8) | `KeyValueTable`, `Chip` |
+| `size-1.25` (5) · `size-1.75` (7) | `size-1.5` (6) · `size-2` (8) | `Chip` dot, `Led` |
+
+Nothing moves by more than a pixel, and no surface has two spacings a pixel apart any more.
 
 | Handoff | Class |
 |---|---|
@@ -216,7 +246,34 @@ No tokens: everything lands on the numbered scale, half-steps included.
 | action 22 · mini-button 20 | `h-5.5` · `h-5` |
 | status bar 26 | `h-6.5` |
 | tab-bar button 48 / gap 6 | `h-12` / `gap-1.5` |
-| field padding 8/11 | `py-2 px-2.75` |
+| field padding 8/11 → 8/12 | `py-2 px-3` |
+
+### The auth card's rhythm
+
+One card, four spacings, all on the scale — the sign-in and sign-up screens are built from nothing
+else:
+
+| What | Class |
+|---|---|
+| card padding 22 | `p-5.5` |
+| between rows of the card | `gap-3.5` (14) |
+| label → input | `gap-1.5` (6) |
+| the two-column key pair | `gap-3` (12) |
+| block width — sign-in 480 · sign-up 576 | `w-120` · `w-144` |
+
+Sign-up is the wider of the two because it carries four secret fields to sign-in's one: at 480 the
+key pair had no room left for a validation message beside `confirm key`, so the label wrapped and
+took its input down with it. 576 is `36rem`, the `xl` step, not "480 plus about a hundred".
+
+**Validation messages cost no height at all.** They render at the right end of the field's label
+row, replacing the hint while they show — not under the control, where they would either grow the
+card as you tab through it or need a reserved line at every field, about 22px each. Both were built
+during COS-298 and both were wrong: this is a condensed design, and dead air reads as a bug. The
+constraint that buys it is that messages must be two or three words, which is enforced where they
+are written, in `schemas/auth.ts`.
+
+The server's refusal takes the same approach one row down: the right end of the action row, the
+spot the handoff filled with an aside.
 
 ---
 
@@ -277,13 +334,13 @@ by one question: **does shadcn already provide it?**
 | `Field` | — | composite: `Overline` bound to a `ui/input` |
 | `Segment` | `.gr-seg` | a toggle, not a tab — see below |
 | `Chip` | `.gr-chip` | the dot's hue comes from the data |
-| `Overline` | `.gr-lab` | the most-used label in the system |
+| `Overline` | `.gr-lab` | the most-used label in the system — `asChild` when it is a link; see below |
 | `Stars` | `GStars` | `role="img"`, reads "3 out of 5" |
 | `PriorityBars` | `GPri` | **four levels**, not the handoff's three |
 | `Led` | `.gr-led` | decorative, `aria-hidden` |
 | `KeyValueTable` | `.gr-kv` | a real `<dl>` |
 | `DropZone` · `ShotSlot` | `.gr-drop` · `.gr-slot` | sunken dashed, two sizes |
-| `BlinkCursor` | `.gr-caret` | `animate-gr-caret` |
+| `BlinkCursor` | `.gr-caret` | `animate-gr-caret` — an **underscore**, drawn; see below |
 | `RowActions` · `RowAction` | `.gr-acts` · `.gr-act` | needs `group/row` on the row |
 | `MiniButton` | `.gr-mini` | preset over `ui/button` |
 
@@ -304,7 +361,15 @@ Variants: `chrome` (default surface) · `primary` (teal) · `danger` (outline ox
 `mini` (20px). shadcn's six stock variants are still there and unused — leaving them is what keeps
 the file regenerable.
 
-### Three things worth knowing before writing a screen
+### Four things worth knowing before writing a screen
+
+**A label that is also a link is `<Overline asChild><Link …/></Overline>`, never a `<Link>` wrapped
+around an `Overline`.** Wrapping puts a 12px element around 10px text. The wrapper is the flex item,
+its line box carries a strut at the inherited font size, and that strut is taller than the span
+inside — so the label lands about a pixel and a half below a bare `Overline` beside it. It showed up
+first in the auth card's `register · or · sign in` row, and the shell's meta row had it too. `asChild`
+makes the link *be* the label: one element, one font size, nothing to disagree about.
+
 
 **`Segment` is not `Tabs`.** They look alike, and Radix Tabs is the wrong primitive: a tab picks
 one of several views, a segment is a checkbox wearing a pill and several are on at once. It is a
@@ -318,6 +383,19 @@ opacity-0 is still tabbable — and stay visible below `@3xl`, where there is no
 `low / medium / high / highest`, which is what the database stores. The schema wins — three bars
 could not tell `high` from `highest`. The empty string is a real, distinct state and renders as
 four dim bars.
+
+**The caret is an underscore, and it is drawn** (revised in COS-298). The handoff writes
+`content: "\2588"` — the full block — and copying it made the caret taller than the text it closes:
+U+2588 fills the em box, and overshoots it in Plex Mono, while the letters beside it reach cap
+height. A 24px slab next to 17px letters reads as a rendering fault, not a caret. Two changes
+followed: the mark is a box with stated dimensions rather than a glyph whose metrics we inherit, and
+it is an **underscore** rather than a block — a solid slab is the heaviest thing on a screen made of
+1px rules, 1px light edges and a 6px meter, where an underscore is the same terminal signal at the
+system's weight.
+
+Its dimensions are the one place `em` beats the spacing scale: half an em wide and `0.08em` thick —
+2px under a 24px title, 1px under 12px text — so it tracks whatever it closes. A caret that does not
+scale with its own text is the bug being fixed.
 
 ---
 
@@ -436,7 +514,7 @@ centred flex child gets clipped at the top.
 ### The two cards inside it (COS-298)
 
 UI 01 rendered both screens from one form, because both were two fields and a button. UI 02 gave
-sign-up a confirm field, a strength gauge, a recovery passphrase and an import checkbox, and one
+sign-up two confirm fields, a strength gauge and a recovery passphrase, and one
 component with a flag would have been four conditionals deep to draw a screen with two fields. So
 `authForms/` holds **two forms and three shared parts**:
 
@@ -445,8 +523,13 @@ authForms/
   AuthCard      the .gr-card at padding 22, the server's refusal, the action row
   AuthField     a ds/Field with its message wired to it through aria-describedby
   SignInForm    identity · key
-  SignUpForm    identity · key + confirm key · strength · passphrase · import
+  SignUpForm    identity · key + confirm key · strength · passphrase + confirm
 ```
+
+**Only one of the two pairs is side by side.** `key` / `confirm key` share a row, as the handoff
+draws them: they hold something short. The passphrase pair is **stacked**, because a passphrase is a
+phrase — at half width it wraps mid-sentence, on the one field where being able to read back what you
+typed is the whole point.
 
 The split follows the same rule as the shell above: share what belongs to the system, not the
 branches. `AuthCard` is the surface both screens are made of; `AuthField` exists because the wiring
@@ -458,21 +541,65 @@ other — so neither form can drift from what the API accepts. The submit is dis
 request is in flight, never by validity: a primary action that will not press and does not say why is
 worse than an error message under the field that caused it.
 
-**`ds/Field` gained an `action` slot**, and where it renders is the point. `hint` sits *inside* the
-`<label>`, which is what you want — "key, 12+ chars" is a better accessible name than "key". A
-control does not: a `<button>` inside a `<label>` puts an interactive element inside another
-element's name, and clicking it also activates the label. So `action` is the label's sibling, in a
-header row that exists to hold the two side by side. Its one caller today is the sign-up screen's
-`show` toggle.
+**`ds/Field` gained two slots, `action` and `message`, and where each renders is the point.** `hint`
+sits *inside* the `<label>`, which is what you want — "key, 12+ chars" is a better accessible name
+than "key". The other two do not: a `<button>` inside a `<label>` puts an interactive element inside
+another element's name and clicking it also activates the label, and a message is a description that
+rewrites itself as you type. So both are the label's siblings in the header row.
 
-**Three departures from the handoff on this screen**, all of the same kind — the mockup draws the
-look of a control and not the control:
+⚠️ **The header row is `flex h-4 items-center gap-2 leading-4`, and every part of that is
+load-bearing.** Two fields side by side have to put their labels *and* their inputs at the same
+height, and **baseline alignment cannot promise either** — each header is its own flex container, so
+the shared baseline is set by whichever child has the greatest ascent. Put a control in one column
+and that column's text and input both shift.
+
+It took three attempts, which is worth recording so nobody spends the afternoon on it again:
+
+1. a `MiniButton` (20px) in a row that sized itself grew that column's header — its input landed 6px
+   low;
+2. replacing the button with text wrapped in a `<span>` moved the *other* column instead, by three: a
+   blockified flex item carries a strut at the **card's** 12px font size, not the label's 10px;
+3. fixing the row's height stopped the input moving but not the text inside it, because baselines
+   still resolved differently per column.
+
+What holds: one line tall, `leading-4` forcing every child's line box to that same 16px, and
+`items-center` — 16px boxes centred in a 16px row land at an identical offset whatever the row
+contains. Labels and messages are `whitespace-nowrap` so nothing can fold, and a control in `action`
+carries its own `ml-auto` with no wrapper.
+
+**The control is a `MiniButton` again, and attempt 1 is the reason it can be.** With the row's height
+fixed, a 20px control centres itself and overflows two pixels each way into the 6px gap above the
+input; it cannot stretch a row that is told how tall it is. Spelling the toggle as text was a fix for
+a problem that lived in the row, not in the button — so the row keeps the fix and the screen keeps
+the handoff's smallest control.
+
+**Validation timing, which is a system rule and not a screen's:** validate on leaving a field, clear
+on the keystroke that fixes it, and say nothing about a field the visitor has **emptied** until they
+submit. `mode: "onTouched"` gives the first two. The third needs `isSubmitted`, because
+react-hook-form keeps the last verdict — clearing a short key left "min 12 chars" standing over a
+blank box, which is being told you are wrong before you have written anything. An empty field is
+still invalid, so the message returns on submit, which is the moment it is genuinely useful.
+
+**With one exception: a confirmation field reports its mismatch live**, without waiting for a blur.
+Waiting is right for "min 12 chars" — you have not finished typing — and wrong for a confirmation,
+where you are copying a secret you cannot read and the entire value of the field is being told *while
+you type* that the copy has diverged. The form compares the pair itself and raises
+`MISMATCH_MESSAGE`, which is exported from `schemas/auth.ts` where the same rule is enforced on
+submit: two places may say it, neither can say it differently. Empty still means "nothing typed yet"
+rather than "different".
+
+**Six departures from the handoff on this screen**, the first three of the same kind — the mockup
+draws the look of a thing and not the thing; the last two are the owner's call on copy and on a
+field's states:
 
 | Handoff | Here | Why |
 | --- | --- | --- |
-| `[x]` in teal | `ui/checkbox`, repainted | A bracket glyph is text: no hit area, no focus ring, no state to read aloud. Radix gives all three; the fill keeps the handoff's colour. |
 | a bare 62% bar | the bar **plus a word**, and the bar `aria-hidden` | A gauge with no label says nothing when read aloud, and a bar and a word carrying the same judgement is one signal twice. The word is the one that survives. |
-| no such field | `recovery passphrase`, with a reveal toggle | Recovery by email is abandoned (COS-298); this field is what replaces it. It is the only revealable secret in the app — a mistyped key costs one more attempt, a mistyped passphrase costs the account. |
+| no such field | `recovery passphrase`, revealable **and** confirmed | Recovery by email is abandoned (COS-298); this pair replaces it. A mistyped key costs one more attempt; a mistyped passphrase is found the day it is needed, which is the day it cannot be repaired. The reveal catches the typo you go looking for, the confirm the one you do not. One toggle per pair, at the end of the pair's label line, unmasking both halves — a single control over a pair is what that placement means. |
+| `[x] import my Session Buddy export after signup` | **gone** | Built, then dropped: registering and importing are two decisions, and tying the second to a checkbox on the first only buys a redirect to a screen the chrome already reaches. `ui/checkbox` went back to the registry version with it — nothing renders it yet, and repainting a component no screen uses is groundwork pretending to be work. |
+| `keys stored locally` · `self-hosted · no tracking` · `tab next field` | **gone** | Decoration. The first is also untrue on its face — it reads as a claim about browser storage, which since AUTH 04 holds nothing — and Tab moves between fields in every form on the web. What the freed spot in the action row now carries is the server's refusal. |
+| `create an index` · `sign in to the index` | `create an account` · `sign in` | The handoff's titles rest on "the index" being the product's word for the collection, which it is — About and the facts block both use it. The screens still name the act rather than the thing behind it: a visitor with no account has no index to create. One line each in `text/auth.ts`. |
+| `.gr-in:focus` swaps `border-color` to the accent **and** rings the field | the 3px ring alone, `focus-visible` and `aria-invalid` both | Two edges for one state: a soft band, then a hard hairline biting the box inside it — and on an invalid field that hairline is the only saturated colour on a panel of greys. The ring says it once. `transition-[box-shadow]` follows, since no border colour is left to animate. Applies to `ui/input` **and** `ui/textarea`; buttons still tint their border on keyboard focus, where the ring alone would vanish into the teal fill. |
 
 The strength score is a **heuristic and says so in its own file** (`helpers/passwordStrength.ts`):
 length dominates, character variety adds one step and no more, and nothing here knows whether the

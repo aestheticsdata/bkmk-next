@@ -10,10 +10,10 @@ import type { AuthResponse, SignUpFormValues } from "@src/schemas/auth";
  * toast, so the screen can put the refusal — "Email already exists" being the one that matters —
  * inside the card.
  *
- * **This is where the form stops being the payload** (COS-298). `confirmPassword` and
- * `importAfterSignup` are dropped here rather than in the screen: the first is a typo check, the
- * second only decides where to go next, and neither is the server's business.
- * `recoveryPassphrase` does travel — it is hashed on arrival, exactly like the password.
+ * **This is where the form stops being the payload** (COS-298). The two confirmations and
+ * `importAfterSignup` are dropped here rather than in the screen: two are typo checks, the third
+ * only decides where to go next, and none is the server's business. `recoveryPassphrase` does
+ * travel — it is hashed on arrival, exactly like the password.
  *
  * `name` is still derived from the address. The handoff's sign-up screen asks for an identity and a
  * key, nothing else, so there is no field to take a display name from, and UI 02 kept it that way

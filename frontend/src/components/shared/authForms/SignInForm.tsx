@@ -34,12 +34,20 @@ function SignInForm({
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    watch,
+    formState: { errors, isSubmitting, isSubmitted },
   } = useForm<SignInPayload>({
     resolver: zodResolver(SignInPayloadSchema),
     mode: "onTouched",
     defaultValues: { email: "", password: "" },
   });
+
+  /* Same rule as the sign-up form: validate on leaving a field, clear on the keystroke that fixes
+   * it, and say nothing about a field you have **emptied** until submit — react-hook-form keeps the
+   * last verdict otherwise, which leaves a message standing over a blank box. */
+  const values = watch();
+  const messageFor = (field: keyof SignInPayload) =>
+    isSubmitted || values[field] ? errors[field]?.message : undefined;
 
   return (
     <AuthCard
@@ -54,7 +62,7 @@ function SignInForm({
         label={copy.identity}
         type="email"
         autoComplete="email"
-        error={errors.email?.message}
+        error={messageFor("email")}
         {...register("email")}
       />
       <AuthField
@@ -62,7 +70,7 @@ function SignInForm({
         label={copy.key}
         type="password"
         autoComplete="current-password"
-        error={errors.password?.message}
+        error={messageFor("password")}
         {...register("password")}
       />
     </AuthCard>

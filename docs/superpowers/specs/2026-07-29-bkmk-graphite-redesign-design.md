@@ -1121,10 +1121,131 @@ passphrase, qui ne doit pas être le maillon faible de ce qu'elle autorise. Et i
 minimum à la connexion : il enfermerait dehors tout compte dont le mot de passe est antérieur à la
 règle.
 
-**Trois écarts au handoff, tous de la même nature** — la maquette dessine l'apparence d'un contrôle,
-pas le contrôle : le `[x]` en teal devient un vrai `ui/checkbox` repeint (aire de clic, anneau de
-focus, état lisible à voix haute), la jauge nue gagne un mot et devient `aria-hidden`, et le champ de
-passphrase n'existe pas dans la maquette du tout. Détail et raisons dans le tableau du §9 du DS.
+**Les deux secrets sont révélables et confirmés** — deux gardes, deux fautes différentes. Un mot de
+passe mal tapé se découvre à la prochaine connexion, au prix d'un essai ; une passphrase mal tapée se
+découvre le jour où elle sert, c'est-à-dire le jour où plus rien ne peut la réparer. Le révélateur
+attrape la faute qu'on va chercher, la confirmation celle qu'on ne cherche pas. **Un révélateur par
+paire**, au bout de la ligne de libellés de la paire, et il démasque les deux moitiés : un seul
+contrôle posé au-dessus d'une paire ne peut pas vouloir dire autre chose. La paire de passphrase est
+**empilée**, là où `key` / `confirm key` partagent une ligne comme dans la maquette : une passphrase
+est une phrase, et à mi-largeur elle se coupe au milieu.
+
+**Quatre écarts au handoff**, dont trois de la même nature — la maquette dessine l'apparence d'une
+chose et pas la chose. La jauge nue gagne un mot et devient `aria-hidden` ; le champ de passphrase
+n'est pas dans la maquette du tout ; et **deux éléments dessinés ont été retirés** sur décision du
+propriétaire : la case d'import Session Buddy (s'inscrire et importer sont deux décisions, et
+accrocher la seconde à une case sur la première n'achète qu'une redirection vers un écran que le
+chrome atteint déjà) et les mentions décoratives des deux écrans — `keys stored locally`,
+`self-hosted · no tracking`, `tab next field`. La première était en plus fausse au premier degré :
+elle se lit comme une affirmation sur le stockage du navigateur, qui depuis AUTH 04 ne contient rien.
+`ui/checkbox` est reparti à la version du registre avec la case : plus rien ne le rend, et repeindre
+un composant qu'aucun écran n'utilise est du terrassement déguisé en travail. Tableau complet au §9
+du DS.
+
+**Les messages de validation ne coûtent aucune hauteur**, et c'est le résultat de deux erreurs. Sous
+le champ, ils font grandir la carte au fur et à mesure qu'on tabule ; en leur réservant une ligne, ils
+la font grandir une fois pour toutes, d'environ 22px par champ. Sur un design condensé, les deux se
+lisent comme un bug — la capture l'a montré sans discussion. Ils sont donc **au bout de la ligne de
+libellé**, à la place du `hint` tant qu'ils s'affichent, et le refus du serveur au bout de la ligne
+d'action, à la place de la mention qui vient d'en partir. Le prix : deux ou trois mots maximum, borné
+là où ils sont écrits (`schemas/auth.ts`).
+
+⚠️ **La ligne de libellé est en `flex h-4 items-center leading-4`, et il a fallu trois essais.** Deux
+champs côte à côte doivent poser leurs libellés *et* leurs inputs à la même hauteur, et l'alignement
+sur la ligne de base ne peut garantir ni l'un ni l'autre : chaque en-tête est son propre conteneur
+flex, donc la ligne de base commune est fixée par l'enfant à la plus grande ascendante. Les trois
+essais, notés pour que personne n'y repasse l'après-midi : (1) un `MiniButton` de 20px dans une ligne
+qui se dimensionnait toute seule fait grandir cette colonne — son input tombe 6px trop bas ; (2) le
+même contrôle en texte mais dans un `<span>` enveloppant décale l'autre colonne de 3, parce qu'un
+élément flex blockifié porte un *strut* à la taille de police de **la carte** (12px) et non du
+libellé (10px) ; (3) fixer la hauteur immobilise l'input mais pas le texte à l'intérieur, les lignes
+de base se résolvant toujours différemment. Ce qui tient : hauteur d'une ligne, `leading-4` qui force
+toutes les boîtes de ligne à ces mêmes 16px, et `items-center` — des boîtes de 16px centrées dans une
+ligne de 16px tombent au même endroit quoi que la ligne contienne. Libellés et messages en
+`whitespace-nowrap`, et le contrôle porte lui-même son `ml-auto`, sans enveloppe.
+
+**Le contrôle est redevenu un `MiniButton`, et c'est l'essai 1 qui explique pourquoi c'est possible.**
+Une fois la hauteur de la ligne fixée, un contrôle de 20px se centre et débord de deux pixels de
+chaque côté dans les 6px qui le séparent de l'input : il ne peut plus étirer une ligne à qui on a dit
+sa hauteur. Écrire la bascule en texte corrigeait un problème qui appartenait à la ligne, pas au
+bouton — la ligne garde donc le correctif, et l'écran garde le plus petit contrôle du handoff.
+
+**Le moment de la validation est une règle du système, pas d'un écran** : valider en quittant le
+champ, effacer au caractère qui corrige, et **ne rien dire d'un champ qu'on a vidé** jusqu'à
+l'envoi. `mode: "onTouched"` donne les deux premiers ; le troisième demande `isSubmitted`, parce que
+react-hook-form conserve le dernier verdict — effacer une clé trop courte laissait « min 12 chars »
+posé au-dessus d'une boîte vide, c'est-à-dire reprocher une faute avant qu'on ait écrit quoi que ce
+soit. Un champ vide reste invalide, donc le message revient à l'envoi, qui est le moment où il sert
+vraiment.
+
+**Une exception : un champ de confirmation signale son désaccord en direct**, sans attendre le blur.
+Attendre est juste pour « min 12 chars » — on n'a pas fini de taper — et faux pour une confirmation,
+où l'on recopie un secret qu'on ne peut pas lire et où tout l'intérêt du champ est d'être averti
+**pendant** la frappe que la copie a divergé. Le formulaire compare la paire lui-même et lève
+`MISMATCH_MESSAGE`, exporté depuis `schemas/auth.ts` où la même règle est appliquée à l'envoi : deux
+endroits peuvent le dire, aucun ne peut le dire autrement.
+
+**Le formulaire d'inscription fait 576px**, là où la connexion garde les 480 de la maquette : quatre
+champs de secret contre un, et à 480 la paire à deux colonnes n'avait plus la place d'un message à
+côté de `confirm key` — le libellé passait à la ligne et emmenait son input avec lui. 576 vaut
+`36rem`, le pas `xl` de Tailwind, pas « 480 plus une centaine ».
+
+⚠️ **Un `superRefine` unique, et c'est un bug à retenir.** La première version validait champ par
+champ puis comparait les paires avec deux `.refine`. Or zod n'exécute les raffinements d'un objet
+**que si l'objet lui-même a parsé** : tant que `password` échouait sur son propre `min(12)`, aucune
+des deux comparaisons ne tournait. `no match` était inatteignable exactement pour qui en avait
+besoin — celui qui est encore en train de taper une clé trop courte. N'importe quel échec de champ
+masquait de la même façon toutes les règles inter-champs. La forme est maintenant cinq chaînes nues,
+donc elle parse toujours, et chaque contrôle tourne toujours.
+
+**Les pas quart de scale ont été balayés.** DS 01 écrit « tout tombe sur l'échelle numérotée,
+demi-pas compris » — vingt occurrences de quarts de pas s'y étaient glissées depuis, dont une listée
+dans le tableau du §6 lui-même (`px-2.75`). Toutes arrondies au demi-pas le plus proche, rien ne
+bouge de plus d'un pixel, et plus aucune surface ne porte deux espacements à un pixel l'un de
+l'autre. Tableau des vingt au §6 du DS.
+
+**Le fond blanc des champs de connexion était l'autofill de Chrome.** Les deux écrans rendent le même
+composant, aux mêmes classes, à l'octet près : la connexion déclare `autocomplete="email"` et
+`current-password`, donc Chrome remplit et repeint ; l'inscription déclare `new-password`, donc non.
+Le hack `transition-delay: 9999s` qui traînait dans `base.css` ne *pouvait* pas marcher — il suppose
+que la peinture passe par une transition sur `background-color`, alors que `ui/input` ne transitionne
+que `border-color` et `box-shadow`. `background-clip: text` empêche la peinture, une ombre interne
+repeint le champ, et le liseré pâle qui restait autour (le `border` à 16% laissait voir le blanc à
+travers) disparaît avec.
+
+**La passe de QA visuelle du propriétaire, en six points.** Aucun navigateur n'est attaché à la
+session : ce sont ses captures qui ont trouvé tout ce qui suit.
+
+1. **La bascule show / hide est redevenue le `MiniButton` de la maquette.** Je l'avais réécrite en
+   texte pour régler le désalignement de la ligne de libellé — alors que le correctif appartenait à la
+   ligne, pas au contrôle. Hauteur de ligne fixée, un contrôle de 20px se centre et débord de deux
+   pixels dans les 6px qui le séparent de l'input, sans rien étirer.
+2. **Et elle ne bouge plus au survol.** Le `chrome` de `ui/button` lève le bouton d'un pixel ; juste,
+   pour un bouton de 30px qui a de l'air autour, faux pour celui-ci, coincé dans un en-tête de champ
+   et pressé deux fois par secret tapé. L'ombre du survol reste, le déplacement part.
+3. **`cursor: pointer` est rétabli pour tout ce qui est cliquable**, dans `base.css` et une fois pour
+   toutes : Tailwind v4 a changé le curseur par défaut des `<button>` de `pointer` à `default`, ce qui
+   avait donné une flèche à tous les contrôles de l'app. Détail du §1 du DS.
+4. **Les champs ne portent plus qu'un seul anneau.** La maquette bascule *en plus* la couleur du
+   `border` vers l'accent à pleine intensité ; à l'écran cela fait deux bords pour un état — une bande
+   douce, puis un filet dur qui mord le bord de la boîte, et sur un champ invalide ce filet est la
+   seule couleur saturée d'un panneau de gris. Départ assumé de la maquette, sur `ui/input` et
+   `ui/textarea`.
+5. **Les titres ne sont plus ceux de la maquette** : `sign in` et `create an account` au lieu de
+   `sign in to the index` et `create an index`. Les écrans nomment l'acte, pas ce qu'il y a derrière —
+   et qui n'a pas encore de compte n'a pas d'index à créer.
+6. **Un libellé qui est aussi un lien s'écrit `<Overline asChild><Link/></Overline>`**, jamais un
+   `<Link>` autour d'un `Overline` : l'enveloppe est l'élément flex, sa boîte de ligne porte un *strut*
+   à la taille de police héritée, et le libellé tombait un pixel et demi sous l'`Overline` d'à côté.
+   Corrigé aux quatre endroits qui avaient ce motif, dont la ligne de méta du chrome.
+
+⚠️ **Et un défaut qui n'en est pas un, mesuré plutôt que discuté.** Le sur-titre, le titre et la carte
+partent tous exactement du même x — 432 mesurés dans une fenêtre sans tête de 1440px. Ce qui reste est
+l'*approche* du glyphe propre à IBM Plex Mono, le vide avant l'encre : 0.45px aux 10px du sur-titre,
+1.61px aux 24px du titre. Ce n'est même pas un nombre à retrancher : le même titre côté connexion
+mesure 1.30px, l'approche appartenant au premier glyphe (`c` ici, `s` là). Toute correction serait une
+constante par écran et par chaîne, fausse le jour où la copie change. Laissé tel quel, sur décision du
+propriétaire — la maquette a la même propriété.
 
 **Écart de périmètre côté serveur, comme en UI 01.** Un champ sans persistance est décoratif, donc
 `addUserController` a été réécrit : `bcrypt` attendu au lieu de deux rappels imbriqués (ajouter un

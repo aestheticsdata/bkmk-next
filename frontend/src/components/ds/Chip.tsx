@@ -25,7 +25,7 @@ function Chip({
     <span
       data-slot="chip"
       className={cn(
-        "inline-flex h-4.5 items-center gap-1.25 whitespace-nowrap rounded-md border px-1.75 text-3xs tracking-wider",
+        "inline-flex h-4.5 items-center gap-1.5 whitespace-nowrap rounded-md border px-2 text-3xs tracking-wider",
         dashed ? "border-dashed border-gr-border text-gr-fg-3" : "border-gr-border bg-white/22 text-gr-fg",
         className,
       )}
@@ -34,7 +34,7 @@ function Chip({
       {!dashed && (
         <i
           data-slot="chip-dot"
-          className="block size-1.25 shrink-0 rounded-full bg-[hsl(var(--th,40)_34%_32%)]"
+          className="block size-1.5 shrink-0 rounded-full bg-[hsl(var(--th,40)_34%_32%)]"
           style={hue == null ? undefined : ({ "--th": hue } as React.CSSProperties)}
         />
       )}

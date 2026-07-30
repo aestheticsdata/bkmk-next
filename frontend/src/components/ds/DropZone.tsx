@@ -18,7 +18,7 @@ function DropZone({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="drop-zone"
       className={cn(
-        "grid justify-items-center content-center gap-2.25 rounded-xl border border-dashed border-gr-border-2 bg-gr-sunk p-6.5 text-gr-fg-3 inset-shadow-gr-sunk @max-3xl:p-5",
+        "grid justify-items-center content-center gap-2 rounded-xl border border-dashed border-gr-border-2 bg-gr-sunk p-6.5 text-gr-fg-3 inset-shadow-gr-sunk @max-3xl:p-5",
         className,
       )}
       {...props}

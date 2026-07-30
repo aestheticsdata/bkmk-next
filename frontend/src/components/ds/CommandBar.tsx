@@ -35,7 +35,7 @@ function PagerBar({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="pager-bar"
       className={cn(
-        "flex shrink-0 items-center gap-3.5 border-t border-gr-border bg-gr-panel-2 px-3.5 py-2.25 inset-shadow-gr-hair @max-3xl:gap-2.5 @max-3xl:px-3",
+        "flex shrink-0 items-center gap-3.5 border-t border-gr-border bg-gr-panel-2 px-3.5 py-2 inset-shadow-gr-hair @max-3xl:gap-2.5 @max-3xl:px-3",
         className,
       )}
       {...props}
