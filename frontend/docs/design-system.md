@@ -608,7 +608,143 @@ phrase is on a leak list. zxcvbn would, and is 400kb shipped to one field on one
 
 ---
 
-## 10. What is still legacy
+## 10. The index (COS-299)
+
+The heaviest screen in the system, and the one every convention below was written for. Two cards:
+the rail at 196px, the table card filling the rest, `gap-3` between them.
+
+```
+grid-cols-[--spacing(49)_1fr]      196px rail + table card
+  rail          index · cat · scopes            @max-3xl:hidden
+  table card    mobile rail · command bar · table · pager
+                   header row  h-7   28px
+                   row         h-7.5 30px  ← the density IS the design
+  columns       pri 36 · stars 62 · title 1fr · tags 188 · shot 44 · added 88   gap-x-2
+```
+
+**Every column is left-aligned, and there is a gutter between them.** The handoff butts its columns
+together and right-aligns `added`; at these widths that printed `PRISTARS` in the header and touched
+the bars to the stars underneath. 8px is the smallest gutter that separates them, the `1fr` title pays
+for all six, and `added` joins the other five on the left — it was right-aligned because that column
+also held the actions, which it no longer does.
+
+**The URL is the whole state.** `readIndexQuery` parses the address bar into the filter object and
+everything is a function of it: which rows are fetched, which rail row is lit, what the query field
+reads, which page the pager shows. No store, so nothing can disagree with anything; the back button
+undoes a filter; a filtered index is a link you can send. Every control in the rail, the header row
+and the pager is a `<Link>`, which is also what makes middle-click and ⌘-click behave.
+
+`helpers/indexQuery.ts` owns all three forms that state takes — the URL, the API query, and the
+expression a human reads — and nothing else converts between them. Two rules in it are load-bearing:
+
+- **the API query's keys are sorted**, because that string is the react-query cache key, and
+  `?starred=1&page=0` and `?page=0&starred=1` are one page that must not occupy two entries;
+- **changing a filter resets the page to 0.** Page 3 of a query that now matches 12 rows is an empty
+  table with no explanation.
+
+⚠️ **`queryFlagSchema`, never `z.coerce.boolean()`, for a flag that arrives as a string.** Coercion is
+`Boolean(value)` and every non-empty string is truthy, so `?screenshot=0` switched the filter **on**.
+The QA suite caught it; it was wrong on the three flags that predate this screen too, and on both
+sides of the network. Both are fixed, and the backend reads its flags from `req.validated.query` —
+the schema can only help if the validated value is the one read.
+
+### How a 30px row is clickable without being a control
+
+The title is a real `<Link>` whose `::after` covers the row (`after:absolute after:inset-0`). The
+click target is the whole row and the thing clicked is still an anchor: Enter opens it, the status bar
+previews where it goes, and no `div` needs a keyboard handler bolted on. The row actions then sit
+**above** that overlay (`relative z-1`), which is why not one of them needs `stopPropagation` — they
+are in front of the link rather than inside it, and interactive elements nested in an anchor would be
+invalid markup anyway.
+
+The alternative the handoff uses — `onClick` on a `div`, `stopPropagation` on every button — is the
+same effect built the way that fails a keyboard, and it is the source of most of the legacy lint
+errors this project has agreed to stop adding to.
+
+**ARIA table roles over a CSS grid.** Six columns that line up across a scroll container at 30px a row
+is what `<table>` cannot do without a fight, so the structure is divs and the semantics are put back
+by hand: `table` → `row` / `rowgroup` → `row` → `cell`, with `aria-sort` on the headers that carry it.
+Biome's `useSemanticElements` and `useFocusableInteractive` both fire on exactly this, correctly by
+their own rule and wrongly here; they are switched off for `components/bookmarks/Index*.tsx` in
+`biome.json` rather than suppressed line by line a dozen times.
+
+**`asChild` is now the DS's answer to "this control navigates".** `Overline`, `Segment` and `RowAction`
+all take it, for the same reason each time: a filter, a category and `↗` are addresses, and an address
+has to be an `<a>`. The state attribute changes with the element — `aria-pressed` on a link would
+announce a control that does not exist, so a link gets `aria-current`.
+
+### What is deliberately not on this screen yet
+
+| The handoff draws | Here | Why |
+| --- | --- | --- |
+| a 58px `id` column | **gone** | A database key among titles and dates. It cannot be sorted by, it does not help you find a record, and the legacy list did not show it either. Owner's call. |
+| the screenshot as a glyph beside the title | a **`shot` column**, 44px, sortable | Back from the legacy list, where it is a column of its own. A column is what makes it scannable down the page, and `screenshot` is one of the backend's sort cases, so the header does something. The alarm glyph stays beside the title — one row-level mark is enough there. |
+| `all 312`, `dev 188`, `demoscene 041` | one real count, on the row it describes | Per-category counts are DATA 05 (COS-310). There is exactly **one** number available — the current query's `total_count` — and pinning it to `all` regardless was a bug: selecting a category showed `all 002`. `countedRow` puts it on `all` when nothing is filtered, on a category when that is the only filter, and nowhere when no single row describes the query. |
+| `storage` — `shots 84/312` + gauge, `db 1.4 mb` | **absent** | Same ticket, and nothing to wire: a permanent `0/0` is worse than a block that arrives meaning something. |
+| a `filter ⌥F` button, and a query field that opens the modal | the field, read-only | The modal is UI 04 (COS-300). A button that opens nothing is worse than a button that has not arrived. |
+| `> tag:demoscene stars:>3` | `cat:demoscene starred prio:high\|highest` | That is a query *language*; the app has a filter object. `describeQuery` prints the object in the same shape, so the line is readable and also true. |
+| chip colours from a `tagPalette` fixture | hue from `category.color` | The prototype has no database; bkmk does, and the colour is the user's own. GRAPHITE keeps the treatment — `hsl(hue 34% 32%)` — so eighteen chosen colours cannot turn a screen of greys into a pin board. Grey or unparseable falls back to a hash of the name, not to one shared default. |
+
+**Three scopes needed a server.** `has shot` was expressible (`screenshot` is a presence test);
+`starred`, `has alarm` and `prio high` were not — `stars` compares for equality and `reminder` for an
+exact frequency. Four checkboxes of which one filters is worse than none, so
+`getBookmarksController` gained three parameterised conditions, in the shape DATA 01 (COS-306) will
+formalise. `prio high` sends `high,highest`: a shortcut named for the level below the top would hide
+the records that matter most.
+
+**Every column sorts, as the legacy list had it** — which `tags` could not, until it was given a
+server-side order. It sorts on the aggregated category names (`categories_names`), so `amiga,css` comes
+before `demoscene,dev` and untagged rows collect at one end. The same change made the three
+`GROUP_CONCAT`s share one `ORDER BY c.name`: they are zipped back together by position, so they have to
+agree, and the side effect is that chips now come out alphabetical.
+
+### Two places nothing may move
+
+**The action strip is out of the flow, and always three buttons wide.** It is `absolute` against the
+row, pinned to the right edge, inside the last cell so the row keeps its six cells. Two reasons, both
+measured:
+
+- while it stood in the flow, `added` had to be 168px — a date plus 70px of blank column. Now the
+  column is 88px, the width of a date, and hovering swaps the date for the actions **in place**;
+- `↗` renders `disabled` on a record with no url rather than being left out. In the flow, a strip one
+  button narrower pushed those rows' dates 22px right; out of the flow it cannot, and the rule stays
+  anyway — hovering a row must not resize anything.
+
+Measured after: 22 dates on one left edge, headers and cells sharing a left edge column by column, and
+an 8px gutter between every pair.
+
+**Both pager arrows are always rendered**, the unavailable one `disabled`. They were absent at the ends
+first, with a spacer holding the gap, and the spacer was square while the button is wider than tall —
+so arriving on page 1 shoved `page 01` sideways. A disabled button holds its own geometry exactly. The
+last page number is a link, as it was in the legacy pager: `/57` jumps to the end.
+
+### The scrollbar is a design system component
+
+`gr-scroll` in `styles/utilities.css` — the first thing this system could not write as a Tailwind class.
+6px, no track, a thumb in the panel's border ink. The native bar was wrong on three counts: 15px wide on
+macOS with a mouse attached, a light track that reads as a gutter cut into the card, and a shape GRAPHITE
+did not choose.
+
+⚠️ **`scrollbar-width` is set only where `::-webkit-scrollbar` does not exist.** Chrome and Safari
+support both and *ignore* the pseudo-elements when the standard properties are present — with
+`scrollbar-width: thin` set unconditionally the rail kept Chrome's own bar, measured at 11px. Hence
+`@supports not selector(::-webkit-scrollbar)`, which is false exactly in the engines that implement
+them. And no `scrollbar-gutter`: reserving the channel is the margin-on-one-side look the utility exists
+to remove.
+
+The rail scrolls vertically and **never horizontally** (`overflow-x-hidden`): every label truncates, so a
+horizontal bar could only mean something is mis-sized — and it did, when a fixed `3ch` counter clipped a
+four-digit total to a plausible-looking `127` and pushed the row wide. `min-w-[3ch]` now: three digits
+is the handoff's padding, not a ceiling.
+
+**The default sort is `-date`, and it stays out of the URL.** The backend's own default is no
+`ORDER BY` — "whatever the storage engine hands back", stable enough to look deliberate. An index
+wants the last thing you saved at the top, and the handoff's pager agrees (`sorted by added ▾`). Kept
+out of the address bar so a clean link stays clean and one page stays one cache entry.
+
+---
+
+## 11. What is still legacy
 
 Three files still carry tokens from the old UI, marked as such: **15 colours** in `colors.css`,
 **2 shadows** in `elevation.css`, **3 sizes and 3 families** in `typography.css`. They are not this

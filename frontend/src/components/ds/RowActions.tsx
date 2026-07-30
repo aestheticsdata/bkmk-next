@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@lib/utils";
+import { Slot } from "radix-ui";
 
 import type * as React from "react";
 
@@ -40,11 +41,22 @@ function RowActions({ className, ...props }: React.ComponentProps<"span">) {
  * nothing to a screen reader.
  *
  * `danger` only changes the hover colour. The action itself is not destructive: the
- * delete glyph opens a confirmation, it does not delete. */
-function RowAction({ className, danger = false, ...props }: React.ComponentProps<"button"> & { danger?: boolean }) {
+ * delete glyph opens a confirmation, it does not delete.
+ *
+ * **`asChild` for the one that navigates** (COS-299): `↗` opens the record's url, which is a link
+ * and has to stay one — a button calling `window.open` loses middle-click, the context menu, and the
+ * status bar preview of where it goes. */
+function RowAction({
+  className,
+  danger = false,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> & { danger?: boolean; asChild?: boolean }) {
+  const Comp = asChild ? Slot.Root : "button";
+
   return (
-    <button
-      type="button"
+    <Comp
+      {...(asChild ? {} : { type: "button" as const })}
       data-slot="row-action"
       className={cn(
         "inline-grid size-5.5 cursor-pointer place-items-center rounded-md text-xs text-gr-fg-3 transition-colors duration-120 outline-none",
