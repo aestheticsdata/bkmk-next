@@ -727,6 +727,12 @@ silencieusement dans le `default` du contrôleur et de ne rien trier.
 
 Inchangé depuis la v1 de cette spec. Le backend Nest reste explicitement remis à plus tard.
 
+> ⚠️ **Règle d'écriture de cette section — le dépôt est public.** Ce qui est corrigé se documente
+> ici, avec son correctif sous les yeux. **Ce qui est encore ouvert ne se décrit pas** : ni le
+> mécanisme, ni le paramètre à modifier, ni la formulation « n'importe quel utilisateur peut… ».
+> Une référence de ticket suffit, Linear étant privé. Idem pour toute adresse email réelle et tout
+> compte de la base : jamais dans un fichier suivi, un message de commit ou un corps de PR.
+
 **Backend** : `express-session` + `connect-redis`, store préfixé `bkmk:`, TTL 10 min,
 `rolling: true` ; cookie `bkmk.sid` `httpOnly` / `sameSite: lax` / `secure` en prod / `proxy: true`
 + `trust proxy` ; CSRF double-submit porté de `pfa/nest-api/src/users/csrf-token.util.ts`
@@ -744,8 +750,8 @@ clé `bkmk-token`).
 
 **Ordre imposé :** l'auth passe avant les écrans login/signup.
 
-**Au passage** : requêtes SQL paramétrées — `signInController.js` concatène aujourd'hui l'email de
-`req.body` dans le SQL, sur une route non authentifiée.
+**Au passage** : requêtes SQL paramétrées, sur l'ensemble du back et pas seulement la couche auth.
+Fait en COS-295.
 
 ### Ce qui a été posé (COS-293, le 2026-07-30)
 
@@ -840,12 +846,10 @@ anonyme — le middleware CSRF ne se serait jamais déclenché. Une chaîne s'al
 reste de l'API manipule déjà (`?userID=` en arrive toujours une) et sur ce que `clearSessionsForUser`
 compare.
 
-⚠️ **Un écart en avance sur pfa : `req.session.regenerate()` à la connexion.** Sans lui, qui parvient
-à poser un cookie de session sur le visiteur avant sa connexion partage la session qu'il vient
-d'authentifier — fixation de session. `saveUninitialized: false` rend l'attaque plus difficile (aucun
-cookie n'est émis avant la connexion) mais ne la ferme pas. **À reporter dans pfa**, qui ne le fait
-pas. L'ordre compte : régénérer, *puis* `clearSessionsForUser` — la nouvelle session n'est pas encore
-au store et ne peut donc pas se supprimer elle-même — puis poser le `userId`, puis roter le jeton CSRF.
+**`req.session.regenerate()` à la connexion**, contre la fixation de session. L'ordre compte :
+régénérer, *puis* `clearSessionsForUser` — la nouvelle session n'est pas encore au store et ne peut
+donc pas se supprimer elle-même — puis poser le `userId`, puis roter le jeton CSRF. C'est un écart en
+avance sur la référence ; le report côté pfa est suivi en COS-323.
 
 **`POST /users/add` renvoie 201** au lieu de 200, comme pfa. Le front traite tout 2xx de la même
 façon.
@@ -870,16 +874,12 @@ d'une autre longueur · passage à 400 (validation) avec le bon jeton, donc au-d
 routes publiques restent exemptées) · logout 403 sans en-tête puis 200, cookie vidé, session absente
 de Redis, cookie devenu inopérant, logout sans session toujours 200.
 
-**Relevé au passage, non corrigé :**
+**Relevé au passage, non corrigé.** Deux points ouverts, décrits dans leurs tickets et **pas ici** —
+ce dépôt est public et le détail d'une faille non corrigée n'a rien à y faire (cf. la règle en tête de
+§6) :
 
-- **Mauvais identifiants → 500 en HTML.** `signInController` fait `next(createError(500, …))` et
-  `utils/errorHandlerMiddleware.js` **est écrit mais n'est jamais monté**, donc c'est le gestionnaire
-  par défaut d'Express qui répond. Un échec de connexion doit être un **401 en JSON** : à traiter avec
-  l'écran Login (COS-297), qui en a besoin pour afficher l'erreur.
-- **Les contrôleurs de liste font confiance à `?userID=` fourni par le client** (`getBookmarks`,
-  `getCategories`, `getReminders`) au lieu de lire `req.user.id`. Maintenant que la session porte
-  l'identité réelle, tout utilisateur authentifié peut lire les données d'un autre en changeant le
-  paramètre. **Ticket à part** (COS-322), ce n'est ni du CSRF ni de l'injection.
+- le code de réponse d'un échec de connexion, à traiter avec l'écran Login → **COS-297** ;
+- le périmètre utilisateur des contrôleurs de liste → **COS-322**.
 
 ### Ce qui a été posé (COS-295, le 2026-07-30)
 
@@ -908,9 +908,9 @@ déduction disparaît, le serveur refuse. Le `GROUP BY b.id` dit tout haut ce qu
 déjà.
 
 **Une traversée de chemin fermée au passage** — même motif, autre puits. `getImage` concaténait
-`req.query.screenshotFilename` dans un chemin de fichier : `?screenshotFilename=../../../etc/passwd`
-lisait ce que le process pouvait lire, sur une route authentifiée. `basename()` dans le helper, et une
-contrainte de forme dans `screenshotQuerySchema` (mot, point, tiret — ni `/` ni `..`).
+`req.query.screenshotFilename` dans un chemin de fichier, ce qui laissait un segment relatif sortir du
+dossier des captures, sur une route authentifiée. `basename()` dans le helper, et une contrainte de
+forme dans `screenshotQuerySchema` (mot, point, tiret — ni `/` ni `..`).
 
 **`resetPasswordController.js` n'est pas converti, délibérément.** Il est mort et ne *peut pas* tourner :
 route commentée, `generate-password` et `sib-api-v3-sdk` absents de `package.json`, et un

@@ -123,7 +123,7 @@ function Login_Phosphor() {
               <div className="dim-2" style={{ fontSize: 11, marginBottom: 3 }}>EMAIL</div>
               <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border-2)', paddingBottom: 5 }}>
                 <span className="accent" style={{ marginRight: 8 }}>›</span>
-                <span className="bright">cosmokaat@protonmail.com</span>
+                <span className="bright">user@example.com</span>
                 <span className="mono-caret" style={{ marginLeft: 1 }} />
               </div>
             </div>
@@ -178,7 +178,7 @@ function Login_Paperwhite() {
           </div>
           <label style={{ display: 'block', marginBottom: 28 }}>
             <div style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--fg-3)', marginBottom: 6 }}>email</div>
-            <input className="field" defaultValue="cosmokaat@protonmail.com" />
+            <input className="field" defaultValue="user@example.com" />
           </label>
           <label style={{ display: 'block', marginBottom: 36 }}>
             <div style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--fg-3)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
@@ -228,7 +228,7 @@ function Login_Neon() {
           <div style={{ padding: 26, background: 'rgba(20,16,46,0.6)', border: '1px solid var(--border)', borderRadius: 2, backdropFilter: 'blur(2px)' }}>
             <label style={{ display: 'block', marginBottom: 18 }}>
               <div className="accent-2" style={{ fontSize: 10, letterSpacing: '0.25em', marginBottom: 6, color: 'var(--accent-2)' }}>[ EMAIL ]</div>
-              <input className="field" defaultValue="cosmokaat@protonmail.com" />
+              <input className="field" defaultValue="user@example.com" />
             </label>
             <label style={{ display: 'block', marginBottom: 24 }}>
               <div className="accent-2" style={{ fontSize: 10, letterSpacing: '0.25em', marginBottom: 6, color: 'var(--accent-2)' }}>[ PASSPHRASE ]</div>
