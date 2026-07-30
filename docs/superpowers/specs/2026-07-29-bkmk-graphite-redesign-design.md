@@ -44,7 +44,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | AUTH 03 | COS-295 — requêtes SQL paramétrées | ✅ mergé (PR #12) |
 | AUTH 04 | COS-296 — AuthContext, cookie, intercepteur CSRF | ✅ mergé (PR #12) |
 | UI 01 | COS-297 — écran Login | ✅ mergé (PR #14) |
-| UI 02 | COS-298 — écran Signup + passphrase de récupération | en cours |
+| UI 02 | COS-298 — écran Signup + passphrase de récupération | ✅ mergé (PR #15) |
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
@@ -1273,8 +1273,18 @@ mot de passe) · le reste de l'auth tient (401 identique octet pour octet, 401 s
 jeton CSRF, 400 passé le jeton, logout, cookie mort ensuite). `next build` passe, `tsc --noEmit`
 propre, lint front stable (50 erreurs, la ligne de base héritée), lint back à 0.
 
-⚠️ **Non vérifié : le rendu.** Comme en UI 01, aucun navigateur n'est connecté — tout ce qui précède
-est du markup, du CSS et des réponses HTTP. La QA visuelle reste à faire.
+**Le rendu, lui, a été vérifié par le propriétaire** — six points, listés plus haut, et c'est ce qui a
+fait la différence entre « le markup est correct » et « l'écran est juste ». Aucun navigateur n'est
+attaché à la session : ce sont ses captures qui ont trouvé la bascule réécrite en texte, le survol qui
+déplaçait le bouton, la flèche à la place du curseur main, le double bord des champs, et le
+désalignement du haut de page.
+
+💡 **Ce qui manquait de mon côté était mesurable, et l'est maintenant.** Chrome se lance en mode sans
+tête avec `--remote-debugging-port`, et Node parle CDP tout seul (`WebSocket` est global depuis Node
+21) : une trentaine de lignes suffisent à demander à la page les `getBoundingClientRect` réels. C'est
+ce qui a tranché le dernier point — les boîtes du sur-titre, du titre et de la carte partent du même
+pixel, seule l'approche du glyphe diffère — au lieu d'une troisième correction à l'aveugle. À refaire
+avant d'affirmer quoi que ce soit sur une géométrie.
 
 ---
 
