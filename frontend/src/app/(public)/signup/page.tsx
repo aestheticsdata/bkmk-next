@@ -12,10 +12,11 @@ export default function SignUpPage() {
   const { setCredentials } = useCredentials();
 
   const onSubmit = async (values: LoginValues) => {
-    const { token, user } = await signupService(values);
-    if (token) {
-      await setCredentials(token, user);
-    }
+    // `signupService` swallows the error and returns `undefined`, same shape as the login
+    // screen's guard.
+    const auth = await signupService(values);
+    if (!auth) return;
+    setCredentials(auth);
   };
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useUserStore } from "@auth/store/userStore";
+import { useAuth } from "@auth/context/AuthContext";
 import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
 import { PAGES, ROWS_BY_PAGE } from "@components/shared/config/constants";
 import { usePageStore } from "@components/shared/pageStore";
@@ -11,7 +11,6 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import queryString from "query-string";
 import { useEffect, useRef, useState } from "react";
 
-import type { UserStore } from "@auth/store/userStore";
 // The mutations keep the old interface: their payload goes out as multipart, where
 // `categories` is already a JSON string and the numbers are strings. Describing it
 // properly (`CreateBookmarkPayloadSchema`) belongs to the DATA lot, with the form.
@@ -24,7 +23,7 @@ const useBookmarks = (from: string = "") => {
   const pathname = usePathname();
   const params = useParams<{ id?: string }>();
   const searchParams = useSearchParams();
-  const userID = useUserStore((state: UserStore) => state.user?.id);
+  const userID = useAuth().user?.id;
   const { privateRequest } = useRequestHelper();
   const [bookmarks, setBookmarks] = useState<BookmarkList>();
   const [page, setPage] = useState(-1);

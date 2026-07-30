@@ -1,6 +1,6 @@
 "use client";
 
-import { useUserStore } from "@auth/store/userStore";
+import { useAuth } from "@auth/context/AuthContext";
 import { Led } from "@components/ds/Led";
 import { Overline } from "@components/ds/Overline";
 import { ROUTES } from "@components/shared/config/constants";
@@ -10,8 +10,6 @@ import useShellCounts from "@components/shared/shell/services/useShellCounts";
 import { cn } from "@lib/utils";
 import { SHELL_TEXT } from "@text/shell";
 import Link from "next/link";
-
-import type { UserStore } from "@auth/store/userStore";
 
 /* `.gr-strip` — the 38px strip along the top of every application screen: wordmark, the
  * four module tabs, and the account meta pushed right.
@@ -25,7 +23,7 @@ import type { UserStore } from "@auth/store/userStore";
 function TopChrome() {
   const { tab } = useShellRoute();
   const counts = useShellCounts();
-  const email = useUserStore((state: UserStore) => state.user?.email);
+  const email = useAuth().user?.email;
 
   return (
     <header
@@ -93,11 +91,11 @@ function TopChrome() {
           </Link>
           <Overline>{SHELL_TEXT.uptime}</Overline>
           {/* The handoff makes the email the way back out of the session ("l'email du
-              chrome → login"), which in real bkmk means /logout: it clears the store and
-              lands on the login screen. It is the only sign-out affordance until UI 09
-              (COS-305) puts one in About; AUTH 04 (COS-296) swaps the target for a
-              `POST /users/logout`. Hence the aria-label — the address alone does not say
-              what clicking it does. */}
+              chrome → login"), which in real bkmk means /logout — since AUTH 04 (COS-296)
+              a `POST /users/logout` that destroys the session server-side, then a redirect.
+              Hence the aria-label: the address alone does not say what clicking it does.
+              ⚠️ A click is still an immediate sign-out with no menu and no confirmation.
+              COS-321 replaces this link with the user menu the handoff draws. */}
           {email && (
             <Link
               href="/logout"

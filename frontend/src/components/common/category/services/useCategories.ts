@@ -1,4 +1,4 @@
-import { useUserStore } from "@auth/store/userStore";
+import { useAuth } from "@auth/context/AuthContext";
 import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
 import useRequestHelper from "@helpers/useRequestHelper";
 import { CategoryListSchema } from "@src/schemas/categories";
@@ -9,10 +9,8 @@ import {
 } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import type { UserStore } from "@auth/store/userStore";
-
 const useCategories = () => {
-  const userID = useUserStore((state: UserStore) => state.user!.id);
+  const userID = useAuth().user?.id;
   const { privateRequest } = useRequestHelper();
   const [categories, setCategories] = useState<any>([]);
 

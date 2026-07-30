@@ -1,14 +1,12 @@
-import { useUserStore } from "@auth/store/userStore";
+import { useAuth } from "@auth/context/AuthContext";
 import { QUERY_KEYS } from "@components/bookmarks/config/constants";
 import useRequestHelper from "@helpers/useRequestHelper";
 import { ReminderListSchema } from "@src/schemas/reminders";
 import { useQuery } from "@tanstack/react-query";
 
-import type { UserStore } from "@auth/store/userStore";
-
 const useReminders = () => {
   const { privateRequest } = useRequestHelper();
-  const userID = useUserStore((state: UserStore) => state.user?.id);
+  const userID = useAuth().user?.id;
 
   const getReminders = async () => {
     const response = await privateRequest(`/reminders?userID=${userID}`);
