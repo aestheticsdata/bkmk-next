@@ -3,7 +3,7 @@ const anyASCII = require("../../../helpers/anyascii");
 const dbConnection = require("../../../db/dbinitmysql");
 
 module.exports = async (req, res) => {
-  const userID = req.decoded.id; // from jwt token middleware
+  const userID = req.user.id; // from sessionAuthMiddleware
   const originalName = req.file.originalname;
   const entries = [];
   const buffer = Buffer.from(req.file.buffer);

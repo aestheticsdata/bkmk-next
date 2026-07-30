@@ -1,4 +1,4 @@
-const signIn = require("./helpers/signInHelper");
+const establishSession = require("./helpers/signInHelper");
 const bcrypt = require("bcryptjs");
 const dbConnection = require("../../../db/dbinitmysql");
 const createError = require("http-errors");
@@ -27,5 +27,5 @@ module.exports = async (req, res, next) => {
   const isMatchPassword = await bcrypt.compare(password, users[0].password);
   if (!isMatchPassword) return next(createError(500, "Invalid credentials"));
 
-  signIn(res, users[0]);
+  return establishSession(req, res, users[0], 200);
 };

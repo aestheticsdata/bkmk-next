@@ -5,11 +5,13 @@
  * to be connected before the session store answers a request, and a CommonJS module has no
  * top-level await. Same shape as pfa's `main.ts`, minus Nest.
  *
- * **Nothing issues a cookie yet.** `saveUninitialized: false` means a session is only
- * written once a route puts something on `req.session`, and no route does — AUTH 02
- * (COS-294) is what makes sign-in create one. Until then the JWT path is untouched and this
- * ticket changes no behaviour, which is deliberate: the four AUTH tickets land one at a
- * time and the app has to keep working between them.
+ * `saveUninitialized: false` means a session is written only once a route puts something on
+ * `req.session` — which, since COS-294, signing in does. A visitor who never signs in is
+ * never given a cookie and never occupies a key in Redis.
+ *
+ * **The authentication and CSRF middlewares are not mounted here.** They sit at the top of
+ * each protected router, the way pfa decorates each controller — see `routes/api/users.js`
+ * for why the public routes must not inherit them.
  */
 const express = require("express");
 const cors = require("cors");
@@ -19,12 +21,7 @@ const { RedisStore } = require("connect-redis");
 const OS = require("os");
 const cronMysql = require("./cron/cron-mysql");
 const redisService = require("./redisService");
-
-/**
- * Ten minutes, pfa's figure. Short because `rolling: true` refreshes it on every response:
- * it is an inactivity timeout, not a cap on how long you can stay signed in.
- */
-const SESSION_TTL_SECONDS = 10 * 60;
+const { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } = require("./auth/constants");
 
 process.env.UV_THREADPOOL_SIZE = OS.cpus().length;
 
@@ -62,7 +59,7 @@ const bootstrap = async () => {
 
   app.use(
     session({
-      name: "bkmk.sid",
+      name: SESSION_COOKIE_NAME,
       store: new RedisStore({
         client: redisService.getClient(),
         prefix: redisService.SESSION_PREFIX,

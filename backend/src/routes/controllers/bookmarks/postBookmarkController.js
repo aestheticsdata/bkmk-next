@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
 
   const categories = JSON.parse(categoriesString);
 
-  const userID = req.decoded.id; // from jwt token middleware
+  const userID = req.user.id; // from sessionAuthMiddleware
 
   let screenshotFilename = null;
   if (req.file) {

@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const createError = require("http-errors");
 const { format } = require("date-fns");
 const dbConnection = require("../../../db/dbinitmysql");
-const signIn = require("./helpers/signInHelper");
+const establishSession = require("./helpers/signInHelper");
 
 module.exports = async (req, res, next) => {
   const { name, email, password, registerDate } = req.body;
@@ -49,11 +49,18 @@ module.exports = async (req, res, next) => {
 
           try {
             const createdUser = await conn.execute(sqlCreateUser);
-            signIn(res, {
-              id: createdUser[0].insertId,
-              name: newUser.name,
-              email: newUser.email,
-            });
+            // Awaited inside the existing try: the session write can fail, and this callback
+            // is the only thing that would catch it -- `catchAsync` cannot see into bcrypt's.
+            await establishSession(
+              req,
+              res,
+              {
+                id: createdUser[0].insertId,
+                name: newUser.name,
+                email: newUser.email,
+              },
+              201,
+            );
           } catch (err) {
             res.status(500).json({ msg: "error adding new user : ", err });
           } finally {

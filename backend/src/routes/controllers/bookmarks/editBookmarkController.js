@@ -318,7 +318,7 @@ module.exports = async (req, res) => {
 
   // new screenshot
   if (req.file) {
-    const userID = req.decoded.id; // from jwt token middleware
+    const userID = req.user.id; // from sessionAuthMiddleware
     const [[existingScreenshot]] = await conn.execute(`
       SELECT screenshot FROM bookmark WHERE id=${originalBookmark.id} AND user_id=${userID};
     `);
