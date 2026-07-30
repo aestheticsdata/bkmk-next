@@ -6,11 +6,10 @@
  *
  * Three things happen in this order, and the order is the point:
  *
- * 1. **The session id is regenerated.** Without it, whoever managed to plant a session
- *    cookie on the visitor before they signed in would end up sharing the session they just
- *    authenticated — session fixation. `saveUninitialized: false` makes that harder, since
- *    no cookie is issued before login, but it does not close it.
- *    ⚠️ pfa does **not** do this; the port is deliberately ahead of the reference here.
+ * 1. **The session id is regenerated**, which is what makes session fixation a non-issue: a
+ *    session cookie planted on a visitor before they sign in is discarded rather than
+ *    inherited. `saveUninitialized: false` already made it unlikely; this closes it. A step
+ *    ahead of the reference implementation — COS-323 tracks bringing the two back in line.
  * 2. **Every other session of this user is dropped** — one active session per user. It runs
  *    after the regeneration so the session being created is not in the store yet and cannot
  *    delete itself.

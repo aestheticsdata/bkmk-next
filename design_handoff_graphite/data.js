@@ -1,6 +1,6 @@
 // Mock bookmark data — 2026, mix of recent + older entries
 window.BKMK_DATA = {
-  user: 'cosmokaat@protonmail.com',
+  user: 'user@example.com',
   total: 312,
   bookmarks: [
     { id: 2087, title: 'The Next Two Years of Software Engineering By Addy Osmani', url: 'https://addyosmani.com/blog/next-two-years/', stars: 5, notes: 'AI coding evolution, profitability over growth, the new graduate calculus.', priority: 'high', tags: ['dev','blogpost'], shot: true, alarm: false, date: '2026-01-12', dateLabel: 'Jan 12, 2026' },
