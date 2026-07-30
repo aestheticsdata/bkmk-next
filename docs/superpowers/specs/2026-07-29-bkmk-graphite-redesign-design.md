@@ -45,7 +45,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | AUTH 04 | COS-296 — AuthContext, cookie, intercepteur CSRF | ✅ mergé (PR #12) |
 | UI 01 | COS-297 — écran Login | ✅ mergé (PR #14) |
 | UI 02 | COS-298 — écran Signup + passphrase de récupération | ✅ mergé (PR #15) |
-| UI 03 | COS-299 — écran Index : rail, table dense, pager | en cours |
+| UI 03 | COS-299 — écran Index : rail, table dense, pager | ✅ mergé (PR #16) |
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
