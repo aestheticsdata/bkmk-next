@@ -10,9 +10,10 @@ const { categoriesJSONSchema, idSchema, prioritySchema, queryFlagSchema, starsSc
 
 /** `GET /bookmarks` — pagination, sorting and filters, all in the query string.
  *
- * `userID` is interpolated straight into the controller's SQL. Constraining it to an
- * integer here removes the list's most direct injection vector, but it does not replace
- * COS-295's prepared statements: the other filters are still interpolated. */
+ * Since COS-295 the controller passes every filter as a parameter, so none of this is the
+ * last line of defence any more. It still earns its keep: `sort` cannot be parameterised —
+ * a column name is not a value — so the enum below is what keeps the only interpolation left
+ * in that query honest. */
 const listBookmarksQuerySchema = z.object({
   userID: idSchema,
   rows: z.coerce.number().int().positive().max(500),
@@ -54,9 +55,18 @@ const listBookmarksQuerySchema = z.object({
 
 const bookmarkIdParamsSchema = z.object({ id: idSchema });
 
+/** `GET /bookmarks/upload/:id` — the screenshot is read off the disk by name.
+ *
+ * The filename is constrained to what `jimpHelper` generates
+ * (`screenshot--user-<id>-<uuid>.<ext>`): word characters, dots and hyphens. **No slash and
+ * no `..`**, because the controller concatenates this into a path — COS-295 also hardened the
+ * read itself with `basename`, and this is the boundary half of the same fix. */
 const screenshotQuerySchema = z.object({
   userID: idSchema,
-  screenshotFilename: z.string().min(1),
+  screenshotFilename: z
+    .string()
+    .min(1)
+    .regex(/^[\w.-]+$/, "screenshotFilename must be a bare filename"),
 });
 
 const bookmarkBodyShape = {

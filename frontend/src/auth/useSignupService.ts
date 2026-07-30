@@ -23,16 +23,15 @@ const useSignupService = () => {
       });
       // The boundary: nothing reaches the app without going through a schema.
       return AuthResponseSchema.parse(res.data);
-    } catch (err) {
+    } catch {
       await Swal.fire({
         title: "Erreur lors de la création de compte",
         icon: "warning",
         confirmButtonText: "fermer",
       });
-      return {
-        token: null,
-        user: null,
-      };
+      // `undefined`, like `useLoginService`: there is no half-built session to hand back, and
+      // the caller already guards on it (COS-296).
+      return undefined;
     }
   };
 

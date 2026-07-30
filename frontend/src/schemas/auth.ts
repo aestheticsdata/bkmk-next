@@ -16,15 +16,15 @@ export const AuthUserSchema = z.object({
 
 export type AuthUser = z.infer<typeof AuthUserSchema>;
 
+/** The answer to `POST /users`, `POST /users/add` **and** `GET /users/me` — the three routes
+ *  that open or confirm a session all reply with the same two fields.
+ *
+ *  There is no `token`: AUTH 02 (COS-294) took the JWT out of the body, and AUTH 04 (COS-296)
+ *  removed the store that read it. The identity is an `httpOnly` cookie the client never sees,
+ *  and `csrfToken` **never goes to storage** — the auth context holds it in memory. */
 export const AuthResponseSchema = z.object({
-  /** JWT signed for 10 hours by `signInHelper`. AUTH 01 (COS-293) moves it out of the
-   *  response body and into an `httpOnly` cookie — this field disappears then. */
-  token: z.string(),
   user: AuthUserSchema,
-  /** Not emitted by the backend yet. Optional **on purpose**: making it required now
-   *  would break login. AUTH 02 (COS-294) emits it and makes it required here in the
-   *  same move. */
-  csrfToken: z.string().optional(),
+  csrfToken: z.string(),
 });
 
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;

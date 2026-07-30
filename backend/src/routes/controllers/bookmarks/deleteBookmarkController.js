@@ -6,16 +6,16 @@ module.exports = async (req, res) => {
   const { id } = req.params;
 
   const sqlInactiveFlag = `
-    UPDATE bookmark SET active=0 WHERE id=${id};
+    UPDATE bookmark SET active=0 WHERE id=?;
   `;
 
   const sqlInactiveDate = `
-    UPDATE bookmark SET date_inactive="${format(new Date(), "yyyy-MM-dd")}" WHERE id=${id};
+    UPDATE bookmark SET date_inactive=? WHERE id=?;
   `;
 
   try {
-    await conn.execute(sqlInactiveFlag);
-    await conn.execute(sqlInactiveDate);
+    await conn.execute(sqlInactiveFlag, [id]);
+    await conn.execute(sqlInactiveDate, [format(new Date(), "yyyy-MM-dd"), id]);
     await conn.end();
     return res.status(200).json({ msg: "bookmark deleted" });
   } catch (err) {

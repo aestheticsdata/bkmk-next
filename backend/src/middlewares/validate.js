@@ -3,7 +3,7 @@
  *
  * Used by naming the parts to validate:
  *
- *     router.get("/", checkToken, validate({ query: listBookmarksQuerySchema }), catchAsync(controller));
+ *     router.get("/", validate({ query: listBookmarksQuerySchema }), catchAsync(controller));
  *
  * **It does not replace `req.body` or `req.query`.** The validated result is placed on
  * `req.validated.{body,query,params}`, and the controllers keep reading the original

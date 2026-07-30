@@ -1,3 +1,17 @@
+/**
+ * ⚠️ **Dead code, and it cannot run.** Audited under COS-295 and deliberately left as it is.
+ *
+ * Its route in `routes/api/users.js` is commented out, and it could not be mounted anyway:
+ * `generate-password` and `sib-api-v3-sdk` are not in `package.json`, so requiring this file
+ * throws. It also calls `dbConnection.query(...)` while `dbinitmysql` exports a function that
+ * returns a connection — broken even with the packages installed — and the mail it sends is
+ * pfa's, "HXF finance" and all.
+ *
+ * Its two statements interpolate `req.body.email`, which is why it appears in this ticket at
+ * all. They are **not** parameterised: nothing reaches them, and making unreachable broken
+ * code injection-safe would only make it look maintained. Rewriting it belongs to whoever
+ * builds `change password` in the user menu (COS-321).
+ */
 const dbConnection = require("../../../db/dbinitmysql");
 const bcrypt = require("bcryptjs");
 const passwordgenerator = require("generate-password");

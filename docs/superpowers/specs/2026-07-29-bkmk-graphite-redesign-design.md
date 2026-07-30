@@ -39,7 +39,14 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | DS 01 | COS-290 — tokens GRAPHITE | ✅ mergé (PR #8) |
 | DS 02 | COS-291 — primitives de composants | ✅ mergé (PR #9) |
 | DS 03 | COS-292 — shell applicatif | ✅ mergé (PR #10) |
-| AUTH 01 | COS-293 — session Redis + cookie httpOnly | en cours |
+| AUTH 01 | COS-293 — session Redis + cookie httpOnly | ✅ mergé (PR #11) |
+| AUTH 02 | COS-294 — CSRF double-submit, retrait du JWT | en cours |
+| AUTH 03 | COS-295 — requêtes SQL paramétrées | en cours |
+| AUTH 04 | COS-296 — AuthContext, cookie, intercepteur CSRF | en cours |
+
+**Les trois tickets AUTH 02-03-04 sont sur une seule branche** (`cosmokaat/cos-294-add-csrf-session-auth`) :
+AUTH 02 coupe le JWT et laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc
+la QA n'a de sens qu'à la fin du lot. Trois commits séparés, une seule PR.
 
 **Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
 validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
@@ -796,6 +803,187 @@ aucune clé `bkmk:*` en fonctionnement normal.**
 **Relevé au passage, pour AUTH 02 :** `checkToken` répond aujourd'hui **200** avec
 `{ success: false }` quand le jeton manque, au lieu de 401. Le `sessionAuthMiddleware` qui le remplace
 doit renvoyer 401 — l'intercepteur de `useRequestHelper` en dépend.
+
+### Ce qui a été posé (COS-294, le 2026-07-30)
+
+`backend/src/auth/` : `csrfToken.js` (port fonction pour fonction de
+`pfa/nest-api/src/users/csrf-token.util.ts`), `csrfMiddleware.js` (port de `csrf.guard.ts`),
+`sessionAuthMiddleware.js` (port de `session-auth.guard.ts`), `constants.js` (nom du cookie + TTL,
+partagés entre `server.js` et le logout). Trois contrôleurs `users` de plus (`getMeController`,
+`getCsrfController`, `logoutController`), `signInHelper.js` réécrit. **Les deux copies de
+`checkToken.js` sont supprimées et `jsonwebtoken` retiré des dépendances.**
+
+⚠️ **L'application front ne fonctionne plus jusqu'à AUTH 04 (COS-296), et c'est le ticket qui le
+demande.** Elle envoie encore `Authorization: Bearer` depuis `localStorage` et n'envoie pas le cookie
+(`withCredentials` manque), donc toute route protégée répond 401. C'est le prix du « retrait du JWT »
+inscrit au titre de COS-294 : contrairement à AUTH 01, ce ticket n'est pas neutre. Le lot doit être
+terminé avant de reprendre la QA visuelle.
+
+**La politique d'auth est déclarée par routeur, pas globalement.** `router.use(sessionAuthMiddleware,
+csrfMiddleware)` en tête de `bookmarks.js`, `categories.js` et `reminders.js` — la traduction du
+`UseGuards(SessionAuthGuard, CsrfGuard)` que pfa pose sur chaque contrôleur. Une route ajoutée plus
+tard en hérite et ne peut plus l'oublier, ce que le `checkToken` répété ligne par ligne ne promettait
+pas. **Un montage global aurait été un piège** : il couvrirait aussi les deux routes publiques, et
+demanderait alors un jeton CSRF à un visiteur déjà connecté qui resoumet le formulaire de connexion —
+exactement le cas que la seconde exemption du middleware existe pour laisser passer. `users.js` garde
+donc ses middlewares route par route, comme pfa.
+
+**Les non-authentifiés reçoivent 401**, là où `checkToken` renvoyait 200 avec `{ success: false }`.
+
+**`req.user` remplace `req.decoded`**, dont le nom ne voulait dire quelque chose que pour un JWT
+décodé. Les trois contrôleurs qui le lisaient (`postBookmark`, `editBookmark`, `uploadBookmarks`) sont
+mis à jour.
+
+**L'identifiant de session est stocké en chaîne** (`String(user.id)`). Les helpers portés de pfa
+testent `typeof userId === "string"` ; avec le `INT(11)` de MySQL, toute session aurait été lue comme
+anonyme — le middleware CSRF ne se serait jamais déclenché. Une chaîne s'aligne en plus sur ce que le
+reste de l'API manipule déjà (`?userID=` en arrive toujours une) et sur ce que `clearSessionsForUser`
+compare.
+
+⚠️ **Un écart en avance sur pfa : `req.session.regenerate()` à la connexion.** Sans lui, qui parvient
+à poser un cookie de session sur le visiteur avant sa connexion partage la session qu'il vient
+d'authentifier — fixation de session. `saveUninitialized: false` rend l'attaque plus difficile (aucun
+cookie n'est émis avant la connexion) mais ne la ferme pas. **À reporter dans pfa**, qui ne le fait
+pas. L'ordre compte : régénérer, *puis* `clearSessionsForUser` — la nouvelle session n'est pas encore
+au store et ne peut donc pas se supprimer elle-même — puis poser le `userId`, puis roter le jeton CSRF.
+
+**`POST /users/add` renvoie 201** au lieu de 200, comme pfa. Le front traite tout 2xx de la même
+façon.
+
+**Le SQL de `getMeController` est paramétré.** Rien n'y est fourni par le client — l'id vient de notre
+propre session — mais COS-295 est sur le point de convertir le reste et du SQL neuf n'a aucune raison
+de s'écrire à l'ancienne. Il gère aussi le cas « la session survit au compte » : session détruite,
+401, plutôt qu'un 200 sans utilisateur.
+
+**Côté front, un seul fichier bouge** : `schemas/auth.ts` rend `csrfToken` **requis** et `token`
+optionnel — ce que le commentaire posé par COS-318 annonçait pour ce ticket. Le champ `token` n'est
+pas supprimé pour son unique lecteur restant (`login/page.tsx`, qui le passe à `authStore`) ; les deux
+partent avec COS-296.
+
+**QA faite en local, 41 assertions** (script jetable, un utilisateur d'essai créé puis supprimé —
+11 comptes avant, 11 après) : signup 201 avec `csrfToken` et **sans** `token` · session unique en
+Redis, `userId` en chaîne · `GET /users/me` et `/users/csrf` rendant le même jeton, 401 sans session ·
+403 sur un verbe non sûr sans en-tête, avec un jeton faux de même longueur, et avec un jeton faux
+d'une autre longueur · passage à 400 (validation) avec le bon jeton, donc au-delà du contrôle CSRF ·
+401 sur `bookmarks`, `categories`, `reminders` sans session · reconnexion : **nouveau** sid, jeton
+**roté**, toujours une seule session, ancien cookie mort · mauvais mot de passe refusé sans 403 (les
+routes publiques restent exemptées) · logout 403 sans en-tête puis 200, cookie vidé, session absente
+de Redis, cookie devenu inopérant, logout sans session toujours 200.
+
+**Relevé au passage, non corrigé :**
+
+- **Mauvais identifiants → 500 en HTML.** `signInController` fait `next(createError(500, …))` et
+  `utils/errorHandlerMiddleware.js` **est écrit mais n'est jamais monté**, donc c'est le gestionnaire
+  par défaut d'Express qui répond. Un échec de connexion doit être un **401 en JSON** : à traiter avec
+  l'écran Login (COS-297), qui en a besoin pour afficher l'erreur.
+- **Les contrôleurs de liste font confiance à `?userID=` fourni par le client** (`getBookmarks`,
+  `getCategories`, `getReminders`) au lieu de lire `req.user.id`. Maintenant que la session porte
+  l'identité réelle, tout utilisateur authentifié peut lire les données d'un autre en changeant le
+  paramètre. **Ticket à part** (COS-322), ce n'est ni du CSRF ni de l'injection.
+
+### Ce qui a été posé (COS-295, le 2026-07-30)
+
+**Toutes les requêtes du back sont préparées**, pas seulement celles de la connexion : 11 fichiers,
+une soixantaine d'instructions passées en `conn.execute(sql, [params])`. Le ticket demandait
+`signInController` puis un audit du reste ; l'audit a conclu qu'il n'y avait aucune raison de laisser
+des interpolations derrière, `req.body.title`, `notes`, `url` et `id` en étant tout autant.
+
+**Deux interpolations restent, et les deux sont irréductibles :**
+
+- **`sort`** dans `getBookmarksController` : un nom de colonne et un sens de tri ne sont pas des
+  valeurs, aucun paramètre ne peut les porter. Ce n'est jamais du texte client — le `switch` ne produit
+  que des littéraux écrits dans le fichier, et l'`enum` de COS-318 rejette le reste en amont.
+- **`LIMIT`** : ⚠️ **MySQL refuse le paramètre**, vérifié sur le 8.4.5 local — `LIMIT ?` en requête
+  préparée échoue en `ER_WRONG_ARGUMENTS` quel que soit le type envoyé. Les deux nombres sont donc
+  interpolés, **lus depuis `req.validated.query`** où zod les a déjà coercés en entiers bornés
+  (`rows` ≤ 500 et positif, `page` ≥ 0). C'est **le premier usage de `req.validated`** dans un
+  contrôleur — la migration décrite par `middlewares/validate.js` — et ici il porte la sécurité, pas
+  la propreté.
+
+**Un `GROUP BY` ajouté à `getBookmarkController`, et c'est le prix du paramètre.** La requête agrège
+(`GROUP_CONCAT`) tout en sélectionnant `b.*`, ce qu'`only_full_group_by` refuse normalement ; elle
+passait parce que le `WHERE b.id = 12` interpolé laissait MySQL 8 voir une égalité sur la clé primaire
+et en déduire la dépendance fonctionnelle. Le paramètre masque le littéral au moment du *prepare*, la
+déduction disparaît, le serveur refuse. Le `GROUP BY b.id` dit tout haut ce que le `WHERE` garantissait
+déjà.
+
+**Une traversée de chemin fermée au passage** — même motif, autre puits. `getImage` concaténait
+`req.query.screenshotFilename` dans un chemin de fichier : `?screenshotFilename=../../../etc/passwd`
+lisait ce que le process pouvait lire, sur une route authentifiée. `basename()` dans le helper, et une
+contrainte de forme dans `screenshotQuerySchema` (mot, point, tiret — ni `/` ni `..`).
+
+**`resetPasswordController.js` n'est pas converti, délibérément.** Il est mort et ne *peut pas* tourner :
+route commentée, `generate-password` et `sib-api-v3-sdk` absents de `package.json`, et un
+`dbConnection.query(...)` alors que `dbinitmysql` exporte une fonction. Rendre du code mort et cassé
+étanche à l'injection ne ferait que le faire passer pour maintenu ; un commentaire d'en-tête le dit, et
+sa réécriture appartient à `change password` (COS-321).
+
+**QA faite en local, 54 assertions, données réelles intactes** (comptes de lignes identiques avant et
+après sur les six tables) : passe **en lecture** sur les 1278 signets réels via une session forgée
+(pagination, tri décroissant, filtres `IS NOT NULL`, `stars`, `EXISTS` de catégories, fiche unique,
+catégories, rappels) · **sondes d'injection** sur le seul filtre en texte libre — une apostrophe ne
+casse plus la requête (elle la cassait avant), `' OR 1=1 -- ` et `'; SELECT SLEEP(0) -- ` renvoient
+**0 ligne**, donc traités comme du texte · traversée de chemin refusée en 400 · passe **en écriture**
+sur un compte jetable : création avec apostrophes et guillemets dans tous les champs, relecture
+verbatim, édition (titre, notes, étoiles, priorité, url, catégories échangées), édition qui **vide**
+tous les champs optionnels, import CSV, suppression douce.
+
+**Relevé au passage, non corrigé :** dans `editBookmarkController`, la comparaison
+`frequency !== req.body.reminder` compare un **objet** (`[[frequency]]` sur un `SELECT frequency`) à
+une chaîne. Elle est donc toujours vraie : éditer un signet recrée son alarme et remet son
+`date_added` à aujourd'hui, ce que la branche « inchangé : ne rien faire » voulait précisément éviter.
+À traiter avec UI 10 (COS-319), qui réécrit ce contrôleur.
+
+### Ce qui a été posé (COS-296, le 2026-07-30)
+
+**Le JWT a disparu du client, et avec lui les deux stores persistés.** `authStore.ts` (clé
+`bkmk-token`) **et** `userStore.ts` (clé `bkmk-user`) sont supprimés — le ticket ne nommait que le
+premier, mais le second est le même anti-patron et pfa n'en a aucun : c'est le contexte qui porte
+l'utilisateur.
+
+**`src/auth/context/AuthContext.tsx`** porte l'utilisateur et le jeton CSRF, **en mémoire, jamais en
+storage**. Perdre cet état au rechargement est normal, pas un défaut à contourner : les layouts le
+réamorcent depuis le serveur.
+
+**`RequireAuth` est remplacé par un contrôle serveur**, comme la spec l'annonçait :
+`auth/server/getServerSession.ts` (port de pfa) interroge `GET /users/me` avec le cookie de la requête,
+et `app/(private)/layout.tsx` redirige avant le premier octet envoyé au navigateur. L'ancien garde
+lisait un JWT dans `localStorage`, invisible du serveur : il devait afficher « Loading … », décider
+après, et laissait ses enfants monter et tirer des requêtes non authentifiées pendant l'attente.
+
+**Le layout `(public)` a aussi un provider**, non amorcé s'il n'y a pas de session : `/login` et
+`/signup` y écrivent le jeton CSRF, `/logout` doit le lire pour envoyer son `POST`. Il **avale** en
+revanche une erreur de session — quelqu'un qui arrive sur `/login` pendant une panne d'API doit quand
+même voir un formulaire.
+
+**`useRequestHelper` devient du TypeScript** et fait trois choses de plus : `withCredentials: true`
+(sans quoi rien n'est authentifié, la paire 3100/3101 étant cross-origin en dev), `x-csrf-token` sur
+les verbes non sûrs seulement, et **un seul rejeu** après `GET /users/csrf` sur 403. Sur 401 il
+redirige et laisse la promesse **pendante**, pour que le 401 n'atteigne jamais l'error boundary ni un
+état d'erreur react-query sur un écran qui s'en va.
+
+**L'URL de l'API est centralisée dans `helpers/apiBase.ts`**, et la constante `https://bkmk.1991computer.com/api/`
+disparaît : en production le front et l'API partagent l'hôte, donc la base est le **relatif** `/api`.
+⚠️ Le préfixe est asymétrique et doit l'être — en dev Express sert ses routes à la racine sur 3101,
+c'est le proxy de production qui ajoute `/api`.
+
+**`/logout` devient un vrai appel serveur.** Vider l'état côté client ne suffisait pas et n'a jamais
+suffi : un cookie `httpOnly` ne s'efface pas au script, donc une session laissée dans le store reste
+valable pour qui détient le cookie. La requête part d'abord (elle a besoin du jeton CSRF que le
+contexte va perdre), puis le contexte et le cache react-query sont vidés. Un garde `useRef` évite le
+second POST du double effet de React 19 en dev, qui arriverait après l'effacement du jeton et
+prendrait un 403.
+
+**`useResetPasswordService.ts` est supprimé** : aucun consommateur, et il visait un
+`/users/resetpassword` qui n'existe pas côté serveur. Le lien `/forgotPassword` de l'écran de connexion
+reste mort — il appartient à UI 01 (COS-297).
+
+**QA faite en local, 16 assertions** : un écran privé sans session **redirige** (307 vers `/login`) au
+lieu de rendre · l'écran de connexion se rend sans session · après une inscription par l'API, la page
+privée se rend, **l'email du compte et le jeton CSRF sont dans le HTML rendu par le serveur**, et
+**aucun JWT n'apparaît dans le markup** · un cookie forgé est refusé · `POST /users/logout` puis le
+même cookie ne rouvre plus l'application, session absente de Redis. `next build` passe, `tsc --noEmit`
+propre, lint front inchangé (53 erreurs avant et après, la ligne de base héritée).
 
 ---
 

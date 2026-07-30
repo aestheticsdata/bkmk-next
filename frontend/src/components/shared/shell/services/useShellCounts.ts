@@ -1,13 +1,11 @@
 "use client";
 
-import { useUserStore } from "@auth/store/userStore";
+import { useAuth } from "@auth/context/AuthContext";
 import { QUERY_KEYS, QUERY_OPTIONS } from "@components/bookmarks/config/constants";
 import useRequestHelper from "@helpers/useRequestHelper";
 import { BookmarkListSchema } from "@src/schemas/bookmarks";
 import { ReminderListSchema } from "@src/schemas/reminders";
 import { useQuery } from "@tanstack/react-query";
-
-import type { UserStore } from "@auth/store/userStore";
 
 /* The two numbers in the chrome — `index 312` and `alarms 004` — and the only real data
  * the shell fetches. Everything else up there is static copy.
@@ -16,9 +14,9 @@ import type { UserStore } from "@auth/store/userStore";
  * (`[bookmarks, <page>]`) and only exists on the index; the counter has to be right on
  * `new`, `import` and `alarms` too. `rows=1` is the cheapest page that still comes back
  * with `total_count`, which the controller computes in a separate `COUNT(DISTINCT b.id)`
- * — so it is the real total, not the size of the page. `page=0` is passed explicitly
- * rather than left to the schema's default: the middleware validates into
- * `req.validated`, while the controller still reads `req.query`.
+ * — so it is the real total, not the size of the page. `page=0` is sent explicitly; the
+ * schema defaults it anyway since COS-295 made the controller read the pagination from
+ * `req.validated.query`, but saying it costs nothing and the URL then reads as what it is.
  *
  * **The key is a child of `[bookmarks]` on purpose.** Every existing mutation invalidates
  * that prefix, so creating or deleting a record refreshes this counter with no wiring at
@@ -33,7 +31,7 @@ import type { UserStore } from "@auth/store/userStore";
  * existence of a total, so this hook survives it. */
 const useShellCounts = (): { bookmarks?: number; reminders?: number } => {
   const { privateRequest } = useRequestHelper();
-  const userID = useUserStore((state: UserStore) => state.user?.id);
+  const userID = useAuth().user?.id;
 
   const bookmarks = useQuery({
     queryKey: [QUERY_KEYS.BOOKMARKS, "count"],

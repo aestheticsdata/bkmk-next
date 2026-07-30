@@ -16,7 +16,8 @@ export default function LoginPage() {
     // failed login would throw here instead of showing its message.
     const auth = await loginService(values.email!, values.password!);
     if (!auth) return;
-    await setCredentials(auth.token, auth.user);
+    // The whole response now: the user for the context, and the CSRF token it carries.
+    setCredentials(auth);
   };
 
   return (

@@ -7,14 +7,14 @@ module.exports = async (req, res) => {
     FROM bookmark b
     INNER JOIN alarm ON b.alarm_id = alarm.id
     LEFT JOIN url u ON b.url_id = u.id
-    WHERE b.user_id="${req.query.userID}"
+    WHERE b.user_id=?
   `;
 
   const conn = await dbConnection();
   const bookmarksToNotify = [];
 
   try {
-    const [result] = await conn.execute(sql);
+    const [result] = await conn.execute(sql, [req.query.userID]);
     for (const bookmark of result) {
       const difference = differenceInDays(new Date(), new Date(bookmark.alarm_added));
       const reminderHasOccurred = difference % bookmark.alarm_frequency === 0;

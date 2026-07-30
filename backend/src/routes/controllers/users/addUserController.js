@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const createError = require("http-errors");
 const { format } = require("date-fns");
 const dbConnection = require("../../../db/dbinitmysql");
-const signIn = require("./helpers/signInHelper");
+const establishSession = require("./helpers/signInHelper");
 
 module.exports = async (req, res, next) => {
   const { name, email, password, registerDate } = req.body;
@@ -13,11 +13,9 @@ module.exports = async (req, res, next) => {
 
   const conn = await dbConnection();
 
-  const sqlUser = `
-    SELECT * FROM user
-    WHERE email="${email}";
-  `;
-  const [user] = await conn.execute(sqlUser);
+  // Prepared, not interpolated (COS-295) — same unauthenticated `req.body.email` as the
+  // sign-in route, same fix.
+  const [user] = await conn.execute("SELECT id FROM user WHERE email = ?;", [email]);
   if (user?.length > 0) {
     return next(createError(500, "Email already exists"));
   }
@@ -45,15 +43,27 @@ module.exports = async (req, res, next) => {
 
           const sqlCreateUser = `
             INSERT INTO user (name, password, email, register_date)
-            VALUES ("${newUser.name}", "${newUser.password}", "${newUser.email}", "${format(new Date(registerDate), "yyyy-MM-dd")}");`;
+            VALUES (?, ?, ?, ?);`;
 
           try {
-            const createdUser = await conn.execute(sqlCreateUser);
-            signIn(res, {
-              id: createdUser[0].insertId,
-              name: newUser.name,
-              email: newUser.email,
-            });
+            const createdUser = await conn.execute(sqlCreateUser, [
+              newUser.name,
+              newUser.password,
+              newUser.email,
+              format(new Date(registerDate), "yyyy-MM-dd"),
+            ]);
+            // Awaited inside the existing try: the session write can fail, and this callback
+            // is the only thing that would catch it -- `catchAsync` cannot see into bcrypt's.
+            await establishSession(
+              req,
+              res,
+              {
+                id: createdUser[0].insertId,
+                name: newUser.name,
+                email: newUser.email,
+              },
+              201,
+            );
           } catch (err) {
             res.status(500).json({ msg: "error adding new user : ", err });
           } finally {

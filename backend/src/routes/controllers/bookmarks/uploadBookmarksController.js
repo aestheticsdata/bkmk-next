@@ -3,7 +3,7 @@ const anyASCII = require("../../../helpers/anyascii");
 const dbConnection = require("../../../db/dbinitmysql");
 
 module.exports = async (req, res) => {
-  const userID = req.decoded.id; // from jwt token middleware
+  const userID = req.user.id; // from sessionAuthMiddleware
   const originalName = req.file.originalname;
   const entries = [];
   const buffer = Buffer.from(req.file.buffer);
@@ -32,9 +32,10 @@ module.exports = async (req, res) => {
 
   for (const bookmark of entries) {
     let urlID = null;
-    const sqlUrl = `INSERT INTO url (original) VALUES ("${bookmark.link}");`;
+    // Prepared, not interpolated (COS-295): both values come from the uploaded file.
+    const sqlUrl = "INSERT INTO url (original) VALUES (?);";
     try {
-      const result = await conn.execute(sqlUrl);
+      const result = await conn.execute(sqlUrl, [bookmark.link]);
       urlID = result[0].insertId;
     } catch (err) {
       await conn.end();
@@ -43,10 +44,13 @@ module.exports = async (req, res) => {
 
     const bookmarkTitle = bookmark.title.length > 120 ? bookmark.title.substring(0, 119) : bookmark.title;
     try {
-      await conn.execute(`
+      await conn.execute(
+        `
         INSERT INTO bookmark (title, user_id, url_id, date_added)
-        VALUES ("${encodeURIComponent(anyASCII(bookmarkTitle))}", ${userID}, ${urlID}, "${format(new Date(), "yyyy-MM-dd")}");
-      `);
+        VALUES (?, ?, ?, ?);
+      `,
+        [encodeURIComponent(anyASCII(bookmarkTitle)), userID, urlID, format(new Date(), "yyyy-MM-dd")],
+      );
     } catch (e) {
       await conn.end();
       return res.status(500).json({ msg: "error creating bookmark : " + e, title: bookmarkTitle });

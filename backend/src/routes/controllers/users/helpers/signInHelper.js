@@ -1,15 +1,46 @@
-const jwt = require("jsonwebtoken");
+/**
+ * Opens a session and answers with it — the single exit both sign-in and sign-up share
+ * (COS-294). It used to sign a ten-hour JWT and hand it to the client in the response body;
+ * the body now carries the CSRF token, and the identity travels in an `httpOnly` cookie the
+ * client never reads.
+ *
+ * Three things happen in this order, and the order is the point:
+ *
+ * 1. **The session id is regenerated.** Without it, whoever managed to plant a session
+ *    cookie on the visitor before they signed in would end up sharing the session they just
+ *    authenticated — session fixation. `saveUninitialized: false` makes that harder, since
+ *    no cookie is issued before login, but it does not close it.
+ *    ⚠️ pfa does **not** do this; the port is deliberately ahead of the reference here.
+ * 2. **Every other session of this user is dropped** — one active session per user. It runs
+ *    after the regeneration so the session being created is not in the store yet and cannot
+ *    delete itself.
+ * 3. **The CSRF token is rotated**, not reused: a new session gets a new token, so a token
+ *    captured under the previous one is worthless.
+ *
+ * The id is stored as a **string**. bkmk's `user.id` is a MySQL `INT`, and the helpers ported
+ * from pfa test it with `typeof userId === "string"`; storing a number there would make every
+ * session read as anonymous. A string also matches what the rest of the API already handles —
+ * `?userID=` has always arrived as one — and what `clearSessionsForUser` compares.
+ */
+const redisService = require("../../../../redisService");
+const { rotateCsrfToken } = require("../../../../auth/csrfToken");
 
-module.exports = (res, user) => {
-  jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "10h" }, (err, token) => {
-    if (err) throw err;
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
-    });
+const regenerateSession = (req) =>
+  new Promise((resolve, reject) => {
+    req.session.regenerate((error) => (error ? reject(error) : resolve()));
+  });
+
+module.exports = async (req, res, user, status) => {
+  await regenerateSession(req);
+  await redisService.clearSessionsForUser(user.id);
+  req.session.userId = String(user.id);
+
+  return res.status(status).json({
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    },
+    csrfToken: rotateCsrfToken(req),
   });
 };
