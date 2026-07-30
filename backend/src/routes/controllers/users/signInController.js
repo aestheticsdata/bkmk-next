@@ -11,14 +11,14 @@ module.exports = async (req, res, next) => {
     return next(createError(500, "Please enter all fields"));
   }
 
-  // Check for existing user
-  const sqlUser = `
-    SELECT * FROM user
-    WHERE email="${email}";
-  `;
-
+  // Check for existing user.
+  //
+  // Prepared, not interpolated (COS-295). This is the route the injection was on: `email`
+  // arrives straight from `req.body` on the one endpoint that by definition has no
+  // authentication in front of it. The zod schema narrowed it to something e-mail shaped,
+  // which is not the same as closing it — a placeholder is.
   const conn = await dbConnection();
-  const [users] = await conn.execute(sqlUser);
+  const [users] = await conn.execute("SELECT * FROM user WHERE email = ?;", [email]);
   await conn.end();
 
   if (users.length === 0) return next(createError(500, "User does not exist"));

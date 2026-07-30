@@ -13,11 +13,9 @@ module.exports = async (req, res, next) => {
 
   const conn = await dbConnection();
 
-  const sqlUser = `
-    SELECT * FROM user
-    WHERE email="${email}";
-  `;
-  const [user] = await conn.execute(sqlUser);
+  // Prepared, not interpolated (COS-295) — same unauthenticated `req.body.email` as the
+  // sign-in route, same fix.
+  const [user] = await conn.execute("SELECT id FROM user WHERE email = ?;", [email]);
   if (user?.length > 0) {
     return next(createError(500, "Email already exists"));
   }
@@ -45,10 +43,15 @@ module.exports = async (req, res, next) => {
 
           const sqlCreateUser = `
             INSERT INTO user (name, password, email, register_date)
-            VALUES ("${newUser.name}", "${newUser.password}", "${newUser.email}", "${format(new Date(registerDate), "yyyy-MM-dd")}");`;
+            VALUES (?, ?, ?, ?);`;
 
           try {
-            const createdUser = await conn.execute(sqlCreateUser);
+            const createdUser = await conn.execute(sqlCreateUser, [
+              newUser.name,
+              newUser.password,
+              newUser.email,
+              format(new Date(registerDate), "yyyy-MM-dd"),
+            ]);
             // Awaited inside the existing try: the session write can fail, and this callback
             // is the only thing that would catch it -- `catchAsync` cannot see into bcrypt's.
             await establishSession(

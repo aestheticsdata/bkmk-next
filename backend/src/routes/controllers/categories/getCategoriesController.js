@@ -3,10 +3,10 @@ const dbConnection = require("../../../db/dbinitmysql");
 module.exports = async (req, res) => {
   const sql = `
     SELECT * from category
-    WHERE user_id="${req.query.userID}";
+    WHERE user_id=?;
   `;
 
   const conn = await dbConnection();
-  const [rows] = await conn.execute(sql);
+  const [rows] = await conn.execute(sql, [req.query.userID]);
   res.json(rows);
 };
