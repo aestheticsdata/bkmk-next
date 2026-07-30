@@ -29,7 +29,7 @@ function KeyValueTable({
       data-slot="key-value-table"
       className={cn(
         "grid grid-cols-[--spacing(26)_1fr] gap-x-4 text-xs @max-3xl:grid-cols-[--spacing(22)_1fr]",
-        "[&>*]:border-b [&>*]:border-gr-border [&>*]:py-1.75",
+        "[&>*]:border-b [&>*]:border-gr-border [&>*]:py-2",
         className,
       )}
       {...props}

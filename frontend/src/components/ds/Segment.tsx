@@ -23,7 +23,7 @@ function Segment({ className, on = false, ...props }: React.ComponentProps<"butt
       data-state={on ? "on" : "off"}
       aria-pressed={on}
       className={cn(
-        "inline-flex h-6 cursor-pointer items-center rounded-lg border px-2.75 text-2xs tracking-wider transition-colors duration-120 outline-none",
+        "inline-flex h-6 cursor-pointer items-center rounded-lg border px-3 text-2xs tracking-wider transition-colors duration-120 outline-none",
         "focus-visible:border-gr-accent focus-visible:ring-3 focus-visible:ring-gr-ring",
         on
           ? "border-gr-teal-border bg-linear-to-b from-gr-teal-from to-gr-teal-to text-gr-teal-fg shadow-gr-1 inset-shadow-gr-hair"

@@ -59,10 +59,10 @@ const buttonVariants = cva(
          * than in the base string because the base is shared with the six stock variants,
          * which stay on the neutral filler tokens. */
         chrome:
-          "h-7.5 gap-1.75 rounded-lg px-3.25 text-3xs uppercase tracking-widest focus-visible:border-gr-accent focus-visible:ring-gr-ring @max-3xl:h-8.5",
+          "h-7.5 gap-2 rounded-lg px-3.5 text-3xs uppercase tracking-widest focus-visible:border-gr-accent focus-visible:ring-gr-ring @max-3xl:h-8.5",
         /* `.gr-pagebtn` — the pager arrows: shorter, and the only GRAPHITE button whose
          * label is not uppercase, because it is a glyph or a number. */
-        page: "h-6.5 gap-1.75 rounded-lg px-2.5 text-xs normal-case tracking-normal focus-visible:border-gr-accent focus-visible:ring-gr-ring",
+        page: "h-6.5 gap-2 rounded-lg px-2.5 text-xs normal-case tracking-normal focus-visible:border-gr-accent focus-visible:ring-gr-ring",
         /* `.gr-mini` — the in-row confirm/cancel pair. Its own fill lives in the variant;
          * this only sets the geometry. */
         mini: "h-5 gap-1.5 rounded-md px-2 text-3xs uppercase tracking-widest focus-visible:border-gr-accent focus-visible:ring-gr-ring",

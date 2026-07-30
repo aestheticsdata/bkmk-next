@@ -6,6 +6,9 @@ CREATE TABLE user (
     id           INT(11) AUTO_INCREMENT PRIMARY KEY,
     name         VARCHAR(20) NOT NULL,
     password     VARCHAR(60) NOT NULL,
+    -- bcrypt hash of the recovery passphrase (COS-298). NULL means the account predates
+    -- the passphrase and cannot recover its password -- see migrations/ and COS-324.
+    recovery_passphrase VARCHAR(60) NULL,
     email        VARCHAR(250) NOT NULL UNIQUE,
     register_date DATE NOT NULL
 );

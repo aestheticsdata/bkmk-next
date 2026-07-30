@@ -36,7 +36,7 @@ function TopChrome() {
       <Link
         href={ROUTES.bookmarks.path}
         aria-label={SHELL_TEXT.aria.home}
-        className="flex items-baseline gap-1.75"
+        className="flex items-baseline gap-2"
       >
         <span className="text-xs font-semibold tracking-caps text-gr-fg-2">{SHELL_TEXT.wordmark}</span>
         <span className="text-3xs tracking-widest text-gr-fg-4">{SHELL_TEXT.build}</span>
@@ -56,7 +56,7 @@ function TopChrome() {
               href={item.path}
               aria-current={on ? "page" : undefined}
               className={cn(
-                "flex h-6 items-center gap-1.75 rounded-md border px-2.75",
+                "flex h-6 items-center gap-2 rounded-md border px-3",
                 "text-2xs uppercase tracking-widest transition-colors duration-120",
                 // The border is transparent at rest rather than absent: the active state
                 // adds one, and without this the lit tab would be 2px taller and wider
@@ -86,9 +86,14 @@ function TopChrome() {
 
       <div className="ml-auto flex items-center gap-3.5">
         <div className="flex items-center gap-3.5 @max-3xl:hidden">
-          <Link href={ROUTES.about.path}>
-            <Overline className="hover:text-gr-fg">{SHELL_TEXT.about}</Overline>
-          </Link>
+          {/* `asChild`: wrapped, the link would be a 12px flex item around a 10px label and its
+              strut would sit it below the `Overline`s beside it. */}
+          <Overline
+            asChild
+            className="hover:text-gr-fg"
+          >
+            <Link href={ROUTES.about.path}>{SHELL_TEXT.about}</Link>
+          </Overline>
           <Overline>{SHELL_TEXT.uptime}</Overline>
           {/* The handoff makes the email the way back out of the session ("l'email du
               chrome → login"), which in real bkmk means /logout — since AUTH 04 (COS-296)

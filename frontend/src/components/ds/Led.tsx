@@ -16,7 +16,7 @@ function Led({ className, ...props }: React.ComponentProps<"i">) {
     <i
       data-slot="led"
       aria-hidden
-      className={cn("block size-1.75 shrink-0 rounded-full bg-gr-accent ring-3 ring-gr-ring", className)}
+      className={cn("block size-2 shrink-0 rounded-full bg-gr-accent ring-3 ring-gr-ring", className)}
       {...props}
     />
   );
