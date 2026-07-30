@@ -45,6 +45,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | AUTH 04 | COS-296 — AuthContext, cookie, intercepteur CSRF | ✅ mergé (PR #12) |
 | UI 01 | COS-297 — écran Login | ✅ mergé (PR #14) |
 | UI 02 | COS-298 — écran Signup + passphrase de récupération | ✅ mergé (PR #15) |
+| UI 03 | COS-299 — écran Index : rail, table dense, pager | en cours |
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
@@ -1285,6 +1286,126 @@ tête avec `--remote-debugging-port`, et Node parle CDP tout seul (`WebSocket` e
 ce qui a tranché le dernier point — les boîtes du sur-titre, du titre et de la carte partent du même
 pixel, seule l'approche du glyphe diffère — au lieu d'une troisième correction à l'aveugle. À refaire
 avant d'affirmer quoi que ce soit sur une géométrie.
+
+### Ce qui a été posé (COS-299 — l'index)
+
+L'écran le plus lourd du lot, et celui qui a fixé les conventions des suivants. Deux cartes : rail
+196px + carte table, `gap-3`. La grille v2 est respectée au pixel — `58 36 62 1fr 188 168`, écrite en
+pas de 4px (`--spacing(14.5)` …), lignes de **30px**.
+
+**L'URL est tout l'état.** `readIndexQuery` lit la barre d'adresse et tout le reste en découle : les
+lignes demandées, la rangée allumée du rail, l'expression de la barre de commande, la page du pager.
+Aucun store, donc deux composants ne peuvent pas se contredire ; le bouton retour annule un filtre ; un index
+filtré est un lien qu'on envoie. Chaque contrôle est un `<Link>`, ce qui fait marcher clic milieu et
+⌘-clic sans une ligne de plus. `helpers/indexQuery.ts` est le seul endroit qui convertit entre les
+trois formes de cet état (URL, requête d'API, expression lisible), avec deux règles porteuses : les
+clés de la requête d'API sont **triées** (cette chaîne est la clé de cache — `?starred=1&page=0` et
+`?page=0&starred=1` sont une seule page), et changer un filtre **remet la page à 0** (la page 3 d'une
+requête qui ne rend plus que 12 lignes est un tableau vide sans explication).
+
+⚠️ **Un flag de query string ne se lit pas avec `z.coerce.boolean()`.** La coercition est
+`Boolean(valeur)` : toute chaîne non vide est vraie, donc `?screenshot=0` **activait** le filtre.
+Trouvé par la QA, et le défaut existait déjà sur les trois flags antérieurs, des deux côtés du réseau.
+Corrigé des deux côtés (`queryFlagSchema`), et le contrôleur lit désormais ses flags dans
+`req.validated.query` — un schéma ne sert à rien si la valeur lue est la brute.
+
+**Une ligne de 30px cliquable sans être un contrôle.** Le titre est un vrai `<Link>` dont le `::after`
+couvre la ligne : la cible du clic est la ligne entière, l'élément cliqué reste une ancre (Entrée
+ouvre, la barre d'état montre la destination), et aucun `div` ne reçoit de gestionnaire clavier
+rapporté. Les actions sont **au-dessus** de cette couverture (`relative z-1`), et c'est pourquoi
+aucune n'a besoin de `stopPropagation` — elles sont devant le lien, pas dedans. La solution de la
+maquette (`onClick` sur un `div` + `stopPropagation` partout) est le même effet construit de la façon
+qui échoue au clavier, et c'est la source de la plupart des erreurs de lint héritées.
+
+**Sémantique de tableau posée à la main.** Six colonnes alignées à travers un conteneur qui défile,
+à 30px la ligne, c'est ce qu'un `<table>` ne fait pas sans se battre : la structure reste des `div` et
+les rôles ARIA sont remis explicitement (`table` → `row` / `rowgroup` → `row` → `cell`, `aria-sort` sur
+les en-têtes triables). Biome proteste (`useSemanticElements`, `useFocusableInteractive`) : les deux
+règles sont désactivées pour `components/bookmarks/Index*.tsx` dans `biome.json`, une fois, plutôt que
+douze suppressions en ligne.
+
+**`asChild` est devenu la réponse du DS à « ce contrôle navigue »** : `Overline`, `Segment` et
+`RowAction` le prennent tous les trois. Un filtre, une catégorie et `↗` sont des adresses.
+
+**Ce qui n'est délibérément pas là**, avec le ticket qui l'apporte : les compteurs par catégorie et le
+bloc `storage` (DATA 05 / COS-310 — `all` porte le vrai total, le reste ne porte rien plutôt qu'un
+`0/0` permanent) · le bouton `filter ⌥F` et le champ de requête cliquable (UI 04 / COS-300 — un bouton
+qui n'ouvre rien est pire qu'un bouton pas encore arrivé) · le langage de requête `tag:demoscene
+stars:>3` de la maquette, remplacé par l'objet de filtres imprimé dans la même forme.
+
+**Trois scopes ont demandé du serveur.** `has shot` était exprimable, les trois autres non (`stars`
+compare à l'égalité, `reminder` à une fréquence exacte). Quatre cases dont une seule filtre est pire
+que zéro : `getBookmarksController` gagne trois conditions paramétrées, dans la forme que DATA 01
+(COS-306) formalisera. `prio high` envoie `high,highest` — un raccourci nommé d'après le niveau
+juste sous le sommet cacherait les enregistrements qui comptent le plus.
+
+**Le tri par défaut est `-date` et reste hors de l'URL.** Le défaut du backend est *aucun* `ORDER BY`,
+c'est-à-dire l'ordre que le moteur veut bien rendre. Un index veut la dernière chose enregistrée en
+haut, et le pager de la maquette le dit déjà (`sorted by added ▾`).
+
+**Les couleurs de chips viennent de la base, pas d'un fixture.** La maquette colore par `tagPalette` ;
+`category.color` existe et appartient à l'utilisateur. On garde sa teinte et le traitement GRAPHITE
+(`hsl(teinte 34% 32%)`), sinon dix-huit couleurs choisies transforment un écran de gris en tableau de
+punaises. Un gris ou une valeur illisible retombe sur un hachage du nom, pas sur un défaut partagé.
+
+**QA locale, 78 assertions** (compte d'essai créé puis supprimé, cinq enregistrements de fixture) :
+lecture d'URL trafiquée (page négative, `stars=99`, tri inconnu, niveau de priorité inventé) · requête
+d'API triée, deux ordres donnant la même chaîne, flag faux absent, priorité normalisée · ce que
+construit un clic (retour page 0, filtres conservés, chemin propre quand tout est vidé) · le tri
+(défaut, nouvelle colonne descendante, bascule) · l'expression lisible (catégories nommées, ordre fixe,
+page jamais affichée) · les teintes de chips sur le vrai helper compilé · **les scopes sur HTTP** :
+`starred=1` garde 3 des 5, `stars=3` en garde 1 (inchangé), `alarm=1` la bonne ligne, `high,highest`
+en garde 2, `screenshot=1` toujours bon, combinaison en ET, `priority=urgent` → 400, tentative
+d'injection → 400 et la table `bookmark` toujours debout, `starred=0` ne filtre rien et `starred=true`
+filtre · la route rendue (rail, scopes, barre de commande, six en-têtes, pager, grille v2 au pixel,
+`role="table"`, redirection sans session) et l'absence des mocks (`1.4 mb`, `188`, `tag:demoscene`,
+l'ancienne liste lime). `next build` passe, `tsc --noEmit` propre, lint front **à 45** — trois de moins
+que la ligne de base, l'ancienne liste étant partie avec ses erreurs.
+
+**La passe visuelle du propriétaire sur l'index, en huit points.** Ses captures, encore une fois, ont
+trouvé ce qu'aucune assertion de markup ne voit :
+
+1. **La colonne `id` est retirée** — une clé de base au milieu de titres et de dates, non triable, et
+   absente de l'ancienne liste. Sa place va à une **colonne `shot`** (44px, triable), reprise de
+   l'ancienne liste : la maquette n'en fait qu'un glyphe à côté du titre, une colonne se lit de haut en
+   bas. Grille : `36 · 62 · 1fr · 188 · 44 · 168`.
+2. **Toutes les colonnes trient**, comme dans l'ancienne liste. `tags` n'en avait pas les moyens : le
+   contrôleur gagne un ordre sur les noms agrégés (`categories_names`), et les trois `GROUP_CONCAT`
+   partagent désormais un `ORDER BY c.name` — ils sont recollés position par position par
+   `marshallCategories`, donc ils doivent s'accorder, et l'effet de bord est que les chips sortent dans
+   l'ordre alphabétique.
+3. **Les dates ne s'alignaient pas.** La bande d'actions partage la cellule de la date, et `↗`
+   n'existait pas sur un enregistrement sans url : la bande faisait un bouton de moins et poussait ces
+   dates de 22px. `↗` est maintenant rendu `disabled` dans ce cas — trois actions toujours. Mesuré
+   après correction : 22 dates, **un seul bord droit**.
+4. **Les flèches du pager ne doivent rien déplacer.** Elles étaient absentes aux extrémités, avec un
+   cache-trou carré alors que le bouton est plus large que haut : arriver page 1 décalait `page 01`. Les
+   deux flèches sont désormais toujours là, désactivée à l'extrémité. Mesuré : `page` au même pixel
+   (283.16) sur les pages 0 et 1.
+5. **Le dernier numéro de page est cliquable**, comme dans l'ancien pager : `/57` saute à la fin.
+6. **Le rail ne défile plus horizontalement**, et sa barre verticale est celle du DS. Un compteur figé à
+   `3ch` tronquait un total de 1290 en un `127` parfaitement crédible et élargissait la ligne — d'où la
+   barre horizontale. `min-w` au lieu de `w` : trois chiffres sont le remplissage de la maquette, pas un
+   plafond.
+7. **Le compteur `all` affichait le total de la requête courante**, donc le compte de la catégorie
+   sélectionnée : « all 002 » sur un index de 1290. Il n'existe qu'**un** nombre, `total_count`, et
+   `countedRow` le pose sur la ligne qui *est* la requête — `all` si rien n'est filtré, une catégorie si
+   elle est le seul filtre, rien sinon (les comptes par catégorie restent DATA 05).
+8. **La barre de défilement est devenue un composant du DS** (`gr-scroll`, dans `styles/utilities.css` —
+   la première chose que ce système ne sait pas écrire en classe Tailwind) : 6px, pas de rail peint, un
+   pouce dans l'encre de bordure du panneau. ⚠️ `scrollbar-width` n'est posé **que** là où
+   `::-webkit-scrollbar` n'existe pas : Chrome et Safari gèrent les deux et **ignorent** les
+   pseudo-éléments dès que les propriétés standard sont présentes — avec `thin` posé partout, le rail
+   gardait la barre de Chrome, mesurée à 11px. D'où `@supports not selector(::-webkit-scrollbar)`.
+
+💡 **Et un piège de JS à retenir** : un commentaire SQL `--` écrit *dans* un littéral de gabarit et
+citant un identifiant entre accents graves **termine le gabarit**. La requête de l'index a été cassée
+comme ça pendant deux minutes. Les notes de ce genre vivent au-dessus du littéral, en commentaire JS.
+
+⚠️ **Non vérifié : rien, cette fois-ci, sur la géométrie.** Les mesures ci-dessus viennent d'un Chrome
+sans tête piloté en CDP, avec un compte d'essai de 1290 enregistrements et 40 catégories créés puis
+supprimés — la recette est au §6. Ce qui reste hors de portée est le jugement : les couleurs, la
+densité, ce qui se lit bien.
 
 ---
 

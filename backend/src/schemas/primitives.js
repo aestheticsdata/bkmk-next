@@ -16,7 +16,12 @@ const { z } = require("zod");
 const idSchema = z.coerce.number().int().positive();
 
 /** A boolean carried by a query string, where "present" means true. */
-const queryFlagSchema = z.coerce.boolean();
+/** A flag in a query string (COS-299 — it was `z.coerce.boolean()`).
+ *
+ *  Coercion is `Boolean(value)`, and every non-empty string is truthy: `?screenshot=0` and
+ *  `?starred=false` both arrived as `true`, switching the filter on. The front only ever writes `1`;
+ *  `true` is accepted as well because a hand-typed URL is the case that hits this. */
+const queryFlagSchema = z.string().transform((value) => value === "1" || value.toLowerCase() === "true");
 
 const starsSchema = z.coerce.number().int().min(0).max(5);
 

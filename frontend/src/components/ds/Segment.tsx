@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@lib/utils";
+import { Slot } from "radix-ui";
 
 import type * as React from "react";
 
@@ -14,14 +15,28 @@ import type * as React from "react";
  *
  * So it is a real `<button>` with `aria-pressed`, which is the toggle-button pattern and
  * gets announced correctly. `on` drives both the visual state and the attribute — passing
- * one without the other is the bug this signature is shaped to prevent. */
-function Segment({ className, on = false, ...props }: React.ComponentProps<"button"> & { on?: boolean }) {
+ * one without the other is the bug this signature is shaped to prevent.
+ *
+ * **`asChild` for the segments that navigate** (COS-299). The index's mobile category scroller is a
+ * row of these, and there each one is a filtered *address*: it has to be a link, or middle-click and
+ * the back button stop working. The state attribute changes with the element — `aria-pressed` is for
+ * a button that toggles, and on a link it would announce a control that does not exist, so a link
+ * gets `aria-current` instead. */
+function Segment({
+  className,
+  on = false,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> & { on?: boolean; asChild?: boolean }) {
+  const Comp = asChild ? Slot.Root : "button";
+
   return (
-    <button
-      type="button"
+    <Comp
       data-slot="segment"
       data-state={on ? "on" : "off"}
-      aria-pressed={on}
+      {...(asChild
+        ? { "aria-current": on ? ("page" as const) : undefined }
+        : { type: "button" as const, "aria-pressed": on })}
       className={cn(
         "inline-flex h-6 cursor-pointer items-center rounded-lg border px-3 text-2xs tracking-wider transition-colors duration-120 outline-none",
         "focus-visible:border-gr-accent focus-visible:ring-3 focus-visible:ring-gr-ring",

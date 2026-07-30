@@ -1,0 +1,75 @@
+/* Utilities that cannot be written as a Tailwind class, declared with `@utility` so they behave like
+ * one — same layer, same ability to be overridden by a later utility.
+ *
+ * This is the file globals.css says the shell does not need. The index needs it: a scrollbar is one of
+ * the few things the framework has no vocabulary for, and pfa keeps its own
+ * `components/chrome.css` for exactly that. See §10 of docs/design-system.md. */
+
+/* ═══ SCROLLBAR ════════════════════════════════════════════════════════════════════
+ *
+ * `gr-scroll` — the system's scrollbar, on any element that scrolls.
+ *
+ * The native one is wrong here on three counts, all visible in the category rail: it is 15px wide on
+ * macOS when a mouse is attached, it paints a light track that reads as a gutter cut into the card, and
+ * its thumb is the only rounded grey rectangle in the interface that GRAPHITE did not choose.
+ *
+ * So: 6px, no track at all, and a thumb in the panel's own border ink that darkens when the pointer is
+ * over the area. `scrollbar-color` covers Firefox, `::-webkit-scrollbar` covers Chrome and Safari, and
+ * they have to be written twice because neither engine reads the other's property.
+ *
+ * ⚠️ **`scrollbar-gutter` is deliberately not set.** Reserving the channel is what makes the rail look
+ * as though it has a margin on one side only — the thing this utility exists to remove. The 6px is
+ * taken from the content box while scrolling is possible and given back when it is not, and a rail of
+ * truncated labels does not care.
+ *
+ * The thumb is `background-clip: padding-box` with a transparent border, which is the only way to give
+ * a webkit thumb breathing room: it has no margin. */
+@utility gr-scroll {
+  /* ⚠️ **`scrollbar-width` only where the pseudo-elements do not exist.**
+   *
+   * Chrome and Safari support both, and when the standard properties are present they **ignore**
+   * `::-webkit-scrollbar` entirely: setting `scrollbar-width: thin` unconditionally left the rail with
+   * Chrome's own thin bar, measured at 11px — not the 6 below. Firefox, which has no pseudo-elements
+   * for a scrollbar, is the one that needs them.
+   *
+   * So the support query is the split: false in engines that implement `::-webkit-scrollbar`, true in
+   * the ones that do not. */
+  @supports not selector(::-webkit-scrollbar) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-gr-border-2) transparent;
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-gr-border-2);
+    background-clip: padding-box;
+    border: 1px solid transparent;
+    border-radius: var(--radius-full, 9999px);
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: var(--color-gr-fg-4);
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/** `gr-scroll-none` — scrolls, shows nothing. The mobile category scroller, where the bar would sit on
+ *  top of the segments and there is a visible edge of content to say the row continues. */
+@utility gr-scroll-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

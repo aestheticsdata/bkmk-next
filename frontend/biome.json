@@ -41,6 +41,19 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["**/src/components/bookmarks/Index*.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off",
+            "useFocusableInteractive": "off"
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "actions": {
       "source": {

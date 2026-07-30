@@ -24,9 +24,15 @@ const marshallCategories = require("./helpers/marshallCategories");
  * Everything else in the file still reads `req.query`; converting the rest belongs to the
  * DATA lot. */
 module.exports = async (req, res) => {
-  const { title, screenshot, url, notes, categories_id, stars, reminder, sort } = req.query;
-  // Integers, guaranteed by `listBookmarksQuerySchema` — see the note on `LIMIT` above.
-  const { page, rows } = req.validated.query;
+  const { title, categories_id, stars, reminder, sort, priority } = req.query;
+  /* Integers, guaranteed by `listBookmarksQuerySchema` — see the note on `LIMIT` above.
+   *
+   * **The five flags come from `req.validated.query` too** (COS-299), and that is a fix rather than
+   * tidiness: read off `req.query` they are raw strings, and `if ("0")` is true, so `?screenshot=0`
+   * switched the filter on. `queryFlagSchema` now turns `0` and `false` into `false`, which only
+   * helps if the validated value is the one read. The remaining fields stay on `req.query` — that
+   * conversion belongs to the DATA lot. */
+  const { page, rows, screenshot, url, notes, starred, alarm } = req.validated.query;
 
   let sortPart = "";
   if (sort) {
@@ -80,6 +86,20 @@ module.exports = async (req, res) => {
       case "-date":
         sortPart += "b.date_added DESC, ";
         break;
+      /* The index's `tags` column (COS-299). It orders on the aggregated names rather than on a
+       * column, because a bookmark has several categories and there is no single value to compare:
+       * `demoscene,dev` sorts after `amiga,css` and before `dev`, which is what reading the column
+       * top to bottom suggests it should do. Untagged rows collect at one end — `NULL` sorts first
+       * ascending, last descending — and that is useful in both directions.
+       *
+       * The alias is safe to name here for the same reason as the columns above: this string is
+       * written in this file, never taken from the request. */
+      case "tags":
+        sortPart += "categories_names ASC, ";
+        break;
+      case "-tags":
+        sortPart += "categories_names DESC, ";
+        break;
       default:
         break;
     }
@@ -113,6 +133,28 @@ module.exports = async (req, res) => {
     conditions.push("b.notes IS NOT NULL");
   }
 
+  /* The index rail's scopes (COS-299) — coarse cuts, next to the fine filters above.
+   *
+   * `starred` is `> 0` where `stars` is `=`: the scope asks "rated at all", the filter asks
+   * "rated exactly this". `alarm` is a presence test on the join column, not on `a.frequency`
+   * like `reminder` — a bookmark can have an alarm of any frequency.
+   *
+   * `priority` is a list, so `IN` with one placeholder per level. The rail's `prio high` sends
+   * `high,highest`: a shortcut labelled "high" that hid the level above it would surprise, and
+   * this is the coarse control. `listBookmarksQuerySchema` accepts only the four literals, and
+   * every one of them still travels as a parameter. */
+  if (starred) {
+    conditions.push("b.stars > 0");
+  }
+  if (alarm) {
+    conditions.push("b.alarm_id IS NOT NULL");
+  }
+  if (priority) {
+    const levels = decodeURIComponent(priority).split(",");
+    conditions.push(`b.priority IN (${levels.map(() => "?").join(", ")})`);
+    conditionParams.push(...levels);
+  }
+
   // One `EXISTS` per selected category, so a bookmark has to carry them all rather than any
   // of them. The subquery's alias is `bc2`: `bc` would shadow the outer join's.
   if (categories_id) {
@@ -139,12 +181,19 @@ module.exports = async (req, res) => {
       SELECT COUNT(DISTINCT b.id)  AS total_count
       ${commonSQLParts}`;
 
+  /* The three lists are zipped back together by `marshallCategories`, position by position, so they
+   * have to be aggregated in the *same* order. Unordered `GROUP_CONCAT` happens to agree today and is
+   * not promised to; one `ORDER BY c.name` on each makes it a rule — and has the side effect the index
+   * wanted anyway: chips come out alphabetical, and the `tags` sort above compares like with like.
+   *
+   * The note lives out here rather than as a `--` comment inside the template literal, because a
+   * comment naming SQL identifiers in backticks ends the template. It did, and the query with it. */
   const sql = `
     SELECT b.*,
            u.original AS original_url,
-           GROUP_CONCAT(c.name) AS categories_names,
-           GROUP_CONCAT(c.color) AS categories_colors,
-           GROUP_CONCAT(c.id) AS categories_id
+           GROUP_CONCAT(c.name ORDER BY c.name) AS categories_names,
+           GROUP_CONCAT(c.color ORDER BY c.name) AS categories_colors,
+           GROUP_CONCAT(c.id ORDER BY c.name) AS categories_id
     ${commonSQLParts}
     GROUP BY b.id, b.user_id, b.url_id, u.original, b.date_added
     ${sortPart}

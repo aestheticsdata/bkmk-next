@@ -29,8 +29,28 @@ const listBookmarksQuerySchema = z.object({
     .optional(),
   reminder: z.coerce.number().int().positive().optional(),
   stars: starsSchema.optional(),
-  /** The eight columns from the controller's `switch`, prefixed with `-` for descending
-   *  order. Any other value used to fall silently into its `default`. */
+  /* The index rail's three remaining scopes (COS-299). The screen draws four — `starred`,
+   * `has alarm`, `has shot`, `prio high` — and only `has shot` was expressible with what
+   * existed: `screenshot` above is a presence test, while `stars` compares for equality and
+   * `reminder` for an exact frequency. Four checkboxes of which one filters is worse than
+   * none, hence these.
+   *
+   * They are a **down payment on the filter object DATA 01 (COS-306) will formalise**, and
+   * deliberately in its shape: presence flags beside `screenshot` / `url` / `notes`, and a
+   * list for `priority` because the spec's filter object writes `priority[]`. */
+  starred: queryFlagSchema.optional(),
+  alarm: queryFlagSchema.optional(),
+  priority: z
+    .string()
+    .regex(
+      /^(low|medium|high|highest)(,(low|medium|high|highest))*$/,
+      "priority must be a comma-separated list of levels",
+    )
+    .optional(),
+  /** The columns from the controller's `switch`, prefixed with `-` for descending order. Any other
+   *  value used to fall silently into its `default`. `tags` is the last one added (COS-299): it
+   *  orders on the aggregated category names, so that every column of the index is sortable, as the
+   *  legacy list had it. */
   sort: z
     .enum([
       "link",
@@ -49,6 +69,8 @@ const listBookmarksQuerySchema = z.object({
       "-alarm",
       "date",
       "-date",
+      "tags",
+      "-tags",
     ])
     .optional(),
 });

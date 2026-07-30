@@ -26,7 +26,10 @@ export const PAGES = {
   PAGINATION: "pagination",
 };
 
-export const ROWS_BY_PAGE = 25;
+/** 22, not the 25 the legacy list asked for (COS-299): the handoff paginates the index at 22 rows and
+ *  says so on screen — `rows 001–022 of 312`. The number is the design's, not an arbitrary page size,
+ *  and the pager's arithmetic reads it from here. */
+export const ROWS_BY_PAGE = 22;
 
 export const FIRST_VISIT = "first_visit";
 export const VISITED = "visited";

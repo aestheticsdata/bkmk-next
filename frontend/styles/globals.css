@@ -8,7 +8,10 @@
  * the shell is written in Tailwind utilities like every other component. pfa keeps a
  * `components/chrome.css` for what utilities cannot express — gradient borders across
  * padding-box and border-box, `::-webkit-scrollbar`, `:has()` scrims — and the GRAPHITE
- * shell needs none of that. See §9 of docs/design-system.md. */
+ * shell needed none of that. See §9 of docs/design-system.md.
+ *
+ * The index does (COS-299), and it took `./utilities.css` rather than a components file: a scrollbar
+ * belongs to whatever scrolls, so it is a utility, not a component. */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -31,3 +34,4 @@
 
 @import "./base.css";
 @import "./animations.css";
+@import "./utilities.css";
