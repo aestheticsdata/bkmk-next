@@ -4,31 +4,40 @@ import useCredentials from "@auth/helpers/useCredentials";
 import useSignupService from "@auth/useSignupService";
 import { BlinkCursor } from "@components/ds/BlinkCursor";
 import { Overline } from "@components/ds/Overline";
+import { SignUpForm } from "@components/shared/authForms/SignUpForm";
 import { ROUTES } from "@components/shared/config/constants";
-import SharedLoginForm from "@components/shared/sharedLoginForm/sharedLoginForm";
 import { AuthShell } from "@components/shared/shell/AuthShell";
 import { readApiError } from "@helpers/apiError";
 import { AUTH_TEXT } from "@text/auth";
+import Link from "next/link";
 import { useState } from "react";
 
-import type { LoginValues } from "@components/shared/sharedLoginForm/interfaces";
+import type { SignUpFormValues } from "@src/schemas/auth";
 
-/* The sign-up screen, on the sign-in screen's frame (COS-297).
+/* `Signup_Graphite` — the sign-up screen (COS-298).
  *
- * ⚠️ **This is the gabarit only, not UI 02.** The screen is here because the form and the shell
- * are shared, and leaving it on the old lime card while its twin is GRAPHITE would have been
- * worse than either. What COS-298 still owns: `key` and `confirm key` **on two columns**, the
- * password strength gauge, and the `import my Session Buddy export after signup` checkbox that
- * has to actually lead to the import screen. */
+ * UI 01 had already given this route the frame and the two-field card, because both were shared
+ * and a lime form beside its GRAPHITE twin would have been worse than either. This is the rest:
+ * the two-column key pair, the strength gauge, the import checkbox — and the recovery passphrase,
+ * which the handoff has no field for because the decision came later.
+ *
+ * **The import checkbox actually goes somewhere.** Ticked, registration lands on
+ * `/bookmarks/upload` instead of the index. That screen is still the legacy one and UI 07 (COS-303)
+ * will rebuild it, but the sequence is real from here on, which is what the ticket asked for.
+ *
+ * The refusal lives in `useState` rather than in the form: the form owns field validity, the screen
+ * owns what the server said. Different failures with different lifetimes — one clears when you fix
+ * the field, the other when you try again. */
 export default function SignUpPage() {
   const { signupService } = useSignupService();
   const { setCredentials } = useCredentials();
   const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = async (values: LoginValues) => {
+  const onSubmit = async (values: SignUpFormValues) => {
     setError(null);
     try {
-      setCredentials(await signupService(values));
+      const auth = await signupService(values);
+      setCredentials(auth, values.importAfterSignup ? ROUTES.bookmarksBatchUpload.path : undefined);
     } catch (failure) {
       setError(readApiError(failure) ?? AUTH_TEXT.signup.failed);
     }
@@ -43,13 +52,14 @@ export default function SignUpPage() {
           <BlinkCursor className="text-gr-accent" />
         </h1>
 
-        <SharedLoginForm
+        <SignUpForm
           copy={AUTH_TEXT.signup}
           switchHref={ROUTES.login.path}
           onSubmit={onSubmit}
           error={error}
         />
 
+        {/* Aligned with spaces in the copy, so the whitespace has to survive. */}
         <div className="mt-4 grid gap-0.75 text-2xs text-gr-fg-4">
           {AUTH_TEXT.facts.map((fact) => (
             <div
@@ -60,6 +70,13 @@ export default function SignUpPage() {
             </div>
           ))}
         </div>
+
+        <Link
+          href={ROUTES.about.path}
+          className="mt-3.5 inline-block"
+        >
+          <Overline className="text-gr-accent hover:text-gr-fg-2">{AUTH_TEXT.about}</Overline>
+        </Link>
       </div>
     </AuthShell>
   );

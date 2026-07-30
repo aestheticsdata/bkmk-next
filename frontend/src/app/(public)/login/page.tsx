@@ -4,15 +4,15 @@ import useCredentials from "@auth/helpers/useCredentials";
 import useLoginService from "@auth/useLoginService";
 import { BlinkCursor } from "@components/ds/BlinkCursor";
 import { Overline } from "@components/ds/Overline";
+import { SignInForm } from "@components/shared/authForms/SignInForm";
 import { ROUTES } from "@components/shared/config/constants";
-import SharedLoginForm from "@components/shared/sharedLoginForm/sharedLoginForm";
 import { AuthShell } from "@components/shared/shell/AuthShell";
 import { readApiError } from "@helpers/apiError";
 import { AUTH_TEXT } from "@text/auth";
 import Link from "next/link";
 import { useState } from "react";
 
-import type { LoginValues } from "@components/shared/sharedLoginForm/interfaces";
+import type { SignInPayload } from "@src/schemas/auth";
 
 /* `Login_Graphite` — the sign-in screen (COS-297).
  *
@@ -32,7 +32,7 @@ export default function LoginPage() {
   const { setCredentials } = useCredentials();
   const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = async (values: LoginValues) => {
+  const onSubmit = async (values: SignInPayload) => {
     setError(null);
     try {
       setCredentials(await loginService(values.email, values.password));
@@ -50,7 +50,7 @@ export default function LoginPage() {
           <BlinkCursor className="text-gr-accent" />
         </h1>
 
-        <SharedLoginForm
+        <SignInForm
           copy={AUTH_TEXT.login}
           switchHref={ROUTES.signup.path}
           onSubmit={onSubmit}

@@ -21,10 +21,18 @@ import type * as React from "react";
  * Passing `id` explicitly still wins, for the cases where a form library owns it.
  *
  * The composite is what earns its place in `ds/` — the control underneath is plain
- * `ui/input` or `ui/textarea`, not a reimplementation of either. */
+ * `ui/input` or `ui/textarea`, not a reimplementation of either.
+ *
+ * `hint` sits **inside** the label and `action` **outside** it, and the difference matters
+ * (COS-298). A hint is part of the field's accessible name, which is what you want: "key,
+ * 12+ chars" is a better name than "key". A control is not — a `<button>` nested in a
+ * `<label>` puts an interactive element inside another element's name, and a click on it
+ * also activates the label. So `action` is a sibling of the label, inside a header row that
+ * exists only to hold them side by side. */
 function Field({
   label,
   hint,
+  action,
   multiline = false,
   className,
   id,
@@ -32,6 +40,8 @@ function Field({
 }: React.ComponentProps<typeof Input> & {
   label: string;
   hint?: React.ReactNode;
+  /** A control belonging to the field — the sign-up screen's `show` toggle. Pushed right. */
+  action?: React.ReactNode;
   multiline?: boolean;
 }) {
   const generatedId = useId();
@@ -42,13 +52,16 @@ function Field({
       data-slot="field"
       className={cn("grid gap-1.25", className)}
     >
-      <label
-        htmlFor={fieldId}
-        className="flex items-baseline gap-2"
-      >
-        <Overline>{label}</Overline>
-        {hint != null && <Overline className="ml-auto text-gr-fg-4">{hint}</Overline>}
-      </label>
+      <div className="flex items-baseline gap-2">
+        <label
+          htmlFor={fieldId}
+          className="flex flex-1 items-baseline gap-2"
+        >
+          <Overline>{label}</Overline>
+          {hint != null && <Overline className="ml-auto text-gr-fg-4">{hint}</Overline>}
+        </label>
+        {action}
+      </div>
       {multiline ? (
         <Textarea
           id={fieldId}

@@ -22,7 +22,6 @@ const addUserController = require("../controllers/users/addUserController");
 const getMeController = require("../controllers/users/getMeController");
 const getCsrfController = require("../controllers/users/getCsrfController");
 const logoutController = require("../controllers/users/logoutController");
-// const resetPasswordController = require('../controllers/users/resetPasswordController');
 const catchAsync = require("../../utils/catchAsync");
 
 router.post("/", validate({ body: signInBodySchema }), catchAsync(signInController));
@@ -30,6 +29,11 @@ router.post("/add", validate({ body: signUpBodySchema }), catchAsync(addUserCont
 router.get("/me", sessionAuthMiddleware, catchAsync(getMeController));
 router.get("/csrf", sessionAuthMiddleware, getCsrfController);
 router.post("/logout", csrfMiddleware, logoutController);
-// router.post('/resetpassword', catchAsync(resetPasswordController));
+
+/* There is no `/resetpassword`, and the commented-out one that sat here is gone with its
+ * controller (COS-298). It sent a mail through Sendinblue, with another project's sender: bkmk
+ * is self-hosted and has no mail server, so recovery by email was never going to be the answer.
+ * What replaces it is the recovery passphrase collected at sign-up; the route that consumes it
+ * is AUTH 05 (COS-324), and it belongs here when it lands, public and rate-limited. */
 
 module.exports = router;

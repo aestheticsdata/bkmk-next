@@ -12,10 +12,12 @@
  * `req.validated` happens one controller at a time, as each gets rewritten — COS-295 for
  * authentication, the DATA lot for the rest.
  *
- * On failure it answers **400** with the offending fields. It answers here rather than
- * calling `next(err)`: the server has no error handler wired, so `next(err)` falls through
- * to Express's, which renders an HTML page. And 400 rather than the 500 the rest of the
- * API returns to everything — a malformed input is the client's error.
+ * On failure it answers **400** with the offending fields, rather than the 500 the rest of
+ * the API returns to everything — a malformed input is the client's error. It still answers
+ * here instead of calling `next(err)`, though the reason has changed: COS-297 mounted the
+ * error handler, so `next(err)` would now produce JSON rather than an HTML page. What it
+ * would lose is `details`, the list of offending fields, which is the whole value of a 400
+ * to a form.
  *
  * On multipart routes, place it **after** multer, otherwise `req.body` is empty.
  */

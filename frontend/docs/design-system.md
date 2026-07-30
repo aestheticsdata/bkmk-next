@@ -433,11 +433,51 @@ The block is centred by `place-items-center` on a grid, not `justify-center` on 
 height where the card no longer fits, grid centring still allows the overflow to scroll, where a
 centred flex child gets clipped at the top.
 
-`sharedLoginForm` renders both screens from one card — `AuthFormCopy` is the handful of words that
-differ. Its validation is `SignInPayloadSchema`, the same object the request is validated against, so
-the form cannot drift from what the API accepts. The submit is disabled only while a request is in
-flight, never by validity: a primary action that will not press and does not say why is worse than an
-error message under the field that caused it.
+### The two cards inside it (COS-298)
+
+UI 01 rendered both screens from one form, because both were two fields and a button. UI 02 gave
+sign-up a confirm field, a strength gauge, a recovery passphrase and an import checkbox, and one
+component with a flag would have been four conditionals deep to draw a screen with two fields. So
+`authForms/` holds **two forms and three shared parts**:
+
+```
+authForms/
+  AuthCard      the .gr-card at padding 22, the server's refusal, the action row
+  AuthField     a ds/Field with its message wired to it through aria-describedby
+  SignInForm    identity · key
+  SignUpForm    identity · key + confirm key · strength · passphrase · import
+```
+
+The split follows the same rule as the shell above: share what belongs to the system, not the
+branches. `AuthCard` is the surface both screens are made of; `AuthField` exists because the wiring
+between an input and its error message is the part that gets forgotten, and doing it by hand five
+times is five chances to get it wrong.
+
+Validation comes from the zod schemas — `SignInPayloadSchema` for one, `SignUpFormSchema` for the
+other — so neither form can drift from what the API accepts. The submit is disabled only while a
+request is in flight, never by validity: a primary action that will not press and does not say why is
+worse than an error message under the field that caused it.
+
+**`ds/Field` gained an `action` slot**, and where it renders is the point. `hint` sits *inside* the
+`<label>`, which is what you want — "key, 12+ chars" is a better accessible name than "key". A
+control does not: a `<button>` inside a `<label>` puts an interactive element inside another
+element's name, and clicking it also activates the label. So `action` is the label's sibling, in a
+header row that exists to hold the two side by side. Its one caller today is the sign-up screen's
+`show` toggle.
+
+**Three departures from the handoff on this screen**, all of the same kind — the mockup draws the
+look of a control and not the control:
+
+| Handoff | Here | Why |
+| --- | --- | --- |
+| `[x]` in teal | `ui/checkbox`, repainted | A bracket glyph is text: no hit area, no focus ring, no state to read aloud. Radix gives all three; the fill keeps the handoff's colour. |
+| a bare 62% bar | the bar **plus a word**, and the bar `aria-hidden` | A gauge with no label says nothing when read aloud, and a bar and a word carrying the same judgement is one signal twice. The word is the one that survives. |
+| no such field | `recovery passphrase`, with a reveal toggle | Recovery by email is abandoned (COS-298); this field is what replaces it. It is the only revealable secret in the app — a mistyped key costs one more attempt, a mistyped passphrase costs the account. |
+
+The strength score is a **heuristic and says so in its own file** (`helpers/passwordStrength.ts`):
+length dominates, character variety adds one step and no more, and nothing here knows whether the
+phrase is on a leak list. zxcvbn would, and is 400kb shipped to one field on one screen. The rule is
+`SECRET_RULES.passwordMin`; the gauge is a nudge next to it, not a verdict.
 
 ---
 

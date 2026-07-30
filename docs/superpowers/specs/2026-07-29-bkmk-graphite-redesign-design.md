@@ -43,15 +43,28 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | AUTH 02 | COS-294 — CSRF double-submit, retrait du JWT | ✅ mergé (PR #12) |
 | AUTH 03 | COS-295 — requêtes SQL paramétrées | ✅ mergé (PR #12) |
 | AUTH 04 | COS-296 — AuthContext, cookie, intercepteur CSRF | ✅ mergé (PR #12) |
-| UI 01 | COS-297 — écran Login | en cours |
+| UI 01 | COS-297 — écran Login | ✅ mergé (PR #14) |
+| UI 02 | COS-298 — écran Signup + passphrase de récupération | en cours |
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
 qu'à la fin du lot.
 
+**Trois tickets ouverts en route**, qui n'étaient pas dans le découpage initial :
+
+| Ticket | Pourquoi |
+|---|---|
+| COS-324 — AUTH 05, récupération par passphrase | L'écran et la route qui consomment ce que UI 02 collecte. Sans lui la passphrase ne sert à rien. |
+| COS-325 — SEC, détail dans le ticket | Trouvé par une assertion de la QA d'UI 02, sur une ligne héritée. Pas un bug du code. |
+| COS-321 — périmètre étendu | Le menu utilisateur devient la seule porte par laquelle les 11 comptes existants peuvent se donner une passphrase. |
+
 ⚠️ **Le déploiement n'a pas suivi le merge.** La box Kimsufi tourne encore le code d'avant le lot
 AUTH : tant qu'elle n'est pas redéployée, la production garde le JWT en `localStorage` et le SQL
 concaténé. Rien de ce lot n'est acquis en prod avant ce déploiement.
+
+⚠️ **Et ce déploiement a maintenant une étape de base de données.** UI 02 ajoute une colonne
+(`src/db/migrations/2026-07-30-add-user-recovery-passphrase.sql`), passée en dev seulement. Sans elle,
+l'inscription répond 500 en production.
 
 **Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
 validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
@@ -923,6 +936,10 @@ route commentée, `generate-password` et `sib-api-v3-sdk` absents de `package.js
 étanche à l'injection ne ferait que le faire passer pour maintenu ; un commentaire d'en-tête le dit, et
 sa réécriture appartient à `change password` (COS-321).
 
+> **Suite, le 2026-07-30 :** il n'a pas été réécrit, il a été **supprimé** par COS-298. La
+> récupération par email est abandonnée — pas de serveur de mail — et ce qui la remplace est la
+> passphrase de récupération, consommée par COS-324.
+
 **QA faite en local, 54 assertions, données réelles intactes** (comptes de lignes identiques avant et
 après sur les six tables) : passe **en lecture** sur les 1278 signets réels via une session forgée
 (pagination, tri décroissant, filtres `IS NOT NULL`, `stars`, `EXISTS` de catégories, fiche unique,
@@ -1060,6 +1077,84 @@ propre, lint front en baisse (53 → 50 erreurs, l'ancien formulaire en emportan
 ⚠️ **Non vérifié : le rendu.** Aucun navigateur n'est connecté à cette session, donc tout ce qui
 précède est du markup et du CSS, pas une capture. La QA visuelle reste à faire.
 
+### Ce qui a été posé (COS-298, le 2026-07-30)
+
+Le détail visuel est dans **`frontend/docs/design-system.md` §9**, qui fait autorité. Ici, les
+décisions — dont une qui n'était pas dans le ticket d'origine.
+
+**La récupération de mot de passe par email est abandonnée.** Décision du 2026-07-30, prise en
+ouvrant ce ticket. bkmk est auto-hébergé et n'a pas de serveur de mail ; l'`resetPasswordController`
+qui prétendait le contraire visait Sendinblue avec l'expéditeur de pfa, était mort, et ne *pouvait
+pas* tourner (deux paquets absents de `package.json`). Ce que COS-295 avait laissé en attente est
+donc tranché : le fichier est supprimé, et ce qui le remplace est une **passphrase de récupération**
+que l'utilisateur choisit à l'inscription.
+
+Le découpage qui en découle, parce qu'un seul ticket ne pouvait pas tout porter :
+
+- **ici** : le champ, sa validation, la colonne, le hachage ;
+- **COS-324** (AUTH 05, nouveau) : l'écran `/recover` et `POST /users/recover` qui la consomment,
+  avec la limitation de débit et la réponse indifférenciée qu'une route publique non authentifiée
+  exige — c'est un second mot de passe, qui le devine prend le compte ;
+- **COS-321** (le menu utilisateur, périmètre étendu) : la seule porte par laquelle les **11 comptes
+  déjà en base**, tous à `NULL`, pourront en poser une. Jusque-là, ils n'ont aucune voie de
+  récupération. C'est assumé et écrit dans les deux tickets.
+
+**Il existe un DDL de référence, et il est juste.** `backend/src/db/bkmk.sql` — que `fieldLimits`
+déclarait inexistant — décrit la base exactement : chaque colonne vérifiée contre le serveur en
+ajoutant `recovery_passphrase`. La table de bornes est donc passée de « inférée » à lue, et **deux de
+ses valeurs étaient fausses du mauvais côté** : `user.name` et `category.name` sont des `VARCHAR(20)`,
+pas 50. L'inscription tombait dessus, puisqu'elle dérive le nom du compte de l'adresse — une partie
+locale de plus de vingt caractères passait le formulaire et revenait en erreur SQL brute. Ce qui reste
+à COS-306 est plus petit d'autant.
+
+**Pas de runner de migration, mais une trace.** `bkmk.sql` est un script de *création* : il ne sait
+rien de la base qui tourne. Chaque changement de schéma va donc dans les deux endroits, et
+`src/db/migrations/` porte le fichier daté à passer à la main, avec un README qui dit sur quelles
+bases il a déjà été passé. ⚠️ **L'`ALTER` n'a été passé qu'en dev.** Sans lui, l'inscription répond
+500 en production.
+
+**72, et c'est bcrypt qui le dit.** Les deux secrets sont bornés à 72 caractères parce que bcrypt
+hache les 72 premiers octets et **ignore silencieusement le reste** : accepter une passphrase plus
+longue, c'est en vérifier une partie en laissant croire que la phrase entière protège le compte. Le
+minimum, lui, est asymétrique — 12 pour le mot de passe (le `12+ chars` de la maquette), 20 pour la
+passphrase, qui ne doit pas être le maillon faible de ce qu'elle autorise. Et il n'y a **aucun**
+minimum à la connexion : il enfermerait dehors tout compte dont le mot de passe est antérieur à la
+règle.
+
+**Trois écarts au handoff, tous de la même nature** — la maquette dessine l'apparence d'un contrôle,
+pas le contrôle : le `[x]` en teal devient un vrai `ui/checkbox` repeint (aire de clic, anneau de
+focus, état lisible à voix haute), la jauge nue gagne un mot et devient `aria-hidden`, et le champ de
+passphrase n'existe pas dans la maquette du tout. Détail et raisons dans le tableau du §9 du DS.
+
+**Écart de périmètre côté serveur, comme en UI 01.** Un champ sans persistance est décoratif, donc
+`addUserController` a été réécrit : `bcrypt` attendu au lieu de deux rappels imbriqués (ajouter un
+second hachage en aurait fait quatre niveaux, avec la seule gestion d'erreur trois fermetures plus
+bas), lecture de `req.validated.body`, et le garde `Please enter all fields` retiré — `validate`
+répond 400 avant le contrôleur, ce qui est le bon statut au bon endroit.
+
+**Une assertion a trouvé autre chose, sur une ligne héritée de 2023.** Rien que le code puisse
+produire, rien que ce chantier ait cassé, et rien de plus ici : le détail et les issues possibles sont
+dans **COS-325** (§6, règle d'en-tête — un ticket privé, pas un dépôt public).
+
+**QA faite en local, 84 assertions** (données réelles intactes, trois comptes d'essai créés puis
+supprimés, compte final identique) : la colonne est bien un `varchar(60)` nullable et **les 11 comptes
+existants sont restés à `NULL`**, rien n'a été inventé pour eux · ce que la route refuse — pas de
+passphrase, 19 caractères, 73 caractères, mot de passe de 11, de 73, et un 400 qui **nomme le champ**
+· le chemin heureux : 201, cookie de session, jeton CSRF, et en base un hash bcrypt qui n'est ni le
+secret en clair ni le même que celui du mot de passe, que `bcrypt.compare` accepte et refuse comme il
+faut · une partie locale de 26 caractères s'inscrit sans erreur SQL et atterrit tronquée à 20 · le
+doublon répond toujours 409 · **la jauge testée sur le vrai helper compilé** (sept cas, dont la borne
+sous le minimum) · les 21 éléments du handoff dans le markup rendu, plus la note qui dit qu'il n'y a
+pas de mail de réinitialisation · cinq champs étiquetés par `for=`, le révélateur annonce son état en
+`aria-pressed`, la jauge est `aria-hidden`, trois `type="password"` et le champ de passphrase n'est
+pas révélé par défaut · **l'écran de connexion n'a pas bougé** (ni jauge, ni révélateur, un seul champ
+mot de passe) · le reste de l'auth tient (401 identique octet pour octet, 401 sans session, 403 sans
+jeton CSRF, 400 passé le jeton, logout, cookie mort ensuite). `next build` passe, `tsc --noEmit`
+propre, lint front stable (50 erreurs, la ligne de base héritée), lint back à 0.
+
+⚠️ **Non vérifié : le rendu.** Comme en UI 01, aucun navigateur n'est connecté — tout ce qui précède
+est du markup, du CSS et des réponses HTTP. La QA visuelle reste à faire.
+
 ---
 
 ## 7. Ce que le handoff implique côté données
@@ -1132,6 +1227,13 @@ COS-308 (doublons) · COS-309 (hash/log/related) · COS-310 (agrégats)
 
 **Lot 4 — finition** : COS-311 (responsive `@container`) · COS-312 (raccourcis clavier) ·
 COS-313 (doc design system)
+
+**Hors découpage initial**, ouverts en cours de route : COS-321 (menu utilisateur) ·
+COS-322 · COS-323 (report vers pfa) · **COS-324 (AUTH 05 — récupération par passphrase)** ·
+**COS-325**
+
+> Les tickets de sécurité encore ouverts sont référencés par leur numéro seul, sans leur contenu :
+> le dépôt est public, Linear ne l'est pas. Règle en tête du §6.
 
 ---
 

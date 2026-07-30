@@ -42,11 +42,29 @@ export const AUTH_TEXT = {
     failed: "could not sign in",
   },
 
+  /* `overline`, `title` and the two placeholders are the handoff's own words (COS-298). UI 01 had
+   * put "account" and "open an index" here, standing in for a screen it was not building. */
   signup: {
-    overline: "account",
-    title: "open an index",
-    identity: "identity",
+    overline: "new account",
+    title: "create an index",
+    identity: "identity · email",
+    identityPlaceholder: "you@domain.tld",
     key: "key",
+    keyPlaceholder: "12+ chars",
+    confirmKey: "confirm key",
+    strength: "strength",
+
+    /* The field the handoff could not know about: password recovery by email is abandoned, so
+     * this is the whole of it. `passphraseNote` is not decoration — someone typing here has to
+     * know that nothing behind the screen can send them a reset link. */
+    passphrase: "recovery passphrase",
+    passphraseHint: "20+ chars",
+    passphraseNote: "the only way back in if you lose your key — there is no recovery email. write it down.",
+    reveal: "show",
+    conceal: "hide",
+
+    importLabel: "import my Session Buddy export after signup",
+
     submit: "register ↵",
     or: "or",
     switchTo: "sign in",
