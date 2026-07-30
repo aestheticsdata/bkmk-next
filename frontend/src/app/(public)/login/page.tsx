@@ -2,40 +2,80 @@
 
 import useCredentials from "@auth/helpers/useCredentials";
 import useLoginService from "@auth/useLoginService";
-import Layout from "@components/shared/Layout";
+import { BlinkCursor } from "@components/ds/BlinkCursor";
+import { Overline } from "@components/ds/Overline";
+import { ROUTES } from "@components/shared/config/constants";
 import SharedLoginForm from "@components/shared/sharedLoginForm/sharedLoginForm";
+import { AuthShell } from "@components/shared/shell/AuthShell";
+import { readApiError } from "@helpers/apiError";
+import { AUTH_TEXT } from "@text/auth";
+import Link from "next/link";
+import { useState } from "react";
 
 import type { LoginValues } from "@components/shared/sharedLoginForm/interfaces";
 
+/* `Login_Graphite` — the sign-in screen (COS-297).
+ *
+ * A 480px block centred on the grey field: the `session` overline, the title closed by the
+ * blinking caret, the auth card, then the three mono facts and the way out to About. The frame
+ * is `AuthShell`, shared with sign-up.
+ *
+ * The width is `w-120` with `max-w-full`, not a media query: 480px is the handoff's figure, and
+ * below it the block simply takes the room it has. Nothing here needs to fold — two fields and a
+ * button are the same shape at every width.
+ *
+ * The refusal lives in `useState` rather than in the form: the form owns field validity, the
+ * screen owns what the server said. They are different failures with different lifetimes — one
+ * clears when you fix the field, the other when you try again. */
 export default function LoginPage() {
   const { loginService } = useLoginService();
   const { setCredentials } = useCredentials();
+  const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (values: LoginValues) => {
-    // `loginService` swallows the error and returns `undefined`: without this guard a
-    // failed login would throw here instead of showing its message.
-    const auth = await loginService(values.email!, values.password!);
-    if (!auth) return;
-    // The whole response now: the user for the context, and the CSRF token it carries.
-    setCredentials(auth);
+    setError(null);
+    try {
+      setCredentials(await loginService(values.email, values.password));
+    } catch (failure) {
+      setError(readApiError(failure) ?? AUTH_TEXT.login.failed);
+    }
   };
 
   return (
-    <Layout
-      isLogin
-      displayTools={false}
-    >
-      <div className="mt-28 flex w-96 flex-col items-center space-y-8 rounded-sm bg-linear-to-br from-lime-300 to-emerald-500 py-3 font-smooch shadow-lg">
+    <AuthShell hints={AUTH_TEXT.login.hints}>
+      <div className="w-120 max-w-full">
+        <Overline className="mb-1.5 block">{AUTH_TEXT.login.overline}</Overline>
+        <h1 className="mb-5 text-2xl font-semibold tracking-snug text-gr-fg-2">
+          {AUTH_TEXT.login.title}
+          <BlinkCursor className="text-gr-accent" />
+        </h1>
+
         <SharedLoginForm
+          copy={AUTH_TEXT.login}
+          switchHref={ROUTES.signup.path}
           onSubmit={onSubmit}
-          buttonTitle="login"
-          displayEmailField
-          displayPasswordField
+          error={error}
         />
-        <div className="text-formsGlobalColor hover:text-generalWarningBackground hover:underline">
-          <a href="/forgotPassword">mot de passe oublié ?</a>
+
+        {/* Aligned with spaces in the copy, so the whitespace has to survive. */}
+        <div className="mt-4 grid gap-0.75 text-2xs text-gr-fg-4">
+          {AUTH_TEXT.facts.map((fact) => (
+            <div
+              key={fact}
+              className="whitespace-pre"
+            >
+              {fact}
+            </div>
+          ))}
         </div>
+
+        <Link
+          href={ROUTES.about.path}
+          className="mt-3.5 inline-block"
+        >
+          <Overline className="text-gr-accent hover:text-gr-fg-2">{AUTH_TEXT.about}</Overline>
+        </Link>
       </div>
-    </Layout>
+    </AuthShell>
   );
 }

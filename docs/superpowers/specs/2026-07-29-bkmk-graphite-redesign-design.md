@@ -40,13 +40,18 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | DS 02 | COS-291 — primitives de composants | ✅ mergé (PR #9) |
 | DS 03 | COS-292 — shell applicatif | ✅ mergé (PR #10) |
 | AUTH 01 | COS-293 — session Redis + cookie httpOnly | ✅ mergé (PR #11) |
-| AUTH 02 | COS-294 — CSRF double-submit, retrait du JWT | en cours |
-| AUTH 03 | COS-295 — requêtes SQL paramétrées | en cours |
-| AUTH 04 | COS-296 — AuthContext, cookie, intercepteur CSRF | en cours |
+| AUTH 02 | COS-294 — CSRF double-submit, retrait du JWT | ✅ mergé (PR #12) |
+| AUTH 03 | COS-295 — requêtes SQL paramétrées | ✅ mergé (PR #12) |
+| AUTH 04 | COS-296 — AuthContext, cookie, intercepteur CSRF | ✅ mergé (PR #12) |
+| UI 01 | COS-297 — écran Login | en cours |
 
-**Les trois tickets AUTH 02-03-04 sont sur une seule branche** (`cosmokaat/cos-294-add-csrf-session-auth`) :
-AUTH 02 coupe le JWT et laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc
-la QA n'a de sens qu'à la fin du lot. Trois commits séparés, une seule PR.
+**AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
+laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
+qu'à la fin du lot.
+
+⚠️ **Le déploiement n'a pas suivi le merge.** La box Kimsufi tourne encore le code d'avant le lot
+AUTH : tant qu'elle n'est pas redéployée, la production garde le JWT en `localStorage` et le SQL
+concaténé. Rien de ce lot n'est acquis en prod avant ce déploiement.
 
 **Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
 validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
@@ -984,6 +989,76 @@ privée se rend, **l'email du compte et le jeton CSRF sont dans le HTML rendu pa
 **aucun JWT n'apparaît dans le markup** · un cookie forgé est refusé · `POST /users/logout` puis le
 même cookie ne rouvre plus l'application, session absente de Redis. `next build` passe, `tsc --noEmit`
 propre, lint front inchangé (53 erreurs avant et après, la ligne de base héritée).
+
+### Ce qui a été posé (COS-297, le 2026-07-30)
+
+Le détail visuel est dans **`frontend/docs/design-system.md` §9**, qui fait autorité. Ici, les
+décisions.
+
+**`AuthShell` est un frère d'`AppShell`, pas une variante.** Le chrome applicatif existe pour porter
+les quatre modules, les compteurs et l'email du compte — tout ce qui demande une session, c'est-à-dire
+exactement ce que ces écrans n'ont pas. Partager un composant voudrait dire un drapeau qui éteint les
+trois quarts. Ce qui est partagé est ce qui appartient au système et non à l'écran : la déclaration
+`@container`, la bande de 38px, la couleur du champ, `h-dvh`.
+
+**Un seul formulaire rend les deux écrans.** `AuthFormCopy` est la poignée de mots qui changent. Sa
+validation est `SignInPayloadSchema`, l'objet même contre lequel la requête est validée : le
+formulaire ne peut pas dériver de ce que l'API accepte. Les messages français écrits à la main et les
+`required: true` disparaissent avec lui, ainsi que les deux icônes FontAwesome de l'œil montrer/cacher
+— le handoff ne dessine pas ce contrôle.
+
+**Le bouton n'est plus désactivé par la validité**, seulement pendant la requête. L'ancien formulaire
+le grisait jusqu'à `isValid` : rien n'expliquait pourquoi il ne s'enfonçait pas, et une technologie
+d'assistance annonçait un contrôle indisponible sans dire pourquoi. La validation se déclenche à la
+sortie du champ et le message s'affiche sous le champ fautif, relié par `aria-describedby`.
+
+**Le refus du serveur s'affiche dans la carte, plus dans un `Swal`.** C'est ce qui a rendu nécessaire
+la moitié backend de ce ticket :
+
+- **`errorHandlerMiddleware` est enfin monté.** Il était écrit et jamais branché, donc chaque
+  `next(createError(…))` tombait sur le gestionnaire par défaut d'Express et répondait **une page
+  HTML** — illisible pour axios, et c'est pourquoi l'écran ne pouvait rien afficher. Toute l'API
+  répond désormais `{ error: "…" }` au statut demandé.
+- **Un échec de connexion est un 401, et un seul message.** C'étaient deux 500 distincts, « User does
+  not exist » ou « Invalid credentials ». Le 500 dit « l'API est cassée » quand la réponse est « ces
+  identifiants sont refusés » ; et les deux messages **énuméraient les comptes** sur une route
+  anonyme et sans limitation de débit. Même 401, même phrase, dans les deux cas.
+- **Une inscription en doublon est un 409**, avec le message que l'écran affiche. Le dire ici n'est
+  pas un oracle : celui qui s'inscrit apprend quelque chose sur une adresse qu'il vient de saisir.
+
+**Écart assumé : le fond de page global n'est pas basculé**, contrairement à ce que cette spec prévoyait
+pour UI 01. Les deux cadres peignent leur propre sous-arbre, donc le reset global n'aurait plus rien à
+faire sinon repeindre les deux écrans encore hérités (About, les barres d'outils dans le bureau) — ce
+qui les ferait passer de datés à cassés, sans rien gagner sur une surface GRAPHITE. Il partira avec le
+dernier écran hérité, comme `base.css` le disait.
+
+**Écart de périmètre, dans l'autre sens : l'écran d'inscription reçoit le gabarit.** Le formulaire et
+le cadre étant partagés, le laisser sur sa carte vert citron à côté de son jumeau aurait été pire que
+tout. UI 02 (COS-298) garde ce qui lui appartient vraiment : `key` et `confirm key` sur deux colonnes,
+la jauge de force, et la case d'import Session Buddy qui doit enchaîner sur l'écran Import.
+
+**Le lien mort `/forgotPassword` disparaît** — il n'y a ni page ni route derrière, et
+`useResetPasswordService` avait déjà été supprimé en COS-296.
+
+**Les valeurs statiques suivent la règle de §8.1.** Les trois lignes mono sous la carte
+(`host` / `index` / `sync`) et le `build 2.4.1 · tls on` du chrome sont de la copie, rendues telles
+quelles. Deux d'entre elles *pourraient* être réelles, mais pas ici : la page est servie à quelqu'un
+qui n'a pas de session, donc le nombre d'enregistrements est inconnaissable, et un hôte réel à côté de
+deux nombres inventés se lirait comme un accident plutôt qu'une décision.
+
+**QA faite en local, 44 assertions** (données réelles intactes, compte d'essai créé puis supprimé) :
+les quatre réponses d'erreur — 401 en JSON sur mauvais mot de passe, **401 identique octet pour octet
+sur une adresse inconnue**, 400 du schéma sur une adresse malformée, 409 sur un doublon · l'écran de
+connexion rend les dix-sept éléments du handoff (chrome réduit, sur-titre, titre, les deux champs,
+action primaire, bascule, mention, les trois lignes mono, lien About, barre de statut) · le curseur est
+`aria-hidden`, le champ mot de passe est un `type="password"`, l'email est étiqueté par `for=` · plus
+aucune trace de l'ancien formulaire · l'écran d'inscription partage le cadre avec ses propres mots · le
+chemin heureux marche encore de bout en bout. En plus : **les 19 utilitaires de l'écran résolvent dans
+le CSS compilé** — `w-120` vaut bien 480px et `p-5.5` 22px, les chiffres du handoff — `tsc --noEmit`
+propre, lint front en baisse (53 → 50 erreurs, l'ancien formulaire en emportant trois).
+
+⚠️ **Non vérifié : le rendu.** Aucun navigateur n'est connecté à cette session, donc tout ce qui
+précède est du markup et du CSS, pas une capture. La QA visuelle reste à faire.
 
 ---
 

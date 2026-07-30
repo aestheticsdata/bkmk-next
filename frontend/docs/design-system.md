@@ -412,6 +412,33 @@ and record actions several tickets before the GRAPHITE command bar arrives. The 
 one sign-out affordance left until UI 09 puts one in About; it points at `/logout`, which AUTH 04
 (COS-296) turns into a `POST /users/logout`.
 
+### The second frame: `AuthShell` (COS-297)
+
+The two public auth screens get their own frame, a sibling of `AppShell` rather than a variant of it:
+
+```
+AuthShell       @container, h-dvh, the same grey field
+  header        38px — wordmark, the screen label, the build tag, LED
+  main          grid place-items-center — the 480px block
+  status bar    26px — the state word and the screen's key hints
+```
+
+**Why not `TopChrome` with a prop.** The application chrome exists to carry the four modules, the
+index counters and the account email, and every one of those needs a session — which is exactly what
+these screens do not have. Sharing one component would mean a flag switching three quarters of it
+off. What *is* shared is what belongs to the system rather than to a screen: the `@container`
+declaration every `@max-3xl:` variant resolves against, the 38px strip, the field colour, `h-dvh`.
+
+The block is centred by `place-items-center` on a grid, not `justify-center` on a flex column: at a
+height where the card no longer fits, grid centring still allows the overflow to scroll, where a
+centred flex child gets clipped at the top.
+
+`sharedLoginForm` renders both screens from one card — `AuthFormCopy` is the handful of words that
+differ. Its validation is `SignInPayloadSchema`, the same object the request is validated against, so
+the form cannot drift from what the API accepts. The submit is disabled only while a request is in
+flight, never by validity: a primary action that will not press and does not say why is worse than an
+error message under the field that caused it.
+
 ---
 
 ## 10. What is still legacy
@@ -421,7 +448,12 @@ Three files still carry tokens from the old UI, marked as such: **15 colours** i
 ticket's debt: they keep alive the screens the UI lot has not rebuilt, and they leave screen by
 screen with it.
 
-Two resets are waiting on the UI lot too: the page background (`base.css` still applies `bg-grey1`)
-and the `body` typeface. Flipping them here would strip every page before GRAPHITE has anything to
-put in its place — UI 01 (COS-297) does it. The shell does not wait on them and does not need to:
-`AppShell` paints its own surface and sets its own typeface, inside its own subtree.
+Two resets are still waiting: the page background (`base.css` applies `bg-grey1`) and the `body`
+typeface.
+
+⚠️ **UI 01 was supposed to flip them and deliberately did not.** By the time it arrived, both frames
+paint their own subtree — `AppShell` for the application, `AuthShell` for the auth screens — so the
+global reset has nothing left to do except repaint the two screens that are still legacy, About and
+the old tool bars inside the desk. Flipping it would make those look broken rather than dated, for no
+gain on any GRAPHITE surface. It leaves with the last legacy screen, which is what `base.css` said in
+the first place.

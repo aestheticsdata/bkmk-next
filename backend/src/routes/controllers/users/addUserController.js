@@ -17,7 +17,11 @@ module.exports = async (req, res, next) => {
   // sign-in route, same fix.
   const [user] = await conn.execute("SELECT id FROM user WHERE email = ?;", [email]);
   if (user?.length > 0) {
-    return next(createError(500, "Email already exists"));
+    // 409, not 500: the request was understood and refused because the address is taken.
+    // The sign-up screen shows this message inline, so it has to arrive as a real status
+    // (COS-297). Unlike sign-in, saying so is not an oracle — whoever is registering is
+    // being told about an address they just typed and can already test by trying to log in.
+    return next(createError(409, "Email already exists"));
   }
 
   const newUser = {

@@ -94,6 +94,19 @@ const bootstrap = async () => {
   app.use("/categories", require("./routes/api/categories"));
   app.use("/reminders", require("./routes/api/reminders"));
 
+  /* The error handler, finally mounted (COS-297) — last, because Express only routes an error
+   * to a four-argument middleware declared after everything that can raise one.
+   *
+   * It was written long ago and never wired up, so every `next(createError(…))` fell through to
+   * Express's default handler and answered an **HTML page**. On an API consumed by axios that
+   * turns a refused login into an unreadable blob, which is why the login screen could not show
+   * why it failed. Now the whole API answers `{ error: "…" }` at the status the controller asked
+   * for, and `readApiError` on the front has one shape to read.
+   *
+   * The middlewares that answer for themselves — `validate`, the CSRF and session checks — are
+   * unaffected: they never call `next(err)`, precisely because this was missing. */
+  app.use(require("./utils/errorHandlerMiddleware"));
+
   if (process.env.NODE_ENV === "production") {
     cronMysql();
   }
