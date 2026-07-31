@@ -320,6 +320,17 @@ COS-300, on a design that is one typeface end to end. `font-mono` now sits on `D
 the dropdown menu's two contents. **Anything new that portals needs it too**, until `body` gets the
 family and this stops being a per-component chore.
 
+⚠️ **And it escapes the size, which is the same bug and was found second** (COS-342). The screen root
+carries `text-xs` beside the family; `DialogContent` had only picked up the family. `ui/input` and
+`ui/textarea` declare no size of their own — a faithful transcription of the handoff's
+`.gr-in{font:inherit}` — and `inherit` under a `body` that set nothing is the browser's 16px. So the
+edit modal's `url`, `title` and `note` drew at 16 while the whole app is at 12, and the padding round a
+16px line made each field 42px tall instead of 34. Measured through CDP against the same form rendered
+in its full-page fallback, which was correct all along. The fix is written twice on purpose: `text-xs`
+on `DialogContent`, so any modal present or future inherits the app's base, **and** on the two field
+primitives, so a field never depends on who renders it. The dropdown menu's two contents already
+carried theirs — checked, not assumed. Everything else in a modal states its own size and was already
+right.
 
 Two live consequences, both deliberate:
 

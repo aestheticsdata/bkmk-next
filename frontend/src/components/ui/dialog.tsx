@@ -96,12 +96,16 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          /* ⚠️ **`font-mono` was missing here** (found while building the account menu, COS-321).
-             The shell puts the typeface on the screen root, and a portal renders outside it into a
-             `body` that has none until the global reset lands — so the filter modal has been
-             drawing in `-apple-system` since COS-300. Measured through CDP, on both portalled
-             surfaces. */
-          "fixed top-[50%] left-[50%] z-50 flex max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.25rem)] max-w-160 translate-x-[-50%] translate-y-[-50%] flex-col overflow-hidden rounded-2xl border border-gr-border-2 bg-gr-panel font-mono text-gr-fg shadow-gr-modal duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          /* ⚠️ **`font-mono text-xs` — the app's type, which a portal does not inherit.** The shell
+             puts both on the screen root, and a portal renders into a `body` that has neither until
+             the global reset lands. The family was the first half, found while building the account
+             menu (COS-321): the filter modal had been drawing in `-apple-system` since COS-300. The
+             size is the second (COS-342): `ui/input` and `ui/textarea` carry no size of their own —
+             a faithful reading of the handoff's `font: inherit` — so the edit modal's three fields
+             came back at the browser's 16px default while the whole app is 12, and the padding
+             around a 16px line made every one of them taller with it. Both measured through CDP,
+             on both portalled surfaces. */
+          "fixed top-[50%] left-[50%] z-50 flex max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.25rem)] max-w-160 translate-x-[-50%] translate-y-[-50%] flex-col overflow-hidden rounded-2xl border border-gr-border-2 bg-gr-panel font-mono text-xs text-gr-fg shadow-gr-modal duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className,
         )}
         {...props}

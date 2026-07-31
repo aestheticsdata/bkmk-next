@@ -12,13 +12,13 @@ import type * as React from "react";
  *
  * `gr-scroll` because it is `resize-y`: dragged shorter it becomes a scroll container of its
  * own, and there is no reason for the system's bar to stop at the modal that contains it
- * (COS-341). */
+ * (COS-341). `text-xs` for the same reason as `ui/input.tsx` — see there. */
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return (
     <textarea
       data-slot="textarea"
       className={cn(
-        "gr-scroll field-sizing-content min-h-16 w-full resize-y rounded-lg border border-gr-border bg-gr-sunk px-3 py-2 text-gr-fg inset-shadow-gr-sunk transition-[box-shadow] duration-150 outline-none",
+        "gr-scroll field-sizing-content min-h-16 w-full resize-y rounded-lg border border-gr-border bg-gr-sunk px-3 py-2 text-xs text-gr-fg inset-shadow-gr-sunk transition-[box-shadow] duration-150 outline-none",
         "selection:bg-gr-selection selection:text-gr-fg-2 placeholder:text-gr-fg-4",
         /* Ring only, no border swap — same reasoning, and the same words, as `ui/input.tsx`. */
         "focus-visible:ring-3 focus-visible:ring-gr-ring",

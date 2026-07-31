@@ -10,14 +10,21 @@ import type * as React from "react";
  * hoisting them into a shared constant would make re-running `shadcn add` a merge.
  *
  * A sunken field, not a raised one: the inset shadow reads as a groove cut into the
- * panel, which is what makes the raised buttons beside it look raised. */
+ * panel, which is what makes the raised buttons beside it look raised.
+ *
+ * ⚠️ **`text-xs` is a deliberate departure from the handoff** (COS-342), which writes
+ * `font: inherit` and nothing else. Inheriting only works under an ancestor that set
+ * something: the shell sets the app's 12px on the screen root, and a field rendered in a
+ * portal — the edit modal's three — landed outside it and came back at the browser's 16px
+ * default. `DialogContent` now carries the size too, which fixes it from above; this fixes
+ * it from below, so that a field never again depends on who renders it. */
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input
       type={type}
       data-slot="input"
       className={cn(
-        "w-full min-w-0 rounded-lg border border-gr-border bg-gr-sunk px-3 py-2 text-gr-fg inset-shadow-gr-sunk transition-[box-shadow] duration-150 outline-none",
+        "w-full min-w-0 rounded-lg border border-gr-border bg-gr-sunk px-3 py-2 text-xs text-gr-fg inset-shadow-gr-sunk transition-[box-shadow] duration-150 outline-none",
         "selection:bg-gr-selection selection:text-gr-fg-2 placeholder:text-gr-fg-4",
         "file:inline-flex file:border-0 file:bg-transparent file:text-3xs file:uppercase file:tracking-widest file:text-gr-fg-3",
         /* **The ring carries the state on its own, and the border never changes colour.**
