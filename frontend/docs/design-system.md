@@ -128,6 +128,21 @@ The same argument settles the 9px the handoff drops the status bar to on narrow 
 it is one pixel below the smallest label in the system, and the shrink would be paid for with a
 token nothing else would ever use. The status bar stays `text-3xs` at both widths.
 
+⚠️ **One value in the table does not survive contact with the screen: the row actions' 12px.** The
+mapping above assumes the em size *is* the size, which holds for letters and fails for glyphs.
+`next/font` loads Plex Mono's `latin` subset, which stops at U+00FF bar a short list, so **every
+arrow and symbol in the app is drawn by the system fallback** — and fallback ink is a fraction of
+the em. Measured through CDP at 12px, `↗` inks 5.07px tall and `⌧` 4.69px, **under the 5.68px
+x-height of the 11px line they sit on**, while the row's own `◔` and `◨` come from that same
+fallback, ink 7.2px at the same size and read correctly. So `RowAction` is `text-lg`, which puts
+`↗` at 7.61px against the line's 7.68px cap height. **The rule this leaves behind: a letter is
+sized by its em, a glyph by its ink** — the two are only the same number inside the loaded subset,
+and no glyph in this design is.
+
+The same section is why `RowAction`'s delete is `✕` (U+2715) and not the handoff's `⌧`: U+2327
+draws as an X inside a rectangle, which at 22px is indistinguishable from the empty box a browser
+paints for a glyph it has not found.
+
 ### Letter-spacing
 
 | Token | Value | Usage |
