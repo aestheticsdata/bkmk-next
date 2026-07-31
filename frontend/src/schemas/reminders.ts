@@ -11,16 +11,27 @@ import { z } from "zod";
  *
  * The aliases differ from the record screen's too: `alarm_added` here,
  * `alarm_date_added` there. That is not a typo in this file, it is what the two queries
- * write. DATA 03 (COS-308) will align them. */
+ * write. DATA 03 (COS-308) will align them.
+ *
+ * ⚠️ **The endpoint now returns every armed alarm, not the ones ringing today** (COS-304). The two
+ * fields below are what changed with it, and they are why: the alarms screen needs the distance to
+ * each next firing, and the list it used to return had that distance at zero on every row. The
+ * "rings today" list is still reachable — it is `alarm_days_until === 0`. */
 
 export const ReminderSchema = BookmarkSchema.omit({ categories: true }).extend({
   /** Re-aliased onto `alarm.id` by the join: never null here, the `INNER JOIN` excludes
    *  bookmarks with no alarm. */
   alarm_id: numberLikeSchema,
-  /** Frequency in days. The controller only keeps a row when the number of days elapsed
-   *  since `alarm_added` is a multiple of this value. */
+  /** Frequency in days — the alarm repeats every `alarm_frequency` days from `alarm_added`. Never
+   *  zero: the query excludes those, because they are what makes the countdown below undefined. */
   alarm_frequency: numberLikeSchema,
   alarm_added: dateLikeSchema,
+  /** Days until the next firing, `0` on the day itself. Computed by MySQL from the two fields above
+   *  — see `getRemindersController` for the expression and for why it is not derived here. */
+  alarm_days_until: numberLikeSchema,
+  /** The date of that next firing. **A day, not a moment**: an alarm has no time of day anywhere in
+   *  the schema, so nothing downstream may print one. */
+  alarm_next_fire: dateLikeSchema,
 });
 
 export type Reminder = z.infer<typeof ReminderSchema>;

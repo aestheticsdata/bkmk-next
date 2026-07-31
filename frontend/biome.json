@@ -45,7 +45,8 @@
     {
       "includes": [
         "**/src/components/bookmarks/Index*.tsx",
-        "**/src/components/bookmarks/import/ImportStaged.tsx"
+        "**/src/components/bookmarks/import/ImportStaged.tsx",
+        "**/src/components/reminders/Alarms*.tsx"
       ],
       "linter": {
         "rules": {

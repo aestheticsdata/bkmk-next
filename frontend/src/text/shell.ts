@@ -85,7 +85,12 @@ export const SHELL_STATUS = {
    *  UI 06 (COS-302) adds the real draft reference if the insert screen ever has one. */
   create: { hints: ["tab next", "⌘↵ commit", "esc cancel"], right: "draft" },
   upload: { hints: ["drop file", "⌘↵ send"], right: "import queue empty" },
-  reminders: { hints: ["enter open", "s snooze", "d done"] },
+  /** ⚠️ **`s snooze` and `d done` are gone** (COS-304), for the reason the record screen has no
+   *  hints at all: they named two keys nothing listens for — and now name two *controls* that are
+   *  drawn and disabled, so binding them would be worse than leaving them unbound. They come back
+   *  with COS-330, which builds the routes, not with the shortcut lot: COS-312's table does not have
+   *  them. `enter open` stays and is true — every row is a link to its record. */
+  reminders: { hints: ["enter open"] },
   /** No hint: the handoff's `esc back` was written for a screen with a key bound to it, and About
    *  has a link and no listener (COS-305). The shortcut lot (COS-312) is what makes it true. */
   about: { hints: [], right: "about" },
