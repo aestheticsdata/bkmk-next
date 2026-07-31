@@ -53,6 +53,8 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | UI 09 | COS-305 — écran About : les mentions légales en GRAPHITE | ✅ mergé (PR #21) |
 | hors lot | COS-321 — le menu de compte dans le chrome | ✅ mergé (PR #22) |
 | UI 05 | COS-301 — écran Record : la fiche en consultation | ✅ mergé (PR #23) |
+| UI 06 | COS-302 — écran Insert : le formulaire de création | ✅ mergé (PR #25) |
+| hors lot | COS-329 — de-mock de l'écran Insert | ⏳ ouvert par UI 06 |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -79,6 +81,37 @@ substitution d'URL par concaténation de chaînes, sans échappement, sur du tex
 propriétaire du compte. Le volet droit, réduit à `preview`, garde la carte à la hauteur du record :
 mesuré en 1440×900, une carte pleine hauteur laissait 511px de volet vide sous la vignette, contre
 262 en épousant le contenu.
+
+⚠️ **UI 06 est le premier écran où ce qui manque est MOCKÉ au lieu d'être retiré, et c'est une règle
+générale du chantier, pas une exception.** Arbitrage du propriétaire, en cours de ticket : « tout ce
+qui n'existe pas encore côté back ou front, on mock pour l'instant, et il faut un ticket pour
+de-mock ». Elle **remplace** ce qui avait été fait sur UI 05 et UI 09, où les blocs sans donnée
+étaient simplement absents ; à partir d'ici la maquette est tenue telle qu'elle est écrite, chaque
+valeur en dur est marquée sur place, et un ticket `de-mock` la reprend. Pour cet écran c'est
+**COS-329** : `shot · auto capture` et son `queued · 1280×800`, la ligne `2 duplicate candidates in
+index`, et le titre récupéré depuis le `<title>` de la page. Le `record preview`, lui, n'est pas
+mocké — chaque ligne est calculée depuis le brouillon, et son `id` affiche `—` parce que
+l'identifiant est ce que l'insertion retourne.
+
+⚠️ **Le périmètre de contenu, lui, reste celui de l'écran existant** — les deux règles ne se
+contredisent pas. UI 06 livre les huit champs que le formulaire portait déjà et rien de plus ; `group`
+disparaît (le contrôleur le lit dans un `if` vide et ne l'écrit nulle part), et l'édition part avec le
+composant, qui servait `create` et `edit/[id]` sur un seul `id`. Mocker comble un **trou de donnée**
+dans un bloc que la maquette dessine ; ça n'autorise pas à inventer des blocs que l'écran n'a pas.
+
+⚠️ **Là où la maquette et la donnée divergent, la donnée gagne** — l'arbitrage de `ds/PriorityBars`,
+étendu aux contrôles de saisie. `priority` a quatre segments et non trois (un contrôle à trois ne peut
+pas exprimer `highest` sur des records qui le portent), `alarm` en a six et non quatre parce que
+l'alarme est une **fréquence** et pas un compte à rebours, et rien n'est coché sur un formulaire
+vierge : le `med` + 4 étoiles de la maquette sont les valeurs de son record d'exemple. Deux
+correctifs de frontière sont venus avec : le champ tags s'arrête à 20 caractères (`category.name`, le
+21e revenait en erreur SQL brute) et une capture est vérifiée type + taille **avant** de devenir celle
+du brouillon, au lieu d'après que multer a interrompu la requête.
+
+**Ce qui est mutualisé pour UI 10** : les cinq contrôles non-texte sont dans
+`components/bookmarks/fields/`, le `Group` local de la modale de filtres est devenu `ds/FieldGroup`,
+et `ds/Segment` a gagné un troisième mode (`action`) pour les segments qui agissent et disparaissent
+au lieu de basculer. `CreateBookmarkPayloadSchema`, écrit par PLAT 05 et resté inutilisé, est branché.
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
