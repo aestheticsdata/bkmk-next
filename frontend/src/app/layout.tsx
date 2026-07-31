@@ -41,13 +41,12 @@ const ubuntu = Ubuntu({
   display: "swap",
 });
 
+// No `icons` here on purpose: `icon.svg`, `favicon.ico` and `apple-icon.png` sit next to this
+// file and the App Router picks them up on its own, emitting the <link> tags with the right
+// type and sizes. Declaring them here as well would override that convention.
 export const metadata: Metadata = {
   title: "bkmk",
   description: "a bookmark index for people who keep everything",
-  icons: {
-    icon: "/images/favicon.ico",
-    apple: "/images/apple-touch-icon.png",
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
