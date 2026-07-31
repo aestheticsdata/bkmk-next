@@ -56,6 +56,9 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | UI 06 | COS-302 — écran Insert : le formulaire de création | ✅ mergé (PR #25) |
 | hors lot | COS-329 — de-mock de l'écran Insert | ⏳ ouvert par UI 06 |
 | UI 07 | COS-303 — écran Import : dépôt, staging, formats | ✅ mergé (PR #26) |
+| UI 08 | COS-304 — écran Alarms : inventaire, compte à rebours, charge 14 jours | ✅ mergé (PR #27) |
+| hors lot | COS-330 — de-mock de l'écran Alarms (snooze / done) | ⏳ ouvert par UI 08 |
+| hors lot | COS-331 — SEC : secrets en clair dans l'historique git | ⏳ trouvé pendant UI 08 |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -135,6 +138,57 @@ décidé par `originalname.split(".")[1]` — le **deuxième** segment du nom, p
 donc la chaîne vide que `split("\n")` laisse après un saut de ligne final produisait un `TypeError`
 → **500**, après avoir déjà inséré les lignes précédentes. Quasiment tous les imports csv étaient
 concernés.
+
+⚠️ **UI 08 a élargi son périmètre, et c'est le propriétaire qui l'a tranché en cours de ticket.**
+L'écran ne listait que les alarmes qui sonnent **le jour même**, parce que c'est tout ce que
+`GET /reminders` renvoyait : le contrôleur bouclait sur le résultat complet et ne gardait que les
+lignes où `differenceInDays(now, alarm_added) % frequency === 0`. Or la colonne `countdown` de la
+maquette et la carte `next 14 days` ne peuvent pas être dessinées sur une liste où chaque ligne sonne
+dans zéro jour. Deux options lui ont été posées ; il a pris la première. Le contrôleur cesse donc de
+filtrer et se met à **calculer** : `alarm_days_until` (la même expression MySQL que le filtre
+`alarm=due` de l'index, écrite pareil pour qu'ils ne puissent pas diverger sur ce qui est imminent) et
+`alarm_next_fire`. La liste « ça sonne aujourd'hui » n'est pas perdue, c'est `alarm_days_until = 0`.
+**Les deux compteurs du chrome bougent avec** — `alarms NNN` et `N armed` comptent enfin ce que leur
+mot dit, ils comptaient les sonneries du jour sous le mot « armées ».
+
+⚠️ **Rien n'est mocké sur cet écran, et ce n'est pas une exception à la règle de UI 06** — c'est la
+donnée qui était là dès que l'endpoint a cessé de la jeter. Le compte à rebours, la date de sonnerie
+et les quatorze barres sont calculés. La charge sur 14 jours est comptée **côté client** depuis les
+alarmes que la table affiche déjà : la liste n'est pas paginée, donc compter dans le navigateur donne
+exactement ce que donnerait un `GROUP BY`, et une alarme étant une répétition elle peut tomber
+plusieurs fois dans la fenêtre. DATA 05 (COS-310) n'est donc plus le de-mock de ce bloc mais son
+déplacement côté serveur — obligatoire dès que la liste sera paginée — et son ticket le dit.
+
+⚠️ **Ce qui est dessiné-mais-inerte : `snooze`, `done`, `snooze all`.** Aucune route ne repousse ni
+n'acquitte une alarme. Même choix que le menu de compte : montrés, grisés, et **COS-330** les câble.
+Les hints `s snooze` / `d done` de la barre de statut sont retirés en attendant, pour la raison qui
+laisse l'écran Record sans aucun hint — le tableau de COS-312 ne les porte pas non plus, donc c'est
+COS-330 qui les rétablira. `arm new`, lui, n'est pas dans cette liste : armer une alarme, c'est donner
+un rappel à un signet, et le formulaire de création est l'écran où ce champ vit.
+
+⚠️ **Deux correctifs sont venus avec la requête.** La suppression est douce et laisse la ligne
+`alarm` en place, donc **un signet supprimé continuait de sonner ici et d'être compté dans le chrome**,
+sans qu'aucun écran puisse l'atteindre — `b.active = 1` y met fin. Et `frequency > 0` garde le modulo,
+que rien ne contraint en base.
+
+⚠️ **Trois écarts à la maquette, tous mesurés** (Chrome sans tête, 1440×900, vraie IBM Plex Mono) : la
+colonne `id` part, pour la raison qui l'a fait partir de l'index ; `fires` porte une date **et pas
+d'heure**, parce qu'une alarme n'a d'heure nulle part dans le schéma et que le `09:00` de la maquette
+est une précision que rien ne peut produire ; et les colonnes sont dimensionnées à leur contenu — les
+96px de `act` coupaient la paire de boutons de 34. La jauge suit le **cycle** de l'alarme,
+`(frequency - days) / frequency`, et non le `100 - days * 12` de la maquette, qui est une pente sans
+source. Deux défauts trouvés dans la même passe : sous le pli l'en-tête était collé aux deux bords de
+la carte alors que les lignes sont rentrées de 12, et la barre de commande repliait l'horloge sur
+trois lignes avant de l'élider.
+
+⚠️ **Une horloge qui tourne, et le §8.1 ne l'interdit pas.** Ce qu'il interdit, ce sont les lectures
+**inventées** — `uptime 04:12`, `IDX/2.4.1`. Celle-ci est l'heure du navigateur, et c'est ce qui rend
+`T-00d` lisible. Posée dans un effet, donc pas de désaccord d'hydratation.
+
+⚠️ **Trouvé en marge, sans rapport avec GRAPHITE : COS-331.** En cherchant de quoi vérifier la requête
+SQL contre la base de dev, on tombe sur des secrets en clair restés dans l'**historique git** d'un
+dépôt public. Le fichier a été retiré du suivi, ce qui ne retire pas ce qu'il contenait. Rien de plus
+n'est écrit ici : la spec est commitée sur ce dépôt.
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
@@ -1837,7 +1891,93 @@ COS-322 · COS-323 (report vers pfa) · **COS-324 (AUTH 05 — récupération pa
 
 ---
 
-## 10. Fichiers de référence
+## 10. Après GRAPHITE — axes d'amélioration (hors périmètre de la refonte)
+
+> **Ce lot ne fait pas partie de la refonte.** Il a été ouvert le 2026-07-31, une fois la question
+> posée autrement : quand GRAPHITE sera terminé, qu'est-ce que bkmk ne sait toujours pas faire ?
+> Aucun de ces tickets ne bloque un ticket de la refonte, aucun ne change son périmètre, et le §0
+> continue de ne suivre qu'elle. Ils se prennent quand elle est finie — ou entre deux, s'ils
+> tombent bien.
+
+### 10.1 Trois constats qui ont recadré la question
+
+Vérifiés dans le code, pas déduits.
+
+1. **La recherche ne marche pas sur la majeure partie de l'index.**
+   `uploadBookmarksController.js:63` stocke les titres importés en
+   `encodeURIComponent(anyASCII(title))`, le formulaire legacy (`CreateBookmark.tsx:122`) encode
+   tous les champs, et l'écran insert GRAPHITE stocke le titre brut en n'encodant que les notes
+   (`useBookmarkCreate.ts:52`). `getBookmarksController.js:125` compare la saisie **décodée** à cette
+   colonne : toute recherche contenant une espace rate donc toutes les lignes importées, qui sont
+   l'essentiel de l'index. Six sites de rendu appellent `decodeURIComponent` pour défaire ça, dont un
+   dans un `try/catch` parce qu'un `%` littéral lève (`RecordNote.tsx:41`).
+2. **Il n'y a pas de champ de recherche.** Le champ `query` de la barre de commande est un
+   `<button>` qui ouvre la modale de filtres (`IndexCommandBar.tsx:55`), et le filtre derrière ne
+   regarde que `b.title` — ni les notes, ni l'url. Or l'url est le seul texte que possède la plupart
+   des lignes : un import n'apporte que `title` + `url`.
+3. **L'index fait ~1 280 lignes et 53 catégories**, pas les 312 de la maquette (mesures reportées
+   dans `IndexRail.tsx:152` et `IndexPager.tsx:15`). À cette taille, « je corrigerai à la main en
+   SQL » cesse d'être vrai, et les catégories créées par un `if (!category.id) INSERT` présent dans
+   deux contrôleurs produisent des doublons de nom par construction.
+
+### 10.2 Les huit tickets
+
+Dans l'ordre des dépendances. Chaque description s'ouvre sur la mention « axe d'amélioration, en
+plus de la refonte GRAPHITE ».
+
+| Ticket | Titre | Dépend de |
+|---|---|---|
+| COS-332 | PLAT 06 — Runner de migrations et table `schema_migrations` | — |
+| COS-333 | DATA 06 — Export de l'index (json · csv · netscape html) | — |
+| COS-334 | DATA 07 — Normaliser le texte en base (titres et notes décodés) | COS-332 |
+| COS-335 | UI 14 — La barre de commande devient un champ de recherche (titre, notes, url) | COS-334 |
+| COS-336 | DATA 08 — Catégories : dédupe des noms et contrainte d'unicité | COS-332 |
+| COS-337 | UI 15 — Gestion des tags : renommer, fusionner, recolorer, purger | COS-336 |
+| COS-338 | DATA 09 — `url` : forme normale, colonne `host`, backfill | COS-332 |
+| COS-339 | UI 16 — Axe `host` dans le rail | COS-338 |
+
+Trois choses à retenir de ce découpage :
+
+- **Le runner passe avant.** `backend/src/db/migrations/` contient un fichier, aucun runner, aucune
+  trace de ce qui est appliqué où, et `bkmk.sql` est un `CREATE DATABASE`, pas un schéma de
+  référence. Quatre de ces tickets veulent une migration. `schemas/bookmarks.ts:12` le dit déjà :
+  *« with no versioned DDL, `.nullish()` is the only honest assumption »*.
+- **L'export passe avant la normalisation du texte** : c'est le diagnostic en lecture seule qui
+  montre l'ampleur des dégâts avant que quoi que ce soit ne réécrive 1 280 lignes.
+- **DATA 07 ne peut pas être un `.sql`** — MySQL n'a pas de fonction de décodage d'URL. C'est un
+  script Node, premier écart à la convention des migrations à la main, et la raison d'être du runner.
+
+Deux pièges de migration, identiques dans leur forme : l'`UNIQUE (user_id, name)` de COS-336 et
+l'éventuel index unique sur l'url normalisée de COS-338 **échouent tant que les doublons existent**.
+La passe de nettoyage précède la contrainte, dans le même ticket.
+
+### 10.3 Ajustements sur des tickets existants (pas de nouveau ticket)
+
+- **COS-306** est livré à ~90 % par UI 03 / UI 04 : pagination serveur, objet de filtres à six
+  champs, requête de comptage et `describeQuery` sont en place. Reliquat réel : l'arithmétique de
+  pagination est cliente parce que l'API ne renvoie ni `page` ni `pages`. À redécouper ou à fermer.
+- **COS-307 et COS-308** dépendent de COS-338 : la détection de doublons n'a aujourd'hui aucune
+  définition de « même url ».
+- **COS-329** absorbe la favicon si l'occasion se présente — c'est le même fetch que le titre
+  automatique. À stocker localement : pointer un service de favicons tiers poserait une balise sur
+  chaque ligne d'un index dont l'écran de signup annonce « self-hosted · no tracking ».
+
+### 10.4 Écartés, et pourquoi
+
+Consigné ici pour ne pas les reproposer.
+
+| Idée | Pourquoi non |
+|---|---|
+| Vues enregistrées | L'URL **est** déjà l'état : chaque filtre est une adresse partageable, et l'utilisateur fait tourner un gestionnaire de bookmarks |
+| Tags et résumés par IA | Envoie le contenu des pages à un tiers depuis un produit qui annonce « no tracking », la machine ne fera pas tourner de modèle local, et étiqueter automatiquement dans un vocabulaire à doublons ne fait qu'empirer le vocabulaire plus vite. Le problème est COS-336, pas un modèle |
+| Archivage du contenu des pages | Bonne intuition, mauvais ordre : on construit le capteur avant la réponse, et la croissance du stockage n'est surveillée par rien |
+| Extension navigateur, PWA share target | Un bookmarklet passant `?url=&title=` à l'écran insert prend l'essentiel pour presque rien ; l'extension sort du dépôt unique et la PWA demande un manifest et un service worker qui n'existent pas |
+| Vérificateur de liens morts | **Reporté, pas écarté.** Les hôtes hostiles aux robots répondent 403 ou 429, et un vérificateur qui crie au loup sur des liens vivants est pire que rien. Demande aussi une passe qui tient une connexion, `dbinitmysql.js` en ouvrant une par requête |
+| `last_opened_at` | **Reporté.** C'est le meilleur signal d'élagage pour une archive de cet âge, et l'action `↗` existe déjà pour l'accrocher — mais c'est de la journalisation de comportement dans un produit qui annonce ne pas en faire. Décision du propriétaire, pas un défaut |
+
+---
+
+## 11. Fichiers de référence
 
 | Quoi | Où |
 |---|---|
