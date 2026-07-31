@@ -647,6 +647,36 @@ AUTH 04 (COS-296) remplacera la cible par un `POST /users/logout`.
 Idem pour About, qui est aujourd'hui dans `(public)` et n'a donc pas le shell : c'est COS-305 qui
 décidera de son groupe de routes.
 
+### Ce qui a été posé (COS-327 — le favicon, le 2026-07-31)
+
+La marque vient du projet Claude Design « Favicon GRAPHITE », importée par le MCP `claude_design` :
+trois lignes d'index sur le gris uni avec le marqueur teal de la ligne sélectionnée, soit la
+signature de la table, aux tokens du thème (`#a3a4a0`, `#161715`, `#1d5b4f`).
+
+**Trois fichiers, dans `src/app/`, par la convention de fichiers de l'App Router** — pas de
+`metadata.icons` écrit à la main : Next lit `icon.svg`, `favicon.ico` et `apple-icon.png` posés à
+côté de `layout.tsx`, émet les `<link>` avec le bon `type` et les bonnes `sizes`, et sert les
+fichiers hashés. Le bloc `icons` de `layout.tsx` est donc **retiré** : le laisser aurait écrasé la
+convention. Les six fichiers hérités de `public/images/` partent avec — les deux `android-chrome-*`
+et les deux `favicon-{16,32}x{16,32}.png` n'étaient référencés nulle part (pas de `site.webmanifest`
+dans le dépôt), seuls `favicon.ico` et `apple-touch-icon.png` étaient câblés.
+
+**Le `.ico` est fabriqué, la source n'en fournit pas.** Il emballe les PNG **16, 32 et 48 du
+designer tels quels** (conteneur ICO à charges PNG, format Vista+) plutôt que de re-rastériser le
+SVG : le 16 est *retracé à la main* — barres sur pixels entiers, liseré retiré — et une
+rastérisation l'aurait perdu. Charges vérifiées par CRC de chaque bloc PNG avant emballage, les
+octets ayant transité par une transcription base64.
+
+**Vérifié sur le serveur de dev** : les trois `<link>` sont émis (`favicon.ico` en `image/x-icon`,
+`icon.svg` en `image/svg+xml` `sizes="any"`, `apple-icon.png` en 180×180) · les trois répondent 200,
+**y compris `/favicon.ico` sans hash**, celui que les robots demandent en dur · les anciens chemins
+`/images/*` répondent 404 et plus rien ne les demande · `tsc --noEmit` propre, lint front à 36 sans
+occurrence de `layout.tsx`.
+
+⚠️ **Pas de manifest, pas de PWA** : les `android-chrome-*` sont partis sans remplaçants. Et le SVG
+ne porte **pas** de variante `prefers-color-scheme` — le gris moyen est prévu pour tenir sur un
+onglet clair comme sombre, ce que la maquette du projet Claude Design montre côte à côte.
+
 ---
 
 ## 5. zod — la frontière d'API
@@ -1409,6 +1439,13 @@ sans tête piloté en CDP, avec un compte d'essai de 1290 enregistrements et 40 
 supprimés — la recette est au §6. Ce qui reste hors de portée est le jugement : les couleurs, la
 densité, ce qui se lit bien.
 
+⚠️ **Un défaut rouvert depuis, sous le pli : COS-326.** Toutes les mesures ci-dessus sont prises au
+large. Sous `@max-3xl`, `IndexRow` se replie sur une seule ligne — `pri`, `stars`, `tags`, `shot` et
+`added` passent tous en `hidden` — mais la bande d'actions du point 3 reste **hors flux** et n'est
+plus révélée au survol : elle est peinte en permanence par-dessus l'url, que rien n'écarte. Le
+hors-flux reste juste au-dessus du pli (c'est lui qui donne le bord droit unique du point 3) ; ce
+qui manque est le pendant replié. Recoupe FIN 01 (COS-311), qui passera sur les 9 écrans.
+
 ---
 
 ## 6 bis. UI 04 — la modale de filtres (COS-300)
@@ -1620,7 +1657,8 @@ Tranché le 2026-07-29, plus rien ne bloque :
 
 ## 9. Découpage en tickets Linear
 
-**26 tickets dans le projet BKMK.** Ordre d'exécution :
+**38 tickets dans le projet BKMK** — le compte inclut ceux ouverts en cours de route, listés en
+bas de section. Ordre d'exécution :
 
 **Lot -1 — plateforme (nouveau, passe avant tout)**
 | Ticket | Titre |
@@ -1649,11 +1687,11 @@ COS-301 (record) · COS-302 (insert) · COS-303 (import) · COS-304 (alarms) · 
 COS-308 (doublons) · COS-309 (hash/log/related) · COS-310 (agrégats)
 
 **Lot 4 — finition** : COS-311 (responsive `@container`) · COS-312 (raccourcis clavier) ·
-COS-313 (doc design system)
+COS-313 (doc design system) · **COS-327 (FIN 04 — favicon GRAPHITE, ouvert en cours de route)**
 
 **Hors découpage initial**, ouverts en cours de route : COS-321 (menu utilisateur) ·
 COS-322 · COS-323 (report vers pfa) · **COS-324 (AUTH 05 — récupération par passphrase)** ·
-**COS-325**
+**COS-325** · COS-326 (bug d'UI 03 : la bande d'actions recouvre l'url sous le pli)
 
 > Les tickets de sécurité encore ouverts sont référencés par leur numéro seul, sans leur contenu :
 > le dépôt est public, Linear ne l'est pas. Règle en tête du §6.
