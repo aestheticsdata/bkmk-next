@@ -23,5 +23,8 @@ export const ABOUT_TEXT = {
     { label: "vat", value: "FR 22 424 761 419" },
   ],
 
+  /** Without a session there is one place to go, and it is the door. */
   back: "‹ back to sign in",
+  /** With one, going "back" to the sign-in screen would mean leaving the app to read a notice. */
+  backToIndex: "‹ back to the index",
 } as const;
