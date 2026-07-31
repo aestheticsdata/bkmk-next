@@ -21,13 +21,22 @@ import type * as React from "react";
  * row of these, and there each one is a filtered *address*: it has to be a link, or middle-click and
  * the back button stop working. The state attribute changes with the element — `aria-pressed` is for
  * a button that toggles, and on a link it would announce a control that does not exist, so a link
- * gets `aria-current` instead. */
+ * gets `aria-current` instead.
+ *
+ * **`action` for the segments that do something and leave** (COS-302). The insert screen's tag row
+ * is a third case: clicking a suggestion adds the tag, and the segment is gone from the row on the
+ * next render — the selection lives in the field above it, as a token. Announcing that as a toggle
+ * button that is "not pressed" describes a state it never reaches. So `action` drops the attribute
+ * and leaves a plain button wearing the row's look.
+ *
+ * Three modes, one rule: the state attribute has to match what the control actually does. */
 function Segment({
   className,
   on = false,
   asChild = false,
+  action = false,
   ...props
-}: React.ComponentProps<"button"> & { on?: boolean; asChild?: boolean }) {
+}: React.ComponentProps<"button"> & { on?: boolean; asChild?: boolean; action?: boolean }) {
   const Comp = asChild ? Slot.Root : "button";
 
   return (
@@ -36,7 +45,7 @@ function Segment({
       data-state={on ? "on" : "off"}
       {...(asChild
         ? { "aria-current": on ? ("page" as const) : undefined }
-        : { type: "button" as const, "aria-pressed": on })}
+        : { type: "button" as const, ...(action ? {} : { "aria-pressed": on }) })}
       className={cn(
         "inline-flex h-6 cursor-pointer items-center rounded-lg border px-3 text-2xs tracking-wider transition-colors duration-120 outline-none",
         "focus-visible:border-gr-accent focus-visible:ring-3 focus-visible:ring-gr-ring",

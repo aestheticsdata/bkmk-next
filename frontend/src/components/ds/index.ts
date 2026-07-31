@@ -18,6 +18,7 @@ export { Chip } from "@components/ds/Chip";
 export { CommandBar, PagerBar } from "@components/ds/CommandBar";
 export { DropZone } from "@components/ds/DropZone";
 export { Field } from "@components/ds/Field";
+export { FieldGroup } from "@components/ds/FieldGroup";
 export { KeyValueTable } from "@components/ds/KeyValueTable";
 export { Led } from "@components/ds/Led";
 export { MiniButton } from "@components/ds/MiniButton";
