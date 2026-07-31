@@ -53,7 +53,11 @@
    * the click. And this is in `@layer base`, so a `cursor-*` utility still wins wherever a
    * screen wants something else — `cursor-grab` on a drag handle, `cursor-not-allowed`. */
   button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]) {
+  [role="button"]:not([aria-disabled="true"]),
+  /* A Radix menu row is a `<div role="menuitem">`, so neither selector above reaches it, and
+   * the registry ships it `cursor-default` besides (COS-321 removed that). `^=` covers
+   * `menuitem`, `menuitemcheckbox` and `menuitemradio` in one. */
+  [role^="menuitem"]:not([aria-disabled="true"]) {
     cursor: pointer;
   }
 }

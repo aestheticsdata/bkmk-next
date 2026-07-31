@@ -6,17 +6,18 @@
  * English (§4 of the spec), so `@text/shell.ts` is the whole path. The ticket's
  * `src/text/fr/` was written before that was settled.
  *
- * ⚠️ **`build` and `uptime` are static chrome** (§8.1 of the spec, decided 2026-07-29).
- * They are rendered exactly as written and must never look alive: no `setInterval`
- * advancing the clock, no blinking LED. Only the tab counters and the account email are
- * real data. */
+ * ⚠️ **The chrome's two invented readings are gone** (COS-321, the owner's call): `IDX/2.4.1`
+ * beside the wordmark, a build number nothing in the project produces, and `uptime 04:12`, a
+ * clock that never advanced. §8.1 of the spec says static values are rendered exactly as written
+ * — never a `setInterval`, never a blinking LED — not that every slot the mockup fills has to be
+ * filled. The auth screens' `build 2.4.1 · tls on` went the same way in the same pass; see
+ * `build` in `@text/auth.ts`.
+ *
+ * What is left of it is `sync 12s`, inside `status.index`. The tab counters and the account
+ * email are the shell's only real values. */
 
 export const SHELL_TEXT = {
   wordmark: "BKMK",
-  /** Static. An index build number, not a version read from anywhere. */
-  build: "IDX/2.4.1",
-  /** Static. See the warning above — this string never moves. */
-  uptime: "uptime 04:12",
   about: "about",
 
   /** The four modules, keyed by the tab ids in `shell/config/constants.ts`. */
@@ -36,13 +37,27 @@ export const SHELL_TEXT = {
     armed: (count: string) => `${count} armed`,
   },
 
+  /* The account menu (COS-321). Three of its four entries are drawn and **disabled**: the
+   * password screen, the recovery passphrase and the locale each need a route that does not
+   * exist yet, and `language` needs a translation layer bkmk has none of. They are shown rather
+   * than hidden because the menu is also how you learn what an account has — and greyed rather
+   * than promised, because the one thing worse than a missing entry is an entry that does
+   * nothing when pressed. `log out` is the entry that works, and the reason the menu exists. */
+  menu: {
+    caption: "signed in",
+    password: "change password",
+    passphrase: "set recovery passphrase",
+    language: "language",
+    /** The only locale there is. No submenu while the row is disabled — see `UserMenu`. */
+    languageValue: "english",
+    signOut: "log out",
+  },
+
   aria: {
     /** The chrome's tab row and the narrow-width tab bar are the same navigation, so they
      *  share one label. */
     modules: "modules",
     home: "back to the index",
-    /** The account email is a link out of the session — see TopChrome for why. */
-    signOut: "sign out",
   },
 } as const;
 
@@ -63,5 +78,7 @@ export const SHELL_STATUS = {
   create: { hints: ["tab next", "⌘↵ commit", "esc cancel"], right: "draft" },
   upload: { hints: ["drop file", "⌘↵ send"], right: "import queue empty" },
   reminders: { hints: ["enter open", "s snooze", "d done"] },
-  about: { hints: ["esc back"], right: "about" },
+  /** No hint: the handoff's `esc back` was written for a screen with a key bound to it, and About
+   *  has a link and no listener (COS-305). The shortcut lot (COS-312) is what makes it true. */
+  about: { hints: [], right: "about" },
 } as const;

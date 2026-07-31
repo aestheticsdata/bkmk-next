@@ -25,8 +25,11 @@ export const AUTH_TEXT = {
   wordmark: "BKMK",
   /** The reduced chrome's one label: which half of the app you are in. */
   screen: "auth",
-  /** Static. See the warning above. */
-  build: "build 2.4.1 · tls on",
+  /** The owner's domain, in the slot the handoff filled with `build 2.4.1 · tls on` (COS-321): a
+   *  build number the visitor cannot check, on the one screen served to people who have not signed
+   *  in yet, said less than who runs the thing. `Overline` uppercases it, like every other label in
+   *  the chrome. The application chrome keeps its own `IDX/2.4.1` — see `@text/shell.ts`. */
+  build: "1991computer.com",
 
   /** The paragraph under the card, the same on both screens (COS-328): one sentence saying what
    *  bkmk is, to someone who may be reading the name for the first time. Two lines at sign-in's
