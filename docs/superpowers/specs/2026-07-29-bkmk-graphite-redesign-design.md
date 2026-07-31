@@ -47,6 +47,17 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | UI 02 | COS-298 — écran Signup + passphrase de récupération | ✅ mergé (PR #15) |
 | UI 03 | COS-299 — écran Index : rail, table dense, pager | ✅ mergé (PR #16) |
 | UI 04 | COS-300 — modale de filtres | ✅ mergé (PR #17) |
+| FIN 04 | COS-327 — favicon GRAPHITE | ✅ mergé (PR #18) |
+| hors lot | COS-326 — index : la bande d'actions sous le pli | ✅ mergé (PR #19) |
+| UI 13 | COS-328 — login : sur-titre `BKMK` + pitch | ✅ mergé (PR #20) |
+| UI 09 | COS-305 — écran About : les mentions légales en GRAPHITE | ✅ mergé (PR #21) |
+
+⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
+c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
+lien de retour. Le `About_Graphite` du handoff (pitch, table de raccourcis, panneau `system`,
+`changelog`, `sign out`) n'a pas été construit : ce n'est pas le travail de cette page, et la moitié
+n'aurait rien pu dire de vrai sur une page servie sans session. Le §2 ci-dessous, qui annonce
+« refonte + `system`, `changelog` », est périmé sur cette ligne.
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
