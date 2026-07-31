@@ -9,9 +9,20 @@ module.exports = async (req, res) => {
   const buffer = Buffer.from(req.file.buffer);
   const arr = buffer.toString().split("\n");
 
-  if (originalName.split(".")[1] === "csv") {
+  /* ⚠️ **The last dot segment, not the second** (COS-303). This read `split(".")[1]`, so
+   * `session_buddy.2026_07_11.csv` answered `"2026_07_11"` and fell into the `.txt` branch — a csv
+   * read as pairs of lines, which imports garbage rather than failing. `parseImport.ts` on the front
+   * makes the same call, and the preview would have shown the same garbage; both are fixed. */
+  if (originalName.toLowerCase().split(".").pop() === "csv") {
+    /* ⚠️ **A line with no `;` is skipped rather than fatal** (COS-303). Every line was destructured
+     * and `.trim()` called on the second half, so the empty string `split("\n")` leaves after a
+     * trailing newline threw a `TypeError` — which `catchAsync` turned into a 500. Nearly every csv
+     * ends with a newline, so nearly every csv import failed on the last line, after having already
+     * inserted every row before it. */
     arr.forEach((entry) => {
+      if (entry.trim() === "") return;
       const [title, link] = entry.split(";");
+      if (!title || !title.trim() || !link || !link.trim()) return;
       entries.push({ title: title.trim(), link: link.trim() });
     });
   } else {

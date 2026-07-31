@@ -49,6 +49,11 @@ function Segment({
       className={cn(
         "inline-flex h-6 cursor-pointer items-center rounded-lg border px-3 text-2xs tracking-wider transition-colors duration-120 outline-none",
         "focus-visible:border-gr-accent focus-visible:ring-3 focus-visible:ring-gr-ring",
+        /* A drawn-but-inert segment, which the import screen's `on import` row is entirely made of
+           (COS-303). The same call the account menu made for its three unbuilt entries: shown, so
+           you learn what the screen will do, and greyed, because the one thing worse than a missing
+           control is one that does nothing when pressed. */
+        "disabled:pointer-events-none disabled:opacity-45",
         on
           ? "border-gr-teal-border bg-linear-to-b from-gr-teal-from to-gr-teal-to text-gr-teal-fg shadow-gr-1 inset-shadow-gr-hair"
           : "border-gr-border bg-white/18 text-gr-fg-3 hover:bg-white/30 hover:text-gr-fg",

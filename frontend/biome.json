@@ -43,7 +43,10 @@
   },
   "overrides": [
     {
-      "includes": ["**/src/components/bookmarks/Index*.tsx"],
+      "includes": [
+        "**/src/components/bookmarks/Index*.tsx",
+        "**/src/components/bookmarks/import/ImportStaged.tsx"
+      ],
       "linter": {
         "rules": {
           "a11y": {
