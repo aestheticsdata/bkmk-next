@@ -51,6 +51,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-326 — index : la bande d'actions sous le pli | ✅ mergé (PR #19) |
 | UI 13 | COS-328 — login : sur-titre `BKMK` + pitch | ✅ mergé (PR #20) |
 | UI 09 | COS-305 — écran About : les mentions légales en GRAPHITE | ✅ mergé (PR #21) |
+| hors lot | COS-321 — le menu de compte dans le chrome | ✅ mergé (PR #22) |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -58,6 +59,14 @@ lien de retour. Le `About_Graphite` du handoff (pitch, table de raccourcis, pann
 `changelog`, `sign out`) n'a pas été construit : ce n'est pas le travail de cette page, et la moitié
 n'aurait rien pu dire de vrai sur une page servie sans session. Le §2 ci-dessous, qui annonce
 « refonte + `system`, `changelog` », est périmé sur cette ligne.
+
+⚠️ **COS-321 n'a livré que le menu et `log out`.** `change password`, `set recovery passphrase` et
+`language` sont **dessinées et désactivées** : les deux premières attendent leurs routes (COS-324
+porte la passphrase), la troisième attend une couche de traduction que bkmk n'a pas. Elles sont
+montrées plutôt que cachées parce que le menu est aussi la façon d'apprendre ce qu'un compte a — et
+grisées plutôt que promises. Le même passage a **retiré les trois lectures inventées du chrome** sur
+demande du propriétaire : `IDX/2.4.1` et `uptime 04:12` côté application, `build 2.4.1 · tls on` côté
+auth (remplacé par le domaine de l'hôte). Voir le §8.1 plus bas, dont le point 1 est amendé.
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
@@ -653,6 +662,11 @@ About. Il pointe sur `/logout`, ce qui est la traduction fidèle du prototype (�
 login »), avec un `aria-label` explicite parce que l'adresse seule ne dit pas ce que le clic fait.
 AUTH 04 (COS-296) remplacera la cible par un `POST /users/logout`.
 
+⚠️ **C'est COS-321 qui l'a remplacée, pas UI 09.** L'email n'est plus un lien mais le déclencheur du
+menu de compte, dont `log out` poste `/users/logout` pendant que le jeton CSRF est encore en mémoire.
+La page `(public)/logout` est supprimée. About n'a jamais porté de sortie de session : elle ne porte
+que les mentions légales (voir UI 09 dans l'avancement).
+
 **Le chrome d'auth réduit n'est pas fait** (`BKMK` + `auth` + `build 2.4.1 · tls on` + LED, README
 §1). Le ticket porte sur les écrans **applicatifs** ; login et signup appartiennent à UI 01 / UI 02.
 Idem pour About, qui est aujourd'hui dans `(public)` et n'a donc pas le shell : c'est COS-305 qui
@@ -1109,7 +1123,10 @@ deux nombres inventés se lirait comme un accident plutôt qu'une décision.
 ⚠️ **Les trois lignes mono ne sont plus là depuis COS-328** (et le sur-titre `session` non plus) —
 voir la section de ce ticket plus bas. Le raisonnement ci-dessus tient toujours, il a seulement cessé
 de conclure « donc on les rend telles quelles » : sur la porte d'entrée, cette place valait mieux
-qu'un instrument qui ne mesure rien. Le `build 2.4.1 · tls on` du chrome, lui, reste du mobilier.
+qu'un instrument qui ne mesure rien. Le `build 2.4.1 · tls on` du chrome est parti au coup suivant
+(COS-321), remplacé par le domaine de l'hôte : un numéro de version que le visiteur ne peut pas
+vérifier disait moins, sur le seul écran servi à des gens pas encore connectés, que qui fait tourner
+la chose.
 
 **QA faite en local, 44 assertions** (données réelles intactes, compte d'essai créé puis supprimé) :
 les quatre réponses d'erreur — 401 en JSON sur mauvais mot de passe, **401 identique octet pour octet
@@ -1692,6 +1709,13 @@ Tranché le 2026-07-29, plus rien ne bloque :
    constantes dans `src/text/fr/` (la copie ne se met pas en dur, cf. §4) et se rendent telles
    quelles. Corollaire : elles ne doivent **jamais** donner l'impression d'être vivantes —
    pas d'`setInterval` qui incrémente `uptime`, pas de pastille « sync » qui clignote.
+
+   ⚠️ **Trois des quatre ont été retirées depuis** (COS-328 pour la copie d'auth, COS-321 pour le
+   chrome, sur demande du propriétaire) : `IDX/2.4.1`, `uptime 04:12` et `build 2.4.1 · tls on`.
+   La règle n'a pas changé — une valeur statique se rend telle quelle — mais elle disait comment
+   rendre ces lectures, pas qu'il fallait remplir chaque emplacement que la maquette dessine. Un
+   numéro de build que rien dans le projet ne produit et une horloge qui n'avance jamais ne
+   valaient pas leur place. Il reste `sync 12s`, dans `status.index`.
 2. **Champs manquants** (`hash`, `log`, `related`) — **plus tard**. Aucune migration MySQL dans
    ce chantier. Les écrans sont livrés avec ces trois blocs **masqués** (pas de faux contenu,
    pas de squelette permanent), et COS-309 les rallume au lot DATA quand le schéma les portera.
