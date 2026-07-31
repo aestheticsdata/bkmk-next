@@ -1,5 +1,11 @@
 export const ROUTES = {
   bookmarks: { path: "/bookmarks?page=0", label: "Bookmarks" },
+  /** ⚠️ **A record's link cannot be built from `bookmarks.path`** (COS-301): that one carries
+   *  `?page=0` for the legacy list, so `` `${path}/${id}` `` produces `/bookmarks?page=0/6790` — a
+   *  query string with an id inside it, which lands back on the index. Every row of the GRAPHITE
+   *  index had that href since COS-299, and it is why the record screen could not be opened from the
+   *  list. COS-306 moves pagination to the server and can fold this back into one entry. */
+  bookmarksRecord: { path: "/bookmarks", label: "Record" },
   bookmarksCreation: { path: "/bookmarks/create", label: "Create bookmark" },
   bookmarksEdition: { path: "/bookmarks/edit", label: "Edit bookmark" },
   bookmarksBatchUpload: { path: "/bookmarks/upload", label: "Bookmarks upload" },

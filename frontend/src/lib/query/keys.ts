@@ -35,6 +35,11 @@ export const queryKeys = {
   bookmark: {
     all: [ROOTS.bookmark] as const,
     detail: (id: number | string) => [ROOTS.bookmark, String(id)] as const,
+    /** The record's screenshot (COS-301) — a separate request, and a separate entry: the image is a
+     *  base64 data URL of the whole file, so it must not be re-fetched with the record's metadata
+     *  and must not be thrown away when that metadata is invalidated. Keyed by filename as well as
+     *  by record, so re-capturing a screenshot is a different entry rather than a stale one. */
+    screenshot: (id: number | string, filename: string) => [ROOTS.bookmark, String(id), "shot", filename] as const,
   },
   categories: {
     all: [ROOTS.categories] as const,

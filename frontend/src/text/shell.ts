@@ -35,6 +35,9 @@ export const SHELL_TEXT = {
     index: (total: string) => `idx ${total} · sync 12s`,
     /** The reminders screen's right-hand slot. */
     armed: (count: string) => `${count} armed`,
+    /** The record screen's (COS-301). Which record is open, read off the address bar by
+     *  `useShellRoute` — the one screen whose right-hand slot is neither a counter nor a constant. */
+    record: (id: string) => `record ${id}`,
   },
 
   /* The account menu (COS-321). Three of its four entries are drawn and **disabled**: the
@@ -72,7 +75,12 @@ export const SHELL_STATUS = {
    *  `⌥F` and that is the combination the listener answers to. A hint naming a shortcut that does
    *  nothing is worse than no hint. */
   list: { hints: ["j/k move", "enter open", "⌥f filter", "n new"] },
-  detail: { hints: ["esc back", "e edit", "a alarm", "x delete"] },
+  /** ⚠️ **No hint** (COS-301), for the reason About has none: the handoff's `esc back · e edit ·
+   *  a alarm · x delete` names four keys nothing listens for, and the screen has a command bar with
+   *  the same actions on it. FIN 02 (COS-312) binds them and writes them back — minus `a`, which
+   *  belongs to a control this screen does not have. Its right-hand slot is `record <id>`, which is
+   *  computed rather than written here. */
+  detail: { hints: [] },
   /** The handoff writes `draft 2088`; the number is mock data, so only the word survives.
    *  UI 06 (COS-302) adds the real draft reference if the insert screen ever has one. */
   create: { hints: ["tab next", "⌘↵ commit", "esc cancel"], right: "draft" },

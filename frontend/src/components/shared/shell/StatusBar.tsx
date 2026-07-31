@@ -19,7 +19,7 @@ import { SHELL_STATUS, SHELL_TEXT } from "@text/shell";
  * Below `@3xl` the hints go — the tab bar takes their room, and a phone has no keyboard to
  * hint at. */
 function StatusBar() {
-  const { screen } = useShellRoute();
+  const { screen, recordId } = useShellRoute();
   const counts = useShellCounts();
 
   // Widened from the `as const` literal so `right` is uniformly optional: the map only
@@ -30,7 +30,12 @@ function StatusBar() {
   const count = armed ? counts.reminders : counts.bookmarks;
   const format = armed ? SHELL_TEXT.status.armed : SHELL_TEXT.status.index;
 
-  const right = entry.right ?? (count === undefined ? undefined : format(String(count)));
+  /* Three sources, in order of how specific they are: the record screen names the record it is on
+     (COS-301), a screen with a static slot prints it, and everything else falls back to the counter.
+     `recordId` is only ever set on that screen, so the first branch cannot leak into another. */
+  const right = recordId
+    ? SHELL_TEXT.status.record(recordId)
+    : (entry.right ?? (count === undefined ? undefined : format(String(count))));
 
   return (
     <div className="flex h-6.5 shrink-0 items-center gap-4 px-4.5 pb-1 text-3xs uppercase tracking-widest text-gr-fg-4 @max-3xl:h-5 @max-3xl:px-3.5 @max-3xl:pb-0.5">

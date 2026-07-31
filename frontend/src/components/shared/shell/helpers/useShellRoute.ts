@@ -3,7 +3,7 @@
 import { ROUTES } from "@components/shared/config/constants";
 import { usePathname } from "next/navigation";
 
-import type { ShellScreen, ShellTab } from "@components/shared/shell/interfaces/shell";
+import type { ShellRoute } from "@components/shared/shell/interfaces/shell";
 
 /** `trailingSlash: true` makes every path end with a slash, and `ROUTES.bookmarks` carries
  *  a query string. Normalise both sides before comparing them — the same helper the old
@@ -26,18 +26,29 @@ const LIST = normalise(ROUTES.bookmarks.path);
  * `index` lit, which is the handoff's behaviour.
  *
  * `about` lights no tab: it is reachable from the chrome's meta row, not from the four
- * modules. */
-const useShellRoute = (): { screen: ShellScreen; tab: ShellTab | null } => {
+ * modules.
+ *
+ * **The record's id comes from here too** (COS-301), because the status bar prints `record <id>` and
+ * a layout cannot be handed anything by the page it renders. The path already carries it, so reading
+ * it off the address bar costs nothing and cannot go stale. The pattern is what keeps
+ * `/bookmarks/edit/12` — a `detail` screen whose next segment is a word — from printing `record
+ * edit`; it falls back to the index counter, which is what that screen showed before. */
+const RECORD_ID = /^\d+$/;
+
+const useShellRoute = (): ShellRoute => {
   const path = normalise(usePathname() ?? "");
 
-  if (path === CREATE) return { screen: "create", tab: "create" };
-  if (path === UPLOAD) return { screen: "upload", tab: "upload" };
-  if (path === REMINDERS) return { screen: "reminders", tab: "reminders" };
-  if (path === ABOUT) return { screen: "about", tab: null };
-  if (path.startsWith(`${LIST}/`)) return { screen: "detail", tab: "list" };
-  if (path === LIST) return { screen: "list", tab: "list" };
+  if (path === CREATE) return { screen: "create", tab: "create", recordId: null };
+  if (path === UPLOAD) return { screen: "upload", tab: "upload", recordId: null };
+  if (path === REMINDERS) return { screen: "reminders", tab: "reminders", recordId: null };
+  if (path === ABOUT) return { screen: "about", tab: null, recordId: null };
+  if (path.startsWith(`${LIST}/`)) {
+    const segment = path.slice(LIST.length + 1);
+    return { screen: "detail", tab: "list", recordId: RECORD_ID.test(segment) ? segment : null };
+  }
+  if (path === LIST) return { screen: "list", tab: "list", recordId: null };
 
-  return { screen: "list", tab: null };
+  return { screen: "list", tab: null, recordId: null };
 };
 
 export default useShellRoute;
