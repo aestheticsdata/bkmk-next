@@ -9,8 +9,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
  * perform on itself.
  *
  * Written beside the legacy `components/bookmark/services/useBookmark.ts` rather than replacing it,
- * the same call `useBookmarkIndex` made: that hook mirrors its query into `useState` through an
- * effect, and the reminders screen and the edit form still mount it. It leaves with them.
+ * the same call `useBookmarkIndex` made: that hook mirrored its query into `useState` through an
+ * effect, and the reminders screen and the edit form still mounted it. Both are rebuilt — UI 08
+ * (COS-304) and UI 10 (COS-319) — and it left with the second. This hook now serves the record
+ * screen and the edit form alike.
  *
  * ⚠️ **The endpoint answers with an array.** `getBookmarkController` returns the query result as-is,
  * so a one-row array; the schema validates the array and the hook takes the row. An id that matches

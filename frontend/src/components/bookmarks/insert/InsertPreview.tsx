@@ -4,7 +4,7 @@ import { ShotField } from "@components/bookmarks/fields/ShotField";
 import { Overline } from "@components/ds/Overline";
 import { CREATE_TEXT } from "@text/create";
 
-import type { BookmarkDraft } from "@components/bookmarks/insert/draft";
+import type { BookmarkDraft } from "@components/bookmarks/draft";
 
 /** The url's host, which is the one thing in the readout that is not simply echoed back.
  *

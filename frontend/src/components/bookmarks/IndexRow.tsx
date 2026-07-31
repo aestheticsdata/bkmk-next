@@ -7,7 +7,8 @@ import { Overline } from "@components/ds/Overline";
 import { PriorityBars } from "@components/ds/PriorityBars";
 import { RowAction, RowActions } from "@components/ds/RowActions";
 import { Stars } from "@components/ds/Stars";
-import { ROUTES } from "@components/shared/config/constants";
+import { editHref, ROUTES } from "@components/shared/config/constants";
+import { decodeNote } from "@helpers/decodeNote";
 import { cn } from "@lib/utils";
 import { INDEX_TEXT } from "@text/index";
 import { format } from "date-fns";
@@ -78,7 +79,7 @@ function IndexRow({
   onConfirmRemove: () => void;
   busy?: boolean;
 }) {
-  const title = decodeURIComponent(bookmark.title);
+  const title = decodeNote(bookmark.title);
   const url = bookmark.original_url ?? undefined;
 
   return (
@@ -248,14 +249,18 @@ function IndexRow({
                 ↗
               </RowAction>
             )}
-            {/* Edit is the modal of UI 10 (COS-319); until it exists this is the edit screen that
-                exists today, so the action works rather than waiting. */}
+            {/* ⚠️ **A plain `<Link>`, and that is what opens the modal** (COS-319). The edit route is
+                intercepted, so a client navigation from here lays the dialog over this index — with
+                its filters, its page and its scroll position untouched, because they live in the
+                query string and this row never unmounts. Anything that navigated another way — a
+                `router.push` with a `window.location` fallback, an `<a>` — would leave the index and
+                render the full-page form instead. */}
             <RowAction
               asChild
               title={INDEX_TEXT.row.edit}
             >
               <Link
-                href={`${ROUTES.bookmarksEdition.path}/${bookmark.id}`}
+                href={editHref(bookmark.id)}
                 aria-label={INDEX_TEXT.row.edit}
               >
                 ✎

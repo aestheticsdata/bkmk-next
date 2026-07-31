@@ -15,11 +15,20 @@ import { CREATE_TEXT } from "@text/create";
  *
  * `off` is `null` rather than `0`: no alarm means no row in the `alarm` table, and on an edit it is
  * what deletes the one that was there. */
-function AlarmField({ value, onChange }: { value: number | null; onChange: (value: number | null) => void }) {
+function AlarmField({
+  value,
+  onChange,
+  className,
+}: {
+  value: number | null;
+  onChange: (value: number | null) => void;
+  className?: string;
+}) {
   return (
     <FieldGroup
       label={CREATE_TEXT.sections.alarm}
       hint={value == null ? undefined : CREATE_TEXT.fields.alarmHint}
+      className={className}
     >
       <Segment
         on={value == null}

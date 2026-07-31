@@ -93,6 +93,14 @@ export const CREATE_TEXT = {
     choose: "choose a file",
     replace: "replace",
     remove: "remove",
+    /** The edit surface only (COS-319): the record already has a capture on the server. The handoff
+     *  draws `captured` and `re-capture` as two segments; they are a **read-out and a control**, not
+     *  a pair of toggles, so one is a caption in the slot and the other is the file button.
+     *
+     *  The image itself is not shown. Fetching it costs a second request for a base64 of the whole
+     *  file — the record screen's own note — and this field is being edited, not consulted. */
+    captured: "captured",
+    recapture: "re-capture",
     /** What the slot says before a file is picked. See `mock.shotQueued`. */
     accept: "png or jpeg",
     tooLarge: "file is over 10 mb",

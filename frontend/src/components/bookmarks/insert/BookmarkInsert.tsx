@@ -4,7 +4,7 @@ import { AlarmField } from "@components/bookmarks/fields/AlarmField";
 import { PriorityField } from "@components/bookmarks/fields/PriorityField";
 import { StarsField } from "@components/bookmarks/fields/StarsField";
 import { TagsField } from "@components/bookmarks/fields/TagsField";
-import { EMPTY_DRAFT, fieldsInError, isDirty, toInput, validateDraft } from "@components/bookmarks/insert/draft";
+import { EMPTY_DRAFT, fieldsInError, isDirty, toInput, validateDraft } from "@components/bookmarks/draft";
 import { InsertCommandBar } from "@components/bookmarks/insert/InsertCommandBar";
 import { InsertPreview } from "@components/bookmarks/insert/InsertPreview";
 import { Card } from "@components/ds/Card";
@@ -18,7 +18,7 @@ import { CREATE_TEXT } from "@text/create";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import type { BookmarkDraft } from "@components/bookmarks/insert/draft";
+import type { BookmarkDraft } from "@components/bookmarks/draft";
 
 /* `Create_Graphite` — the insert screen (COS-302), and the form the application already had.
  *

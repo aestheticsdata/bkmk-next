@@ -7,13 +7,22 @@ export const ROUTES = {
    *  list. COS-306 moves pagination to the server and can fold this back into one entry. */
   bookmarksRecord: { path: "/bookmarks", label: "Record" },
   bookmarksCreation: { path: "/bookmarks/create", label: "Create bookmark" },
-  bookmarksEdition: { path: "/bookmarks/edit", label: "Edit bookmark" },
   bookmarksBatchUpload: { path: "/bookmarks/upload", label: "Bookmarks upload" },
   bookmarksReminders: { path: "/bookmarks/reminders", label: "Reminders" },
   login: { path: "/login", label: "Login" },
   signup: { path: "/signup", label: "Signup" },
   about: { path: "/about", label: "A propos" },
 };
+
+/** `/bookmarks/<id>/edit` — where editing a record lives since COS-319.
+ *
+ *  ⚠️ **A function, because `bookmarksEdition` could not survive as a prefix.** It used to be
+ *  `/bookmarks/edit` with the id appended; the id is in the *middle* of the address now, and it has
+ *  to be, because that is the path an intercepting route can mirror to open the edit modal over
+ *  whatever screen you were on. Two callers build this link — the index row's `✎` and the record's
+ *  `edit` — and both must produce the identical shape or one of them silently stops being
+ *  intercepted and full-page-navigates instead. */
+export const editHref = (id: number | string): string => `${ROUTES.bookmarksRecord.path}/${id}/edit`;
 
 export const COLUMN_WIDTH = {
   linkIcon: "w-[20px]",

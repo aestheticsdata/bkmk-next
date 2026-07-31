@@ -3,7 +3,7 @@
 import { CommandBar } from "@components/ds/CommandBar";
 import { MiniButton } from "@components/ds/MiniButton";
 import { Overline } from "@components/ds/Overline";
-import { ROUTES } from "@components/shared/config/constants";
+import { editHref, ROUTES } from "@components/shared/config/constants";
 import { Button } from "@components/ui/button";
 import { RECORD_TEXT } from "@text/record";
 import Link from "next/link";
@@ -11,9 +11,9 @@ import { useState } from "react";
 
 /* The record's command bar (COS-301): where you are, and the three things you can do from here.
  *
- * **`edit` links to the edit screen that exists today.** UI 10 (COS-319) turns it into a modal over
- * this page; until it does, the action works rather than waiting — the same bridge the index row
- * made for its `✎`.
+ * **`edit` opens the modal over this page** (COS-319), and it is a plain `<Link>` that does it: the
+ * edit route is intercepted, so a client navigation lays the dialog on top of the record instead of
+ * replacing it. Closing goes back, and the record is still here, still scrolled where it was.
  *
  * **`delete` confirms in place**, the pattern the index row already uses: the button becomes
  * `delete? confirm cancel`, and nothing is destroyed on a single click. UI 11 (COS-320) replaces it
@@ -56,7 +56,7 @@ function RecordCommandBar({
           variant="chrome"
           size="chrome"
         >
-          <Link href={`${ROUTES.bookmarksEdition.path}/${id}`}>{RECORD_TEXT.actions.edit}</Link>
+          <Link href={editHref(id)}>{RECORD_TEXT.actions.edit}</Link>
         </Button>
 
         {confirming ? (
