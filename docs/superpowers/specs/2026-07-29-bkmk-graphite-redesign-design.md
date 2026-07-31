@@ -59,6 +59,10 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | UI 08 | COS-304 — écran Alarms : inventaire, compte à rebours, charge 14 jours | ✅ mergé (PR #27) |
 | hors lot | COS-330 — de-mock de l'écran Alarms (snooze / done) | ⏳ ouvert par UI 08 |
 | hors lot | COS-331 — SEC : secrets en clair dans l'historique git | ⏳ trouvé pendant UI 08 |
+| UI 10 | COS-319 — modale d'édition d'un record, portée par une route | ✅ mergé (PR #28) |
+| hors lot | COS-341 — dialog : le corps défile, plus le panneau autour | ✅ mergé (PR #29) |
+| hors lot | COS-342 — dialog : la taille de base franchit le portail | ✅ mergé (PR #29) |
+| hors lot | index : glyphes dimensionnés à leur encre, bande alignée sur `added` | ✅ mergé (PR #29), sans ticket |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -189,6 +193,51 @@ trois lignes avant de l'élider.
 SQL contre la base de dev, on tombe sur des secrets en clair restés dans l'**historique git** d'un
 dépôt public. Le fichier a été retiré du suivi, ce qui ne retire pas ce qu'il contenait. Rien de plus
 n'est écrit ici : la spec est commitée sur ce dépôt.
+
+⚠️ **UI 10 a emporté le dernier écran legacy, et l'arbre qui ne tenait que par lui.** L'édition était
+un écran construit sur le formulaire de création avec un `id` en prop et une demi-douzaine d'effets ;
+c'est une modale portée par une route, et la route d'édition n'a pas disparu, elle est devenue le
+repli plein écran. Le marqueur d'interception a été **vérifié** avant d'écrire le reste, avec une
+paire de routes jetables et un vrai lien client : `(.)` matche. Le `[...catchAll]` qui vide le slot
+n'est pas optionnel, comme le ticket l'annonçait. Sont partis avec : l'ancien layout, ses barres
+d'outils et de tri, `components/common`, les deux stores zustand et deux hooks. Le contrôleur d'édition
+est réécrit — deux cents lignes de branches imbriquées deviennent une transaction et quatre fonctions
+— et trois défauts avec lui : la comparaison d'alarme opposait un objet à une chaîne, donc chaque
+sauvegarde recréait l'alarme et remettait son compte à rebours à zéro ; celle des catégories était
+stricte entre un nombre et une chaîne, donc chaque sauvegarde supprimait puis réinsérait tous les
+tags ; et le record était chargé **par id seul**, il est porté par la session et un manque est un 404.
+
+⚠️ **Trois écarts au handoff sur UI 10**, tous mesurés : la capture est `compact` dans le formulaire
+— le bloc de 146px rendu en entier dans une modale de 680 remplissait le viewport en 1440×900 et
+mettait le pied hors d'atteinte ; l'en-tête **passe à la ligne** au lieu de masquer son groupe droit,
+puisque `gr-hide-sm` vit dans une requête de conteneur et qu'une modale portalisée est hors du
+conteneur ; et le repli plein écran est ce même panneau de 680px centré, plutôt qu'une carte large
+comme le bureau avec 760px de gris vide à côté d'une colonne de 640.
+
+⚠️ **La relecture d'UI 10 a trouvé deux défauts dans `ui/dialog`, donc dans les trois modales.** Ils
+sont écrits au §7 et au §11 du DS ; l'essentiel ici est ce que chacun laisse comme règle.
+**COS-341** : le panneau était le conteneur de défilement et l'en-tête et les pieds se réépinglaient
+pour compenser — le panneau est une colonne, le corps est le scroller. La règle : *un conteneur de
+défilement doit être le bloc contenant de ce qu'il fait défiler*. Sans `relative` sur le corps, un
+descendant en `sr-only` — qui est du positionnement absolu — échappait à sa découpe, et le clavier,
+qui fait défiler n'importe quel ancêtre y compris un `overflow` caché, tirait l'en-tête 238px au-dessus
+du haut de la fenêtre sans retour possible. Rien ne le dessinait ; c'est une passe sur les 23 arrêts
+de tabulation du formulaire qui l'a sorti. **COS-342** : la racine du screen porte la famille *et* la
+taille, le portail n'avait rattrapé que la famille en COS-321. La règle : *ce qui portalise a besoin
+des deux*, et un composant de champ déclare sa propre taille au lieu de l'hériter — corrigé par le
+haut et par le bas, exprès.
+
+⚠️ **Et une règle de typographie que rien n'avait écrite : un glyphe se dimensionne à son encre, une
+lettre à son em.** Les actions de la ligne d'index étaient à la taille que le handoff leur donne et
+sortaient plus petites que le texte à côté. Aucun de ces glyphes ne vient de Plex Mono : `next/font`
+charge le sous-ensemble `latin`, qui s'arrête à U+00FF, donc **toute flèche et tout symbole de l'app
+sont dessinés par la police système**, dont l'encre est une fraction de l'em — à 12px, `↗` encre
+5,07px, sous la hauteur d'x de la ligne de 11px qu'il accompagne. Ce n'est pas le repli en soi : les
+`◔` et `◨` de la même ligne en viennent aussi et encrent 7,2px. Les deux nombres ne coïncident que
+dans le sous-ensemble chargé, et aucun glyphe de ce design n'y est. Dans la même passe, `⌧` devient
+`✕` — U+2327 dessine un X dans un rectangle, indiscernable à cette taille du carré qu'un navigateur
+peint pour un glyphe absent — et la bande d'actions part du bord gauche de la colonne `added`, si bien
+que le survol **échange** au lieu de déplacer. Sans ticket : sorti d'une relecture de la ligne.
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
