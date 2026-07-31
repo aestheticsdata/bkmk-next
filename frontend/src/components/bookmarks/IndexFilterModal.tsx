@@ -3,6 +3,7 @@
 import { CategoryPicker } from "@components/bookmarks/CategoryPicker";
 import { clearFilters, describeQuery, toFilterHref } from "@components/bookmarks/helpers/indexQuery";
 import { Field } from "@components/ds/Field";
+import { FieldGroup } from "@components/ds/FieldGroup";
 import { Overline } from "@components/ds/Overline";
 import { Segment } from "@components/ds/Segment";
 import { MAX_STARS } from "@components/ds/Stars";
@@ -23,7 +24,7 @@ import { ALARM_STATES } from "@src/schemas/primitives";
 import { useFilterCount } from "@src/services/useFilterCount";
 import { INDEX_TEXT } from "@text/index";
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useState } from "react";
 
 import type { Category } from "@src/schemas/categories";
 import type { FiltersQuery } from "@src/schemas/filters";
@@ -195,7 +196,7 @@ function FilterForm({
             suggestions; the reasoning lives in that file.
             It owns the whole `categories_id` field rather than toggling one id, because a token field
             removes as readily as it adds. */}
-        <Group label={INDEX_TEXT.filters.fields.categories}>
+        <FieldGroup label={INDEX_TEXT.filters.fields.categories}>
           <CategoryPicker
             categories={categories}
             selected={selectedCategories}
@@ -203,7 +204,7 @@ function FilterForm({
             search={search}
             onSearchChange={onSearchChange}
           />
-        </Group>
+        </FieldGroup>
 
         {/* Two pairs of groups, side by side while they fit and stacked when they do not.
             ⚠️ **`flex-wrap`, and no width query of any kind.** This modal is portalled out of the app
@@ -218,7 +219,7 @@ function FilterForm({
             column is wide enough to sit beside its neighbour but too narrow for its own contents is
             the state that printed a lone `5` under the star row, and this number is what removes it. */}
         <div className="flex flex-wrap gap-4">
-          <Group
+          <FieldGroup
             label={INDEX_TEXT.filters.fields.stars}
             className="min-w-72 flex-1"
           >
@@ -237,9 +238,9 @@ function FilterForm({
                 {INDEX_TEXT.filters.starLevels.min(stars)}
               </Segment>
             ))}
-          </Group>
+          </FieldGroup>
 
-          <Group
+          <FieldGroup
             label={INDEX_TEXT.filters.fields.priority}
             className="min-w-72 flex-1"
           >
@@ -252,11 +253,11 @@ function FilterForm({
                 {INDEX_TEXT.filters.priorityLevels[level] ?? level}
               </Segment>
             ))}
-          </Group>
+          </FieldGroup>
         </div>
 
         <div className="flex flex-wrap gap-4">
-          <Group
+          <FieldGroup
             label={INDEX_TEXT.filters.fields.reminder}
             className="min-w-72 flex-1"
           >
@@ -275,9 +276,9 @@ function FilterForm({
                 {INDEX_TEXT.filters.reminderStates[state]}
               </Segment>
             ))}
-          </Group>
+          </FieldGroup>
 
-          <Group
+          <FieldGroup
             label={INDEX_TEXT.filters.fields.contains}
             className="min-w-72 flex-1"
             /* 14px here and 6px everywhere else, both the handoff's: a pill carries its own edge, so
@@ -301,14 +302,14 @@ function FilterForm({
               on={Boolean(draft.url)}
               onClick={() => patch({ url: !draft.url || undefined })}
             />
-          </Group>
+          </FieldGroup>
         </div>
 
         {/* The command bar's own field, read-only and without its caret: the same shorthand in the
             same sunken box, so the line the modal writes and the line the index shows are visibly
             one thing. `describeQuery` prints the draft — it updates as the segments are clicked,
             before anything is applied. */}
-        <Group label={INDEX_TEXT.filters.fields.expression}>
+        <FieldGroup label={INDEX_TEXT.filters.fields.expression}>
           <output className="flex min-h-6.5 w-full min-w-0 items-center gap-1.5 rounded-md border border-gr-border bg-gr-sunk px-2 py-1 text-2xs text-gr-fg-2 inset-shadow-gr-sunk">
             <span
               aria-hidden
@@ -320,7 +321,7 @@ function FilterForm({
                 the point of this line is to be read in full. */}
             <span className="min-w-0 break-all">{expression || INDEX_TEXT.command.unfiltered}</span>
           </output>
-        </Group>
+        </FieldGroup>
       </DialogBody>
 
       {/* Sticky, so the primary action stays where it is when a short viewport makes the modal
@@ -361,50 +362,6 @@ function FilterForm({
         </Overline>
       </DialogFooter>
     </>
-  );
-}
-
-/* A labelled group of controls, laid out exactly like `Field`'s header + control pair so that a
- * `Field` and a `Group` beside each other put their labels *and* their contents on the same two
- * lines — `h-4 leading-4` for the same reason it is load-bearing there.
- *
- * `role="group"` with the label as its accessible name, because a row of toggles is a group and not a
- * fieldset of inputs: `<legend>` would be the right element for radio buttons, and these are
- * `aria-pressed` buttons. */
-function Group({
-  label,
-  className,
-  controlsClassName,
-  children,
-}: {
-  label: string;
-  className?: string;
-  /** The row of controls, for the one group whose spacing is not the segments' — see `contains`. */
-  controlsClassName?: string;
-  children: React.ReactNode;
-}) {
-  const labelId = useId();
-
-  return (
-    <div className={cn("grid gap-1.5", className)}>
-      <Overline
-        id={labelId}
-        className="flex h-4 items-center leading-4"
-      >
-        {label}
-      </Overline>
-      {/* ⚠️ **6px, which is the handoff's gap for a row of segments** — this was `gap-x-3.5` (14px,
-          the figure the *checkboxes* use) and the 8px difference was enough to make two of the rows
-          wrap: `stars` needs 272px on one line and had 291 to spend, but at 14px it wanted 312. The
-          right gap is both the faithful one and the one that fits. */}
-      <div
-        role="group"
-        aria-labelledby={labelId}
-        className={cn("flex flex-wrap items-center gap-1.5", controlsClassName)}
-      >
-        {children}
-      </div>
-    </div>
   );
 }
 
