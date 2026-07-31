@@ -312,6 +312,14 @@ question a threshold approximates; the only number it needs is the width one hal
 is measurable. Same argument `DialogFooter` won on. So the standing answer for a portalled surface is:
 **reach for wrapping first, and only ask for a threshold when the fold changes more than the axis.**
 
+⚠️ **A portal escapes the typeface as well, and that one was a bug** (found in COS-321, measured
+through CDP). `font-mono` lives on the screen root — `AppShell`, `AuthShell` — and `body` carries no
+font at all while the global reset waits for the last legacy screen (§12). So every portalled surface
+came back `-apple-system, system-ui, …`: the filter modal had been drawing in the system sans since
+COS-300, on a design that is one typeface end to end. `font-mono` now sits on `DialogContent` and on
+the dropdown menu's two contents. **Anything new that portals needs it too**, until `body` gets the
+family and this stops being a per-component chore.
+
 Two live consequences, both deliberate:
 
 - **`ui/dialog` has no width variants.** COS-291 gave its header and footer a copy of `CommandBar`'s
@@ -446,10 +454,16 @@ which is why `ui/dialog` carries no width variants. That boundary, and what to d
 
 ### What is alive and what is furniture
 
-`IDX/2.4.1`, `uptime 04:12` and `sync 12s` are **static chrome** (§8.1 of the spec) and live as copy
-in `@text/shell.ts`. They are rendered exactly as written: no interval advancing the clock, no
-blinking LED, nothing that suggests a reading. The tab counters and the account email are the only
-real values in the shell.
+`sync 12s`, inside the status bar's `idx 312 · sync 12s`, is what is left of the shell's **static
+chrome** (§8.1 of the spec) and lives as copy in `@text/shell.ts`. It is rendered exactly as written:
+no interval advancing it, no blinking LED, nothing that suggests a reading. The tab counters and the
+account email are the only real values in the shell.
+
+⚠️ **Both of the chrome's invented readings left in COS-321**, on the owner's call: `IDX/2.4.1`
+beside the wordmark, and `uptime 04:12` in the meta row — a build number nothing produces, and a
+clock that never moved. The auth screens' `build 2.4.1 · tls on` became `1991computer.com` in the
+same pass. §8.1 still holds for what remains: it says a static value is rendered as written, not that
+every slot the mockup fills has to be filled.
 
 Counters print on three digits (`index 312`, `alarms 004`) and render **nothing** until the number
 arrives — `000` would be a wrong answer, not a pending one.
@@ -496,6 +510,26 @@ nothing replaces those yet — removing them would cost the legacy screens their
 and record actions several tickets before the GRAPHITE command bar arrives. The account email is the
 one sign-out affordance left until UI 09 puts one in About; it points at `/logout`, which AUTH 04
 (COS-296) turns into a `POST /users/logout`.
+
+### The account menu (COS-321)
+
+The chrome's e-mail opens a menu instead of signing you out where you stand. `ui/dropdown-menu` from
+the registry, repainted onto the tokens: `gr-panel` surface, `gr-border-2` edge, the hair line and
+the step-2 shadow, rows at 12px with the white wash under the lit one, `SIGNED IN` as a written-out
+`Overline`, and `log out` on the `destructive` variant, which in GRAPHITE means oxide.
+
+**The lit row is `focus:`, never `hover:`.** Radix moves focus with the pointer as well as with the
+arrow keys, so a single rule covers the mouse and the keyboard and the two cannot disagree.
+
+**Three of the four entries are drawn disabled** — `change password`, the recovery passphrase, and
+`language` with its current value. Each needs a route or a layer that does not exist yet. They are
+shown because the menu is also how you learn what an account has, and greyed because the only thing
+worse than a missing entry is one that does nothing when pressed. For the same reason the chevron on
+`language` is **not** drawn: a chevron promises a submenu, and none opens.
+
+`/logout` left with this ticket. Signing out is `useSignOut`, the ordering COS-296 established —
+`POST /users/logout` first, while the CSRF token is still in memory, then the context, then the
+react-query cache, then `replace` to the sign-in screen.
 
 ### The second frame: `AuthShell` (COS-297)
 

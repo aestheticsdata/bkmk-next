@@ -7,6 +7,7 @@ import { ROUTES } from "@components/shared/config/constants";
 import { COUNTER_DIGITS, SHELL_TABS } from "@components/shared/shell/config/constants";
 import useShellRoute from "@components/shared/shell/helpers/useShellRoute";
 import useShellCounts from "@components/shared/shell/services/useShellCounts";
+import { UserMenu } from "@components/shared/shell/UserMenu";
 import { cn } from "@lib/utils";
 import { SHELL_TEXT } from "@text/shell";
 import Link from "next/link";
@@ -33,13 +34,14 @@ function TopChrome() {
         "@max-3xl:h-12 @max-3xl:gap-3 @max-3xl:px-3.5",
       )}
     >
+      {/* The wordmark alone. `IDX/2.4.1` sat beside it until COS-321: a build number nothing
+          produces, that no screen could be checked against, printed where the eye lands first. */}
       <Link
         href={ROUTES.bookmarks.path}
         aria-label={SHELL_TEXT.aria.home}
-        className="flex items-baseline gap-2"
+        className="text-xs font-semibold tracking-caps text-gr-fg-2"
       >
-        <span className="text-xs font-semibold tracking-caps text-gr-fg-2">{SHELL_TEXT.wordmark}</span>
-        <span className="text-3xs tracking-widest text-gr-fg-4">{SHELL_TEXT.build}</span>
+        {SHELL_TEXT.wordmark}
       </Link>
 
       <nav
@@ -85,31 +87,23 @@ function TopChrome() {
       </nav>
 
       <div className="ml-auto flex items-center gap-3.5">
-        <div className="flex items-center gap-3.5 @max-3xl:hidden">
+        {/* **Both items in this row are 24px boxes with the tabs' wash, so the row is spaced like
+            the tab row: `gap-1`, and the padding is what separates the words.** It was `gap-3.5`
+            between two bare labels whose only hover was a shade of ink — invisible at 10px, on the
+            two things in the chrome you are meant to click. */}
+        <div className="flex items-center gap-1 @max-3xl:hidden">
           {/* `asChild`: wrapped, the link would be a 12px flex item around a 10px label and its
               strut would sit it below the `Overline`s beside it. */}
           <Overline
             asChild
-            className="hover:text-gr-fg"
+            className="flex h-6 items-center rounded-md px-2 transition-colors duration-120 outline-none hover:bg-white/22 hover:text-gr-fg focus-visible:ring-3 focus-visible:ring-gr-ring"
           >
             <Link href={ROUTES.about.path}>{SHELL_TEXT.about}</Link>
           </Overline>
-          <Overline>{SHELL_TEXT.uptime}</Overline>
-          {/* The handoff makes the email the way back out of the session ("l'email du
-              chrome → login"), which in real bkmk means /logout — since AUTH 04 (COS-296)
-              a `POST /users/logout` that destroys the session server-side, then a redirect.
-              Hence the aria-label: the address alone does not say what clicking it does.
-              ⚠️ A click is still an immediate sign-out with no menu and no confirmation.
-              COS-321 replaces this link with the user menu the handoff draws. */}
-          {email && (
-            <Link
-              href="/logout"
-              aria-label={SHELL_TEXT.aria.signOut}
-              className="text-3xs text-gr-fg-3 hover:text-gr-fg"
-            >
-              {email}
-            </Link>
-          )}
+          {/* The handoff makes the e-mail the way out of the session; since COS-321 it opens the
+              account menu instead of signing out on the first click, and `log out` inside it is
+              the control that leaves. */}
+          {email && <UserMenu email={email} />}
         </div>
         <Led />
       </div>

@@ -88,7 +88,12 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.25rem)] max-w-160 translate-x-[-50%] translate-y-[-50%] overflow-auto rounded-2xl border border-gr-border-2 bg-gr-panel text-gr-fg shadow-gr-modal duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          /* ⚠️ **`font-mono` was missing here** (found while building the account menu, COS-321).
+             The shell puts the typeface on the screen root, and a portal renders outside it into a
+             `body` that has none until the global reset lands — so the filter modal has been
+             drawing in `-apple-system` since COS-300. Measured through CDP, on both portalled
+             surfaces. */
+          "fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.25rem)] max-w-160 translate-x-[-50%] translate-y-[-50%] overflow-auto rounded-2xl border border-gr-border-2 bg-gr-panel font-mono text-gr-fg shadow-gr-modal duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className,
         )}
         {...props}

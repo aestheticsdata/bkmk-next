@@ -4,8 +4,9 @@ import { getServerSession } from "@auth/server/getServerSession";
 /* The public tree gets a provider too (COS-296), unseeded when there is no session.
  *
  * It is not decoration: `/login` and `/signup` call `setCredentials`, which writes the CSRF
- * token into the context, and `/logout` needs to read that token to send its `POST`. Both
- * would throw outside a provider.
+ * token into the context, and would throw outside a provider. (`/logout` was the third reason
+ * until COS-321 — the route is gone, and signing out is now the account menu's `log out`,
+ * inside the private tree.)
  *
  * Unlike the private layout this one never redirects — it has nowhere to send anyone — and it
  * **swallows a failing session lookup**. A visitor arriving at `/login` while the API is down
