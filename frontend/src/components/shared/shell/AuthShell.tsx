@@ -4,8 +4,8 @@ import { AUTH_TEXT } from "@text/auth";
 
 import type * as React from "react";
 
-/* The frame of the two public auth screens (COS-297): **reduced chrome → centred block →
- * status bar**. `app/(public)/login` and `app/(public)/signup` render into it.
+/* The frame of the public screens (COS-297): **reduced chrome → centred block → status bar**.
+ * `app/(public)/login`, `app/(public)/signup` and `app/(public)/about` render into it.
  *
  * It is a sibling of `AppShell`, not a variant of it, and the strip below is deliberately not
  * `TopChrome`. The application chrome exists to carry the four modules, the index counters and
@@ -20,12 +20,23 @@ import type * as React from "react";
  * flex column: at a height where the card no longer fits, grid centring still lets the
  * overflow scroll in both directions, where a centred flex child would be clipped at the top.
  */
-function AuthShell({ hints, children }: { hints: readonly string[]; children: React.ReactNode }) {
+function AuthShell({
+  hints,
+  screen = AUTH_TEXT.screen,
+  children,
+}: {
+  hints: readonly string[];
+  /** Which screen the chrome names, beside the wordmark. `auth` for the two forms; About passes
+   *  its own (COS-305) — the frame is public, not auth-only, and the label is the one part of it
+   *  that has ever been about the screen rather than about the system. */
+  screen?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="@container flex h-dvh flex-col bg-gr-bg font-mono text-xs text-gr-fg">
       <header className="relative z-10 flex h-9.5 shrink-0 items-center gap-4.5 border-b border-gr-border-2 bg-gr-panel-2 px-4 shadow-gr-chrome inset-shadow-gr-hair @max-3xl:h-12 @max-3xl:gap-3 @max-3xl:px-3.5">
         <span className="text-xs font-semibold tracking-caps text-gr-fg-2">{AUTH_TEXT.wordmark}</span>
-        <Overline>{AUTH_TEXT.screen}</Overline>
+        <Overline>{screen}</Overline>
         <Overline className="ml-auto @max-3xl:hidden">{AUTH_TEXT.build}</Overline>
         <Led />
       </header>
