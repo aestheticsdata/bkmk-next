@@ -728,6 +728,21 @@ measured:
 Measured after: 22 dates on one left edge, headers and cells sharing a left edge column by column, and
 an 8px gutter between every pair.
 
+⚠️ **Out of the flow is a rule for the wide table, and it does not survive the fold** (COS-326). Below
+`@max-3xl` five of the six cells are hidden and the row loses the `added` column the strip was floating
+over — so the strip was painted straight onto the url, measured at 420px as **86px of glyphs over the
+end of the line** on every row whose url is long enough to reach them. It is worse than a hover
+artefact: `RowActions` is `@max-3xl:opacity-100`, because a touch screen has no hover, so the overlap
+was permanent.
+
+The folded row is therefore **two columns**, `1fr auto`, and the strip takes the second one:
+`@max-3xl:relative @max-3xl:inset-auto` on the same element that is `absolute` above the fold. `relative`
+and not `static` — `z-index` is ignored on a static box, and the title link's `::after` overlay would
+take every click meant for a button. Measured at 420px: no intersection on any row, the truncated url
+stopping 8px short of the strip, the three buttons 26×26 and each of them the top element at its own
+centre, and the wider `delete? · confirm · cancel` state still inside the row. At 1440px all six rows
+are byte-identical to the measurement taken before the change.
+
 **Both pager arrows are always rendered**, the unavailable one `disabled`. They were absent at the ends
 first, with a spacer holding the gap, and the spacer was square while the button is wider than tall —
 so arriving on page 1 shoved `page 01` sideways. A disabled button holds its own geometry exactly. The

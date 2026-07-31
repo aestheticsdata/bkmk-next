@@ -34,9 +34,14 @@ import type { Bookmark } from "@src/schemas/bookmarks";
  *  in it.
  *
  *  Exported because the header row must use the identical string: two grids that agree by accident
- *  drift the first time one is edited. */
+ *  drift the first time one is edited.
+ *
+ *  **Below the fold the row is two columns, not one** (COS-326). Five of the six cells are
+ *  `@max-3xl:hidden`, so what is left is the title cell and the action strip — and a strip that is out
+ *  of the flow has nothing to sit in once the `added` column is gone. `1fr auto` gives it a track of
+ *  its own: the title and its url take what is left and truncate into it. */
 const INDEX_COLUMNS =
-  "grid-cols-[--spacing(9)_--spacing(15.5)_1fr_--spacing(47)_--spacing(11)_--spacing(22)] gap-x-2 @max-3xl:grid-cols-1";
+  "grid-cols-[--spacing(9)_--spacing(15.5)_1fr_--spacing(47)_--spacing(11)_--spacing(22)] gap-x-2 @max-3xl:grid-cols-[1fr_auto]";
 
 /** Three at most, as the handoff draws. A fourth would push the column, and the record screen shows
  *  them all. */
@@ -83,7 +88,7 @@ function IndexRow({
       className={cn(
         "group/row relative grid h-7.5 items-center border-b border-gr-border text-2xs transition-colors duration-120",
         INDEX_COLUMNS,
-        "@max-3xl:h-auto @max-3xl:gap-1 @max-3xl:px-3 @max-3xl:py-2",
+        "@max-3xl:h-auto @max-3xl:gap-x-2 @max-3xl:px-3 @max-3xl:py-2",
         selected ? "bg-white/36 inset-shadow-gr-mark" : "hover:bg-white/20",
       )}
     >
@@ -124,7 +129,14 @@ function IndexRow({
             ◔
           </span>
         )}
-        {url && <span className="min-w-0 truncate text-3xs text-gr-fg-3">{url.replace(/^https?:\/\//, "")}</span>}
+        {url && (
+          <span
+            data-slot="index-row-url"
+            className="min-w-0 truncate text-3xs text-gr-fg-3"
+          >
+            {url.replace(/^https?:\/\//, "")}
+          </span>
+        )}
       </div>
 
       <div
@@ -178,8 +190,16 @@ function IndexRow({
       {/* Out of the flow, pinned to the row's right edge — `absolute` resolves against the row, which
           is the `relative` one. Inside the last cell rather than beside it, so the row keeps six cells
           and its ARIA structure. `z-1` puts it above the title link's overlay, which is why none of
-          these handlers needs `stopPropagation`. */}
-      <div className="absolute inset-y-0 right-3 z-1 flex items-center gap-2">
+          these handlers needs `stopPropagation`.
+
+          ⚠️ **Below the fold it comes back into the flow** (COS-326). Out of the flow it was painted
+          on top of the url — measured at 420px, 86px of glyphs over the end of the line — because the
+          folded row is no longer a 30px line with a spare `added` column to sit in, and nothing
+          reserved the space. It takes the `auto` track of the folded grid instead: `relative` rather
+          than `static`, because `z-index` does not apply to a static box and the title link's overlay
+          would then swallow every click. `inset-auto` cancels the offsets, which a relative box would
+          otherwise honour — `right-3` alone would shift it 12px left of where it belongs. */}
+      <div className="absolute inset-y-0 right-3 z-1 flex items-center gap-2 @max-3xl:relative @max-3xl:inset-auto">
         {confirming ? (
           <>
             <Overline className="text-gr-accent-2">{INDEX_TEXT.row.askRemove}</Overline>
