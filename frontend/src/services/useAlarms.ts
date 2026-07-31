@@ -19,8 +19,9 @@ import { useQuery } from "@tanstack/react-query";
  * shape — the parsed array — which is why the counter takes its `.length` at the call site rather
  * than in its query function.
  *
- * `userID` in the query string is the client telling the server who it is, which is COS-322's
- * problem and not this ticket's; every list controller still reads it. */
+ * `userID` in the query string is the client telling the server who it is. COS-322 stopped the
+ * controllers reading it — the scope is the session's now — and left it on the wire, so this call
+ * and its key are unchanged. See `indexQuery.ts`. */
 function useAlarms() {
   const { privateRequest } = useRequestHelper();
   const userID = useAuth().user?.id;

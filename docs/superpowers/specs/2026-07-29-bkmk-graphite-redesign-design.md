@@ -63,6 +63,8 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-341 — dialog : le corps défile, plus le panneau autour | ✅ mergé (PR #29) |
 | hors lot | COS-342 — dialog : la taille de base franchit le portail | ✅ mergé (PR #29) |
 | hors lot | COS-344 — index : glyphes dimensionnés à leur encre, bande alignée sur `added` | ✅ mergé (PR #29) |
+| UI 11 | COS-320 — suppression : confirmation en place + modale | 🔎 en QA |
+| hors lot | COS-322 — le périmètre d'un contrôleur vient de la session, plus de la requête | 🔎 en QA |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -242,6 +244,75 @@ sortie d'une relecture de la ligne et non d'un rapport, et le ticket existe pour
 pour toute l'app. Deux choses qu'il écarte explicitement — élargir le sous-ensemble de police, qui est
 une décision de chargement touchant chaque page, et généraliser la taille aux autres glyphes sans les
 mesurer, ce qui casserait les `◔` et `◨` qui sortent justes.
+
+⚠️ **UI 11 était à moitié livré avant d'être pris, et la moitié qui restait n'était pas celle que le
+ticket met en avant.** Le chemin 1 — les trois actions au survol et la confirmation en place — est
+arrivé avec l'index (COS-299), puis a été replacé et redimensionné par COS-326 et COS-344. Ce que ce
+ticket a écrit, c'est le chemin 2 : la modale, et son remplacement des **deux** paires en place que
+la fiche et le formulaire d'édition portaient comme passerelles annoncées. Le partage tient toujours
+au même arbitrage : on confirme en place quand la ligne qui va disparaître est sous le curseur, et
+dans un panneau quand ce qui disparaît *est* l'écran derrière la question. La ligne d'index n'appelle
+donc pas `DeleteConfirm`, exprès.
+
+⚠️ **`ui/alert-dialog` a été réécrit, pas habillé.** Il était resté en shadcn de série — texte centré,
+boîte `p-5`, emplacement d'icône au-dessus du titre — alors que la confirmation du handoff a
+l'anatomie de `ui/dialog` : en-tête `.gr-cmd`, corps, pied sur `--panel-2`. UI 11 en est le premier
+consommateur, donc rien à migrer : le fichier est devenu `ui/dialog` à 440px au lieu d'un second
+langage de modale à côté du premier. Les tokens oxyde que DS 01 avait posés « pour UI 11 » servent
+enfin, et une seule fois — la variante `danger-solid` du bouton.
+
+⚠️ **Une règle générale sortie d'une mesure, et elle ne parle pas de suppression : un garde qui lit
+l'état de rendu doit s'exécuter avant ce qui va changer cet état dans le même événement.** Les deux
+coques du formulaire d'édition taisent leurs raccourcis `window` pendant la confirmation — `⌘↵` pour
+ne pas sauvegarder l'enregistrement qu'on demande de détruire, et `esc` sur la coque plein écran, qui
+est celui qui l'a rendu nécessaire. Écrit d'abord en phase de bouillonnement, **mesuré en échec** :
+Radix écoute `esc` sur `document` en phase de capture, et React 19 vide une mise à jour discrète *et*
+rejoue l'effet **de façon synchrone, dans le même événement**. L'écouteur atteint au bouillonnement
+était donc une fermeture neuve portant `confirm === "none"`, et laissait passer la touche — une seule
+pression fermait la modale *et* quittait l'écran derrière. Sondé au CDP en imprimant l'état aux quatre
+phases : `window-capture` et `document-capture` lisent encore `remove`, `window-bubble` lit `none`
+alors que le panneau est toujours à l'écran. Interroger le DOM à la place — l'astuce de l'index pour
+`⌥F` — échoue pareil et pire : au bouillonnement le nœud n'est encore là que parce que son animation
+de sortie joue. `capture: true` est le correctif.
+
+⚠️ **La suppression est douce et la copie dit « cannot be undone ».** Le contrôleur bascule
+`active=0` ; les deux requêtes de liste qui doivent le savoir filtrent bien sur `b.active = 1`
+(COS-304 avait corrigé celle des alarmes pour cette raison exacte). La phrase reste vraie de
+l'application — rien ne liste ni ne restaure une ligne inactive — et c'est la copie du handoff.
+La lecture de la fiche, elle, ne filtre toujours pas, et la question d'autorisation que le même
+fichier posait est tranchée juste après, par **COS-322** ci-dessous.
+
+⚠️ **COS-322 s'appelle « les contrôleurs de liste » et ce n'est pas là qu'était le pire.** Les trois
+listes cadraient bien leurs lignes — sur `?userID=`, c'est-à-dire sur la parole du client, ce qui est
+le titre du ticket. Les deux contrôleurs que le ticket demandait seulement de « vérifier au passage »,
+la fiche et la suppression, ne cadraient **rien du tout** : un identifiant suffisait, et ce sont des
+petits entiers. Le correctif n'y est donc pas « lire l'identité au bon endroit » mais « lire
+l'identité ». Un sixième site que le ticket ne nommait pas est venu avec : sur la route du
+screenshot, le paramètre ne choisissait pas des lignes mais **un dossier sur le disque**, moitié que
+le `basename` de COS-295 ne pouvait pas couvrir.
+
+⚠️ **Le paramètre reste sur le fil, validé et ignoré — et c'est ce qui fait tenir le correctif d'un
+seul côté.** Le front continue d'envoyer ce qu'il a toujours envoyé, donc aucune clé react-query ne
+change de forme et le diff côté client est **entièrement en commentaires**. Le retirer est un
+changement de contrat, et il revient à DATA 01 (COS-306), qui réécrit déjà ces chaînes de requête en
+objet de filtres. Même arbitrage sur la fiche : elle répond `200` avec `[]` là où l'édition et la
+suppression répondent `404`. Les deux sont également muettes — un enregistrement d'un autre compte et
+un identifiant que personne n'a utilisé partagent la réponse dans les deux cas — mais `[]` est ce que
+cette route a toujours dit, et `useBookmarkRecord` l'affiche déjà comme `missing`. Aligner les trois
+routes sur un seul code se fera avec le ticket qui touche déjà au client.
+
+⚠️ **Vérifié en exécutant les deux versions, pas en relisant le diff.** Deux comptes jetables créés
+par l'API, un enregistrement chacun avec catégorie, alarme et screenshot, puis la matrice complète :
+sur `HEAD`, A lit la fiche de B, supprime la ligne de B et récupère l'image de B ; avec le correctif,
+les sept contrôles basculent et les neuf contrôles de non-régression tiennent. Les comptes ont été
+effacés ensuite — la base est revenue à ses 11 utilisateurs et 1 331 enregistrements. Un test qui
+passe des deux côtés ne prouve rien : c'est la passe sur `HEAD` qui dit que celui-ci mesure quelque
+chose.
+
+**Deux tickets ouverts en route**, référencés par leur numéro seul — ils sont ouverts, et le dépôt
+est public (règle en tête du §6) : **COS-345** et **COS-346**. Le premier est un axe de la même
+famille que ce ticket, trouvé par l'audit qui l'accompagnait, et il a de la donnée déjà en base ;
+le second est une bombe à retardement de déploiement, sans rapport avec la sécurité.
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
@@ -1129,7 +1200,7 @@ ce dépôt est public et le détail d'une faille non corrigée n'a rien à y fai
 §6) :
 
 - le code de réponse d'un échec de connexion, à traiter avec l'écran Login → **COS-297** ;
-- le périmètre utilisateur des contrôleurs de liste → **COS-322**.
+- le périmètre utilisateur des contrôleurs de liste → **COS-322**, corrigé depuis (voir le §0).
 
 ### Ce qui a été posé (COS-295, le 2026-07-30)
 

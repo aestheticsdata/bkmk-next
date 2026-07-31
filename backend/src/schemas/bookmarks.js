@@ -133,7 +133,17 @@ const updateBookmarkBodySchema = z.object({
   deleteScreenshot: z.string().optional(),
 });
 
-/** `GET /categories` and `GET /reminders` take nothing but the user identifier. */
+/** `GET /categories` and `GET /reminders` take nothing but the user identifier.
+ *
+ * ⚠️ **Which no controller reads any more** (COS-322). The scope comes from the session; `userID` is
+ * validated and ignored, on this schema as on `listBookmarksQuerySchema` and `screenshotQuerySchema`.
+ *
+ * It stays required rather than being dropped, and that is the point of the fix rather than an
+ * oversight: the front keeps sending what it has always sent, so no request builder moves, no
+ * react-query key changes shape, and the whole change is on one side of the wire. Retiring the
+ * parameter is a client contract change and belongs to DATA 01 (COS-306), which is already going to
+ * rewrite these query strings into a filter object. Until then a schema that still describes the
+ * wire truthfully is worth more than one that describes what we wish were on it. */
 const userScopedQuerySchema = z.object({ userID: idSchema });
 
 module.exports = {

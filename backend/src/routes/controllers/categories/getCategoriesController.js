@@ -40,7 +40,8 @@ module.exports = async (req, res) => {
   `;
 
   const conn = await dbConnection();
-  const [rows] = await conn.execute(sql, [req.query.userID]);
+  // The session's user, not the query string's — see `getBookmarksController` (COS-322).
+  const [rows] = await conn.execute(sql, [req.user.id]);
   await conn.end();
   res.json(rows);
 };

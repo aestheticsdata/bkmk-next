@@ -45,8 +45,11 @@ function readIndexQuery(searchParams: URLSearchParams | { toString: () => string
  *  `?stars=1&page=0` and `?page=0&stars=1` describe one page and would occupy two cache
  *  entries — the second arriving as a loading state for something already held.
  *
- *  `userID` is a parameter because every list controller still scopes on it; it is the client's
- *  word for who it is, which is COS-322's subject, not this screen's. */
+ *  `userID` is still sent and **no longer read**: COS-322 moved every list controller onto the
+ *  session's identity, since a parameter the client writes is the client's word for who it is. It
+ *  keeps its place in this string because the string is a cache key — dropping it would rewrite
+ *  every `queryKeys.bookmarks.list` entry for a value the server ignores either way. It goes when
+ *  DATA 01 (COS-306) turns these query strings into a filter object. */
 function toApiQuery(query: FiltersQuery, { rows, userID }: { rows: number; userID?: number }): string {
   const params = new URLSearchParams();
 

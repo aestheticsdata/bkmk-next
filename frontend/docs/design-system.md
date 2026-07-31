@@ -329,7 +329,7 @@ is measurable. Same argument `DialogFooter` won on. So the standing answer for a
 
 ⚠️ **A portal escapes the typeface as well, and that one was a bug** (found in COS-321, measured
 through CDP). `font-mono` lives on the screen root — `AppShell`, `AuthShell` — and `body` carries no
-font at all while the global reset waits for the last legacy screen (§13). So every portalled surface
+font at all while the global reset waits for the last legacy screen (§14). So every portalled surface
 came back `-apple-system, system-ui, …`: the filter modal had been drawing in the system sans since
 COS-300, on a design that is one typeface end to end. `font-mono` now sits on `DialogContent` and on
 the dropdown menu's two contents. **Anything new that portals needs it too**, until `body` gets the
@@ -1080,9 +1080,11 @@ the four with nothing to do — arming a reminder writes `reminder` on the recor
 form's field, and the legacy screen this replaces had `back / edit / delete` and no alarm control. The
 value is on the screen, in `fields`.
 
-`edit` links to the edit screen that exists today and `delete` confirms in place, both bridges until
-COS-319 and COS-320 replace them with modals — the same call the index row made for its `✎`. The
-in-place pair is deliberately the smaller thing to throw away.
+Both bridges are gone now. `edit` is a `<Link>` into the intercepted route, so it lays the edit modal
+over this page (COS-319); `delete` opens the confirmation panel (COS-320, §13), and the in-place
+`delete? confirm cancel` that stood in for it — deliberately the smaller thing to throw away — was
+thrown away. On this screen the pair was always the wrong shape anyway: what it asked about was the
+whole page behind it, not a line under the cursor.
 
 ### Small things, decided
 
@@ -1106,7 +1108,115 @@ in-place pair is deliberately the smaller thing to throw away.
 
 ---
 
-## 13. What is still legacy
+## 13. The delete flow (COS-320)
+
+**Two ways to ask, chosen by what is on the screen behind the question.** This is §10 of the handoff,
+and it is the only place in the system where one action has two confirmations by design rather than by
+oversight.
+
+| From | How it asks | Why |
+|---|---|---|
+| an index row | in place, at the end of the row | the line about to go is under the cursor; a panel over the table would cover the one thing you want to check |
+| the record screen | the confirmation modal | the thing being deleted *is* the screen behind the panel |
+| the edit form, in either shell | the confirmation modal | same, and the draft in the fields is not what is being thrown away |
+
+The row's version is `MiniButton`s and `INDEX_TEXT.row.*`, and it shipped with the index (COS-299);
+the modal is `bookmarks/DeleteConfirm` on `ui/alert-dialog`, with its own copy in `@text/delete.ts`.
+Three surfaces, two vocabularies, one endpoint — and the modal is deliberately *not* wired into the
+row.
+
+### What the panel repeats back
+
+Title, then url without its protocol, then the warning under a rule: *note, tags, screenshot and alarm
+go with it. the entry is removed from the index — this cannot be undone.* The enumeration is the point.
+A record owns four things that are not visible from a command bar, and "delete this record?" does not
+say that the screenshot goes too.
+
+⚠️ **The warning is the `AlertDialogDescription`, not the header's `record 42`.** Radix wires
+`aria-describedby` to whatever sits in that slot, so it has to be the sentence stating the
+consequence; the identifier is already announced with the title. That is the opposite of
+`DialogDescription`, which *is* an overline beside its title — hence two components named alike that
+style nothing alike.
+
+### `ui/alert-dialog` is `ui/dialog` at 440px
+
+It shipped as stock shadcn — centred text, a `p-5` box, an icon slot above the title — and none of that
+is a shape GRAPHITE draws. The handoff's confirmation is a `.gr-cmd` header, a padded body and a footer
+strip on `--panel-2`: `ui/dialog`'s anatomy exactly. So the file was rewritten as that file with a
+narrower cap rather than left as a second modal language beside it. UI 11 is its first consumer, so
+there was nothing to migrate, and the centred variants left rather than sit unused.
+
+`max-w-110` is the handoff's `min(440px, 100% - 20px)` — the narrowest of the system's three, beside
+the filter modal's 640 and the edit modal's 680. It is a default here where 640 is a default there,
+because an alert dialog asks one short question and `ui/dialog` has three consumers wanting three
+widths.
+
+It restates `font-mono text-xs` for the reason §7 gives twice over (COS-321, COS-342), and its body is
+the scroll container for the reason COS-341 gives. Three lines of prose will never scroll; a record
+with a 400-character title on a short viewport will, and the alternative is the `delete record` button
+pushed off the bottom of the screen.
+
+### The one place two portalled surfaces stack
+
+`z-52` / `z-53`, against `ui/dialog`'s 50 — the handoff's own numbers. The confirmation is reachable
+*from inside* the edit modal, which makes it the only surface in the app that opens over another
+portalled one. At equal `z-index` DOM order would settle it, and DOM order happens to be right, since
+Radix appends portals in mount order and this one mounts second. Correct by accident of mount order is
+not a thing to leave in a stacking context.
+
+The edit modal dims behind it, which is intended: the question on top is about the record it is
+editing.
+
+### ⚠️ A guard that reads render state must run before whatever changes it
+
+Both edit shells silence their own `window` shortcuts while the confirmation is up — `⌘↵` so that
+answering "are you sure you want to destroy this" cannot save it instead, and on the full-page shell
+`esc`, which is the one that made this necessary. A `window` listener is not a Radix layer: it fires
+under the dialog as well as in it, so one press closed the confirmation *and* ran the shell's `leave`
+behind it, navigating away from the record still being decided about.
+
+`if (confirm === "remove") return` was written on the bubble phase first, and **measured failing.**
+Radix listens for `esc` on `document` in the *capture* phase, and React 19 flushes a discrete update
+and re-runs the effect **synchronously, inside the same event dispatch** — so the listener reached at
+bubble time was a fresh closure holding `confirm === "none"`, and it waved the keypress through.
+Probed through CDP, printing the state at all four phases: `window-capture` and `document-capture`
+still read `remove`, `window-bubble` reads `none` while the panel is visibly still on screen.
+
+Asking the DOM instead — the trick the index uses for `⌥F` (§10) — fails the same way and worse: at
+bubble time the node is still present only because its exit animation is playing, so the check would
+pass or fail on a timer. **`capture: true` is the fix**, and it is a general rule, not a local one:
+*a guard that reads render state has to run before whatever else is going to change that state in the
+same event.*
+
+### Small things, decided
+
+- **The panel stays open while the request is in flight**, where Radix's `Action` closes on click.
+  `preventDefault` in the handler suppresses that — Radix's `composeEventHandlers` checks
+  `defaultPrevented` first. Closing on press is the easier code and the wrong behaviour: the delete is
+  a round trip, so the panel would vanish and leave the record on screen for as long as the network
+  takes with nothing saying why. Held open, the button reads `deleting…`, `busy` swallows `esc`, the
+  backdrop and `cancel` — none of which can take back a `DELETE` already sent — and what dismisses it
+  is the caller navigating away, which only happens on success. **A failed delete finds the question
+  still on screen.**
+- **Radix focuses `cancel`, not the destructive button**, which is its own decision for alert dialogs
+  and the right one; nothing here overrides it.
+- **Outline oxide asks, filled oxide destroys.** Every `delete` button that opens the panel is
+  `variant="danger"`; the one inside it is `danger-solid`, and there is exactly one per screen. The
+  row's in-place `confirm` is filled too — at 20px an outline reads as a border rather than a warning,
+  and that button really does delete.
+- **`discard?` keeps its in-place pair** and did not become a modal with it. It is a different
+  question: what it throws away is the draft in the fields, which is right there on the screen.
+- **The title is decoded, the url is not.** Titles are stored percent-encoded (`decodeNote`), and a
+  panel that exists to be recognised must not show an escaped one. A url carries its own escaping and
+  decoding it would be a second bug.
+- **Deletion is soft** — the controller flips `active=0` — and the copy still says *cannot be undone*,
+  which is true of the application: nothing lists or restores an inactive row. The three list queries
+  that must know this do (`getBookmarksController`, `getRemindersController`, the latter fixed for it
+  by COS-304). The one that does not, and the authorization gap in the same file, are COS-322.
+
+---
+
+## 14. What is still legacy
 
 Three files still carry tokens from the old UI, marked as such: **15 colours** in `colors.css`,
 **2 shadows** in `elevation.css`, **3 sizes and 3 families** in `typography.css`. They are not this
