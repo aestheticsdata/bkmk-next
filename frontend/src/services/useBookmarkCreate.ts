@@ -40,7 +40,7 @@ type CreateBookmarkInput = CreateBookmarkPayload & { screenshot?: File | null };
  * `invalidation` is the index's whole set: a new record changes the pages and the chrome's counter,
  * it can create a category the rail does not know about, and it can arm an alarm the reminders
  * screen should show. */
-const toFormData = (input: CreateBookmarkInput): FormData => {
+const toBookmarkFormData = (input: CreateBookmarkInput): FormData => {
   const body = new FormData();
 
   body.append("title", input.title);
@@ -62,7 +62,7 @@ function useBookmarkCreate() {
 
   return useMutation({
     mutationFn: async (input: CreateBookmarkInput) => {
-      const response = await privateRequest("/bookmarks", { method: "POST", data: toFormData(input) });
+      const response = await privateRequest("/bookmarks", { method: "POST", data: toBookmarkFormData(input) });
       // The boundary. The answer is an acknowledgement and nothing else — the new record's id is not
       // in it, which is why committing goes back to the index rather than to the record.
       return BookmarkMutationResponseSchema.parse(response.data);
@@ -76,6 +76,6 @@ function useBookmarkCreate() {
   });
 }
 
-export { useBookmarkCreate };
+export { toBookmarkFormData, useBookmarkCreate };
 
 export type { CreateBookmarkInput };

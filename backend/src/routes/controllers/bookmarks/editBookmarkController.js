@@ -3,404 +3,225 @@ const dbConnection = require("../../../db/dbinitmysql");
 const jimpHelper = require("./helpers/jimpHelper");
 const generateHexColor = require("./helpers/generateHexColor");
 
-/* Every statement below is prepared (COS-295). The values are a mix of three origins —
- * `req.body` (the client's text), `originalBookmark.*` (read back from the database) and ids
- * returned by previous inserts — and only the first was ever dangerous. They are all passed
- * as parameters anyway: a rule that holds for every statement in a file is one a later edit
- * cannot get wrong, and this controller is 25 statements deep in nested branches.
- *
- * Untouched otherwise. The shape of this file — the branch tree, the try/catch per statement,
- * the connection closed on each error path — is what UI 10 (COS-319) rewrites; converting it
- * and restructuring it at the same time would leave nothing to review. */
-module.exports = async (req, res) => {
-  console.log("bookmark edit", req.body);
+/** The string the form sends to mean "remove the screenshot", kept from the shape the legacy form
+ *  used and the one `updateBookmarkBodySchema` describes. **It has to be a word, not a boolean**: a
+ *  multipart body carries strings, and `"false"` is truthy — a flag sent unconditionally would erase
+ *  a screenshot on every save. The client only ever appends this field when it means it. */
+const DELETE_SCREENSHOT = "delete";
 
+const today = () => format(new Date(), "yyyy-MM-dd");
+
+/** The url the record should end up pointing at, given the one it points at now.
+ *
+ *  `url` lives in its own table behind `bookmark.url_id`, so "no url" is a null column and a missing
+ *  row rather than an empty string. An absent field is therefore a **removal**, which is what the
+ *  form means by it: it only sends `url` when there is one. */
+const applyUrl = async (conn, bookmark, url) => {
+  if (bookmark.url_id) {
+    if (url) {
+      await conn.execute("UPDATE url SET original=? WHERE id=?", [url, bookmark.url_id]);
+      return;
+    }
+    // Detach before deleting: the column is what points at the row.
+    await conn.execute("UPDATE bookmark SET url_id=NULL WHERE id=?", [bookmark.id]);
+    await conn.execute("DELETE FROM url WHERE id=?", [bookmark.url_id]);
+    return;
+  }
+
+  if (url) {
+    const [inserted] = await conn.execute("INSERT INTO url (original) VALUES (?)", [url]);
+    await conn.execute("UPDATE bookmark SET url_id=? WHERE id=?", [inserted.insertId, bookmark.id]);
+  }
+};
+
+/* The record's categories, as a difference rather than a rebuild.
+ *
+ * ⚠️ **The comparison this replaces could never be true.** It read
+ * `incoming.value === row.category_id.toString()`, strictly, against a `value` the form now sends as
+ * a **number** — so every category was deleted and re-inserted on every single save. Ids are compared
+ * as numbers here, on both sides, which is what they are.
+ *
+ * A tag with no `id` is one to create. It is looked up by name first: the picker will not offer a
+ * name that already exists, but a name can still be typed, and the alternative is a second category
+ * with the same name and a different colour. `category.name` is the 20-character column
+ * `FIELD_LIMITS.categoryName` mirrors. */
+const applyCategories = async (conn, bookmark, incoming) => {
+  const [linked] = await conn.execute("SELECT category_id FROM bookmark_category WHERE bookmark_id=?", [bookmark.id]);
+  const linkedIds = new Set(linked.map((row) => Number(row.category_id)));
+
+  const keep = new Set();
+
+  for (const category of incoming) {
+    const existingId = Number(category.id ?? category.value);
+
+    if (Number.isFinite(existingId)) {
+      keep.add(existingId);
+      continue;
+    }
+
+    const name = String(category.label ?? "").trim();
+    if (name === "") continue;
+
+    const [[named]] = await conn.execute("SELECT id FROM category WHERE user_id=? AND name=? LIMIT 1", [
+      bookmark.user_id,
+      name,
+    ]);
+
+    if (named) {
+      keep.add(Number(named.id));
+      continue;
+    }
+
+    const [created] = await conn.execute("INSERT INTO category (name, color, user_id) VALUES (?, ?, ?)", [
+      name,
+      generateHexColor(),
+      bookmark.user_id,
+    ]);
+    keep.add(Number(created.insertId));
+  }
+
+  for (const categoryId of linkedIds) {
+    if (!keep.has(categoryId)) {
+      await conn.execute("DELETE FROM bookmark_category WHERE bookmark_id=? AND category_id=?", [
+        bookmark.id,
+        categoryId,
+      ]);
+    }
+  }
+
+  for (const categoryId of keep) {
+    if (!linkedIds.has(categoryId)) {
+      await conn.execute("INSERT INTO bookmark_category (bookmark_id, category_id) VALUES (?, ?)", [
+        bookmark.id,
+        categoryId,
+      ]);
+    }
+  }
+};
+
+/* The reminder.
+ *
+ * ⚠️ **The "unchanged, so leave it alone" branch never ran.** It compared `frequency`, destructured
+ * as `[[frequency]]` off a `SELECT frequency` — so the *row object* — against `req.body.reminder`, a
+ * string. An object is never equal to a string, so every save deleted the alarm and inserted a new
+ * one dated today: the countdown on the alarms screen reset to a full period each time the record
+ * was touched, which is precisely what that branch existed to prevent. Both sides are numbers here.
+ *
+ * And when the frequency really does change, the row is **updated** rather than dropped and
+ * recreated. The alarms screen keys its rows on `alarm.id`; recycling the id keeps that stable, and
+ * there was never a reason to renumber. `date_added` still moves, because it is the anchor the whole
+ * repeat is computed from and a new rhythm starts now. */
+const applyAlarm = async (conn, bookmark, reminder) => {
+  const frequency = Number(reminder);
+  const wanted = Number.isFinite(frequency) && frequency > 0 ? frequency : null;
+
+  if (bookmark.alarm_id) {
+    if (wanted === null) {
+      await conn.execute("UPDATE bookmark SET alarm_id=NULL WHERE id=?", [bookmark.id]);
+      await conn.execute("DELETE FROM alarm WHERE id=?", [bookmark.alarm_id]);
+      return;
+    }
+
+    const [[alarm]] = await conn.execute("SELECT frequency FROM alarm WHERE id=?", [bookmark.alarm_id]);
+    if (alarm && Number(alarm.frequency) === wanted) return;
+
+    await conn.execute("UPDATE alarm SET frequency=?, date_added=? WHERE id=?", [wanted, today(), bookmark.alarm_id]);
+    return;
+  }
+
+  if (wanted !== null) {
+    const [created] = await conn.execute("INSERT INTO alarm (frequency, date_added) VALUES (?, ?)", [wanted, today()]);
+    await conn.execute("UPDATE bookmark SET alarm_id=? WHERE id=?", [created.insertId, bookmark.id]);
+  }
+};
+
+/** Removing the file on disk and the filename in the row, in that order — a row still naming a file
+ *  that is gone is what the record screen would try to fetch. */
+const dropScreenshot = async (conn, bookmark) => {
+  if (!bookmark.screenshot) return;
+  await jimpHelper.deleteScreenshot({ filename: bookmark.screenshot, userID: bookmark.user_id });
+  await conn.execute("UPDATE bookmark SET screenshot=NULL WHERE id=? AND user_id=?", [bookmark.id, bookmark.user_id]);
+};
+
+/* `PUT /bookmarks` — saving a record (COS-319).
+ *
+ * Rewritten with the edit modal, as the note left on this file said it would be. What it replaced
+ * was 25 statements in a tree of nested branches, each with its own `try`, its own `conn.end()` and
+ * its own message — around 200 lines in which two comparisons were silently always-true and nothing
+ * was atomic. The behaviour is deliberately the same one field at a time; what changed is that each
+ * field is now a named function, the whole save is one transaction, and the connection is closed in
+ * one place.
+ *
+ * **Three defects went with the rewrite**, each noted where it lived: the categories comparison, the
+ * alarm comparison, and the scope below.
+ *
+ * ⚠️ **The record is loaded scoped to the session's user, and a miss is a 404.** It used to be
+ * `SELECT * FROM bookmark WHERE id=?` — any signed-in account could save over any other account's
+ * record by putting its id in the body, and the answer would have been `bookmark edited`. The read
+ * that follows is also what every helper below trusts for `user_id`, so scoping it here scopes the
+ * categories and the screenshot with it. Reading it from the session rather than from the request is
+ * the same fix COS-322 owes the list controllers.
+ *
+ * **One transaction.** A save touches up to five tables, and half of a save is worse than none: an
+ * error between the title and the categories used to leave the record renamed and its tags as they
+ * were, with a 500 and no way to tell which half had landed. The screenshot's file is the one thing
+ * a rollback cannot undo — a failed commit can leave an orphan on disk, which is a cheaper wrong
+ * than a row naming a file that is not there.
+ *
+ * The `console.log` of `req.body` on every edit is gone with it. */
+module.exports = async (req, res) => {
   const conn = await dbConnection();
 
-  const sqlBookmark = "SELECT * FROM bookmark WHERE id=?";
-  let originalBookmark = null;
   try {
-    const result = await conn.execute(sqlBookmark, [req.body.id]);
-    originalBookmark = result[0][0];
-  } catch (e) {
-    await conn.end();
-    return res.status(500).json({ msg: "error getting bookmark : ", e });
-  }
+    const [[bookmark]] = await conn.execute("SELECT * FROM bookmark WHERE id=? AND user_id=? AND active=1", [
+      req.body.id,
+      req.user.id,
+    ]);
 
-  // title
-  if (req.body.title !== originalBookmark.title) {
-    try {
-      await conn.execute("UPDATE bookmark SET title=? WHERE id=?", [req.body.title, originalBookmark.id]);
-    } catch (e) {
-      await conn.end();
-      return res.status(500).json({ msg: "error updating title : ", e });
+    if (!bookmark) {
+      return res.status(404).json({ msg: "bookmark not found" });
     }
-  }
 
-  // categories
-  // one or more categories came in with the request
-  const incomingCategories = JSON.parse(req.body.categories);
-  if (incomingCategories.length > 0) {
-    try {
-      const [existingCategories] = await conn.execute("SELECT * FROM bookmark_category WHERE bookmark_id=?;", [
-        originalBookmark.id,
+    await conn.beginTransaction();
+
+    await conn.execute(
+      `UPDATE bookmark
+          SET title=?, notes=?, stars=?, priority=?, date_last_modified=?
+        WHERE id=?`,
+      [
+        req.body.title,
+        req.body.notes || null,
+        req.body.stars,
+        // `""` is the form's "no level", and the column holds `NULL` for it.
+        req.body.priority === "" ? null : req.body.priority,
+        today(),
+        bookmark.id,
+      ],
+    );
+
+    await applyUrl(conn, bookmark, req.body.url);
+    await applyCategories(conn, bookmark, JSON.parse(req.body.categories));
+    await applyAlarm(conn, bookmark, req.body.reminder);
+
+    if (req.file) {
+      // A replacement removes the previous file: the column holds one name.
+      await dropScreenshot(conn, bookmark);
+      const filename = await jimpHelper.createScreenshot({ file: req.file, userID: bookmark.user_id });
+      await conn.execute("UPDATE bookmark SET screenshot=? WHERE id=? AND user_id=?", [
+        filename,
+        bookmark.id,
+        bookmark.user_id,
       ]);
-      // the bookmark has no categories attached yet
-      if (existingCategories.length === 0) {
-        // for each category in the request
-        for (const category of incomingCategories) {
-          // this category already exists in the category table
-          if (category.id) {
-            try {
-              await conn.execute(
-                `
-                INSERT INTO bookmark_category (bookmark_id, category_id)
-                VALUES (?, ?);
-              `,
-                [originalBookmark.id, category.id],
-              );
-            } catch (e) {
-              await conn.end();
-              return res.status(500).json({
-                msg: "error inserting existing categories to bookmark_category table : " + e,
-              });
-            }
-
-            // this is a new category, to be created in the category table
-          } else {
-            try {
-              const result = await conn.execute(
-                `
-                INSERT INTO category (name, color, user_id)
-                VALUES (?, ?, ?);
-              `,
-                [category.label, generateHexColor(), originalBookmark.user_id],
-              );
-              await conn.execute(
-                `
-                INSERT INTO bookmark_category (bookmark_id, category_id)
-                VALUES (?, ?);
-              `,
-                [originalBookmark.id, result[0].insertId],
-              );
-            } catch (e) {
-              await conn.end();
-              return res.status(500).json({ msg: "error inserting new category " + e });
-            }
-          }
-        }
-
-        // the bookmark has categories attached and the request carries one or more
-      } else {
-        const incomingCategoryIds = incomingCategories.map((category) => {
-          return {
-            label: category.label,
-            id: !isNaN(Number(category.value)) ? Number(category.value) : null,
-          };
-        });
-        const existingCategoryIds = existingCategories.map((category) => category.category_id);
-
-        const categoriesToDelete = existingCategories.filter(
-          (category) =>
-            !incomingCategories.some((incomingCategory) => incomingCategory.value === category.category_id.toString()),
-        );
-        if (categoriesToDelete.length > 0) {
-          for (const categoryToDelete of categoriesToDelete) {
-            try {
-              await conn.execute(
-                `
-                DELETE FROM bookmark_category
-                WHERE bookmark_id=? AND category_id=?;
-              `,
-                [categoryToDelete.bookmark_id, categoryToDelete.category_id],
-              );
-            } catch (e) {
-              await conn.end();
-              return res.status(500).json({ msg: "error deleting category in bookmark_category : " + e });
-            }
-          }
-        }
-
-        const categoriesToAdd = incomingCategoryIds.filter((category) => !existingCategoryIds.includes(category.id));
-        if (categoriesToAdd.length > 0) {
-          for (const categoryToAdd of categoriesToAdd) {
-            try {
-              const [categories] = await conn.execute("SELECT id FROM category WHERE user_id=?;", [
-                originalBookmark.user_id,
-              ]);
-              let result = null;
-              if (!categories.some((category) => category.id === categoryToAdd.id)) {
-                result = await conn.execute(
-                  `
-                  INSERT INTO category (name, color, user_id)
-                  VALUES (?, ?, ?);
-                `,
-                  [categoryToAdd.label, generateHexColor(), originalBookmark.user_id],
-                );
-              }
-              await conn.execute(
-                `
-                INSERT INTO bookmark_category (bookmark_id, category_id)
-                VALUES (?, ?);
-              `,
-                [originalBookmark.id, result ? result[0].insertId : categoryToAdd.id],
-              );
-            } catch (e) {
-              await conn.end();
-              return res.status(500).json({ msg: "error creating category and/or bookmark_category : " + e });
-            }
-          }
-        }
-      }
-    } catch (e) {
-      await conn.end();
-      return res.status(500).json({ msg: "error getting bookmark_category entries : " + e });
-    }
-    // no categories in the request
-  } else {
-    try {
-      const [existingCategories] = await conn.execute("SELECT * FROM bookmark_category WHERE bookmark_id=?;", [
-        originalBookmark.id,
-      ]);
-      if (existingCategories.length > 0) {
-        for (const existingCategory of existingCategories) {
-          try {
-            await conn.execute(
-              `
-              DELETE FROM bookmark_category
-              WHERE bookmark_id=? AND category_id=?;
-            `,
-              [existingCategory.bookmark_id, existingCategory.category_id],
-            );
-          } catch (e) {
-            await conn.end();
-            return res.status(500).json({ msg: "error deleting bookmark_category : " + e });
-          }
-        }
-      }
-    } catch (e) {
-      await conn.end();
-      return res.status(500).json({ msg: "error getting bookmark_category : " + e });
-    }
-  }
-
-  // url
-  let originalURL = null;
-  // there is already a url
-  if (originalBookmark.url_id) {
-    try {
-      const result = await conn.execute("SELECT * FROM url WHERE id=?", [originalBookmark.url_id]);
-      originalURL = result[0][0];
-    } catch (e) {
-      await conn.end();
-      return res.status(500).json({ msg: "error getting url : ", e });
+    } else if (req.body.deleteScreenshot === DELETE_SCREENSHOT) {
+      await dropScreenshot(conn, bookmark);
     }
 
-    // a url came in with the request, so overwrite the existing one
-    if (req.body.url) {
-      try {
-        await conn.execute("UPDATE url SET original=? WHERE id=?", [req.body.url, originalURL.id]);
-      } catch (e) {
-        await conn.end();
-        return res.status(500).json({ msg: "error updating url : ", e });
-      }
-      // otherwise delete the url and null out bookmark.url_id
-    } else {
-      try {
-        await conn.execute("UPDATE bookmark SET url_id=NULL WHERE id=?", [originalBookmark.id]);
-        await conn.execute("DELETE FROM url WHERE id=?", [originalURL.id]);
-      } catch (e) {
-        await conn.end();
-        return res.status(500).json({ msg: "error deleting url : ", e });
-      }
-    }
-    // no url exists yet
-  } else {
-    // there is a url to create
-    if (req.body.url) {
-      try {
-        const result = await conn.execute("INSERT INTO url (original) VALUES (?)", [req.body.url]);
-        const newURL_ID = result[0].insertId;
-        try {
-          await conn.execute("UPDATE bookmark SET url_id=? WHERE id=?;", [newURL_ID, originalBookmark.id]);
-        } catch (e) {
-          await conn.end();
-          return res.status(500).json({ msg: "error updating bookmark url : ", e });
-        }
-      } catch (e) {
-        await conn.end();
-        return res.status(500).json({ msg: "error creating url : ", e });
-      }
-    }
-  }
-
-  // notes
-  try {
-    if (req.body.notes) {
-      await conn.execute("UPDATE bookmark SET notes=? WHERE id=?;", [req.body.notes, originalBookmark.id]);
-    } else {
-      await conn.execute("UPDATE bookmark SET notes=NULL WHERE id=?;", [originalBookmark.id]);
-    }
+    await conn.commit();
+    return res.status(200).json({ msg: "bookmark edited" });
   } catch (e) {
+    await conn.rollback().catch(() => {});
+    return res.status(500).json({ msg: "error editing bookmark : " + e });
+  } finally {
     await conn.end();
-    return res.status(500).json({ msg: "error updating notes : ", e });
   }
-
-  // stars
-  try {
-    await conn.execute("UPDATE bookmark SET stars=? WHERE id=?", [req.body.stars, originalBookmark.id]);
-  } catch (e) {
-    await conn.end();
-    return res.status(500).json({ msg: "error updating stars : ", e });
-  }
-
-  // priority
-  try {
-    // The empty string used to pick between a quoted value and a bare `null` in the SQL; it
-    // now picks between the value and `null` as a parameter, which is what it always meant.
-    await conn.execute("UPDATE bookmark SET priority=? WHERE id=?", [
-      req.body.priority === "" ? null : req.body.priority,
-      originalBookmark.id,
-    ]);
-  } catch (e) {
-    await conn.end();
-    return res.status(500).json({ msg: "error updating priority : ", e });
-  }
-
-  // alarm
-  // there is already an alarm
-  if (originalBookmark.alarm_id) {
-    try {
-      const [[frequency]] = await conn.execute("SELECT frequency FROM alarm WHERE id=?;", [originalBookmark.alarm_id]);
-      // an alarm came in with the request
-      if (req.body.reminder) {
-        // unchanged: do nothing, so the alarm's date_added is not touched
-        // otherwise update the frequency and date_added
-        if (frequency !== req.body.reminder) {
-          try {
-            await conn.execute("UPDATE bookmark SET alarm_id=NULL WHERE id=?;", [originalBookmark.id]);
-            await conn.execute("DELETE FROM alarm WHERE id=?;", [originalBookmark.alarm_id]);
-            const result = await conn.execute("INSERT INTO alarm (frequency, date_added) VALUES (?, ?);", [
-              req.body.reminder,
-              format(new Date(), "yyyy-MM-dd"),
-            ]);
-            const newAlarmID = result[0].insertId;
-            await conn.execute("UPDATE bookmark SET alarm_id=? WHERE id=?;", [newAlarmID, originalBookmark.id]);
-          } catch (e) {
-            await conn.end();
-            return res.status(500).json({ msg: "error creating new alarm and/or updating bookmark.alarm_id : ", e });
-          }
-        }
-        // no alarm in the request: delete the existing one and null out bookmark.alarm_id
-      } else {
-        try {
-          await conn.execute("UPDATE bookmark SET alarm_id=NULL WHERE id=?;", [originalBookmark.id]);
-          await conn.execute("DELETE FROM alarm WHERE id=?;", [originalBookmark.alarm_id]);
-        } catch (e) {
-          await conn.end();
-          return res.status(500).json({ msg: "error deleting and/or updating to NULL bookmark alarm_id : ", e });
-        }
-      }
-    } catch (e) {
-      await conn.end();
-      return res.status(500).json({ msg: "error getting alarm : ", e });
-    }
-    // no alarm exists yet
-  } else {
-    // there is an alarm to create
-    if (req.body.reminder) {
-      try {
-        const result = await conn.execute("INSERT INTO alarm (frequency, date_added) VALUES (?, ?);", [
-          req.body.reminder,
-          format(new Date(), "yyyy-MM-dd"),
-        ]);
-        const newAlarmID = result[0].insertId;
-        try {
-          await conn.execute("UPDATE bookmark SET alarm_id=? WHERE id=?;", [newAlarmID, originalBookmark.id]);
-        } catch (e) {
-          await conn.end();
-          return res.status(500).json({ msg: "error updating bookmark.alarm_id : ", e });
-        }
-      } catch (e) {
-        await conn.end();
-        return res.status(500).json({ msg: "error creating new alarm and/or updating bookmark.alarm_id : ", e });
-      }
-    }
-  }
-
-  // screenshot
-  const deleteScreenshot = async () => {
-    const [[result]] = await conn.execute("SELECT screenshot FROM bookmark WHERE id=? and user_id=?;", [
-      originalBookmark.id,
-      originalBookmark.user_id,
-    ]);
-    const filename = result.screenshot;
-    try {
-      await jimpHelper.deleteScreenshot({ filename, userID: originalBookmark.user_id });
-      try {
-        await conn.execute(
-          `
-          UPDATE bookmark
-          SET screenshot=NULL
-          WHERE id=? AND user_id=?;
-        `,
-          [originalBookmark.id, originalBookmark.user_id],
-        );
-      } catch (e) {
-        await conn.end();
-        return res.status(500).json({ msg: "error removing screenshot from bookmark entry : " + e });
-      }
-    } catch (e) {
-      await conn.end();
-      return res.status(500).json({ msg: "error unlink file : " + e });
-    }
-  };
-
-  // new screenshot
-  if (req.file) {
-    const userID = req.user.id; // from sessionAuthMiddleware
-    const [[existingScreenshot]] = await conn.execute("SELECT screenshot FROM bookmark WHERE id=? AND user_id=?;", [
-      originalBookmark.id,
-      userID,
-    ]);
-    if (existingScreenshot.screenshot) {
-      try {
-        await deleteScreenshot();
-      } catch (e) {
-        await conn.end();
-        return res.status(500).json({ msg: "error deleting screenshot : " + e });
-      }
-    }
-
-    try {
-      const screenshotFilename = await jimpHelper.createScreenshot({
-        file: req.file,
-        userID,
-      });
-      await conn.execute(
-        `
-        UPDATE bookmark
-        SET screenshot=?
-        WHERE id=? AND user_id=?;
-      `,
-        [screenshotFilename, originalBookmark.id, userID],
-      );
-    } catch (e) {
-      await conn.end();
-      return res.status(500).json({ msg: "error creating new screenshot : " + e });
-    }
-  }
-
-  // screenshot removed
-  if (req.body.deleteScreenshot) {
-    await deleteScreenshot();
-  }
-
-  conn.execute("UPDATE bookmark SET date_last_modified=? WHERE id=?", [
-    format(new Date(), "yyyy-MM-dd"),
-    originalBookmark.id,
-  ]);
-
-  await conn.end();
-  return res.status(200).json({ msg: "bookmark edited" });
 };

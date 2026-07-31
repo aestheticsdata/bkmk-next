@@ -10,10 +10,11 @@ import type { Category } from "@src/schemas/categories";
 
 /* The categories, as the index rail and the filter modal read them (COS-299): a sorted, typed list.
  *
- * Separate from `components/common/category/services/useCategories.ts`, which the create and edit
- * forms use: that one returns `any`, and mutates each row to add the `label` / `value` pair
- * `react-select` wants. Those forms are UI 06 (COS-302) and UI 10 (COS-319); when they are rebuilt
- * that hook goes and this one is what remains.
+ * **It is now the only one.** It was written beside `components/common/category/services/useCategories.ts`
+ * — which returned `any` and mutated each row to add the `label` / `value` pair `react-select`
+ * wanted — until the two forms that mounted it were rebuilt. UI 06 (COS-302) took the create form
+ * and UI 10 (COS-319) took the edit form; that hook left with the second, along with the rest of the
+ * legacy tree. `TagsField` builds its own `CategoryOption` from these rows.
  *
  * ⚠️ **Each row now carries `bookmarks_count`** (COS-300), which it did not: the filter modal ranks its
  * suggestions by "most used", and a most-used list without a count is an arbitrary ten. See

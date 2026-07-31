@@ -3,6 +3,7 @@
 import { Overline } from "@components/ds/Overline";
 import { ShotSlot } from "@components/ds/ShotSlot";
 import { useScreenshot } from "@src/services/useScreenshot";
+import { decodeNote } from "@helpers/decodeNote";
 import { RECORD_TEXT } from "@text/record";
 
 import type { BookmarkDetail } from "@src/schemas/bookmarks";
@@ -51,7 +52,7 @@ function RecordPreview({ record }: { record: BookmarkDetail }) {
         // biome-ignore lint/performance/noImgElement: a `data:` URL has nothing to optimise and no `next/image` loader accepts one — see above.
         <img
           src={imageUrl}
-          alt={RECORD_TEXT.aria.shot(decodeURIComponent(record.title))}
+          alt={RECORD_TEXT.aria.shot(decodeNote(record.title))}
           className="w-full shrink-0 rounded-lg border border-gr-border-2 bg-gr-sunk inset-shadow-gr-sunk"
         />
       ) : (

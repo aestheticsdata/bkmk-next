@@ -1,4 +1,5 @@
 import { Overline } from "@components/ds/Overline";
+import { decodeNote } from "@helpers/decodeNote";
 import { RECORD_TEXT } from "@text/record";
 
 /* The note (COS-301) — the record's only free text, and the only thing on this screen the owner
@@ -38,18 +39,8 @@ function segments(note: string): { text: string; isLink: boolean; at: number }[]
     });
 }
 
-/** `decodeURIComponent` throws on a `%` that is not an escape — a note written before the form
- *  encoded them, or one that simply contains `100%`. The raw text is the right answer then. */
-function decodeNote(note: string): string {
-  try {
-    return decodeURIComponent(note);
-  } catch {
-    return note;
-  }
-}
-
 function RecordNote({ note }: { note?: string | null }) {
-  const text = note ? decodeNote(note) : "";
+  const text = decodeNote(note);
 
   return (
     <>

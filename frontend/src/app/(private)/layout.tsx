@@ -13,8 +13,23 @@ import { redirect } from "next/navigation";
  * unauthenticated requests while it waited for zustand to rehydrate.
  *
  * The provider is seeded from that same answer, so the chrome has the account email and the
- * client has its CSRF token on the very first render, with no round trip of its own. */
-export default async function PrivateLayout({ children }: { children: React.ReactNode }) {
+ * client has its CSRF token on the very first render, with no round trip of its own.
+ *
+ * ⚠️ **`modal` is a parallel slot** (COS-319), and it is a prop because `app/(private)/@modal/`
+ * exists — Next hands every `@folder` under a layout to it by name. It renders **outside** `AppShell`
+ * on purpose: a dialog portals itself to `document.body` anyway, and putting the slot inside the
+ * shell would only suggest a nesting that does not survive the portal.
+ *
+ * What is in it is the edit modal, and what makes it work is the three files beside it: the
+ * interception, `default.tsx` for a fresh load, and the catch-all that empties the slot when you
+ * navigate away. Each of the three says what it is for. */
+export default async function PrivateLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}) {
   const session = await getServerSession();
 
   if (!session) {
@@ -27,6 +42,7 @@ export default async function PrivateLayout({ children }: { children: React.Reac
       initialCsrfToken={session.csrfToken}
     >
       <AppShell>{children}</AppShell>
+      {modal}
     </AuthProvider>
   );
 }

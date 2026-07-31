@@ -3,6 +3,7 @@
 import { MiniButton } from "@components/ds/MiniButton";
 import { ROUTES } from "@components/shared/config/constants";
 import { Progress } from "@components/ui/progress";
+import { decodeNote } from "@helpers/decodeNote";
 import { cn } from "@lib/utils";
 import { ALARMS_TEXT } from "@text/alarms";
 import { format } from "date-fns";
@@ -60,7 +61,7 @@ const IMMINENT_DAYS = 1;
  * acknowledges one. The `title` sits on the wrapper rather than on the buttons because a disabled
  * button receives no pointer events and would never show it. */
 function AlarmsRow({ alarm }: { alarm: Reminder }) {
-  const title = decodeURIComponent(alarm.title);
+  const title = decodeNote(alarm.title);
   const url = alarm.original_url ?? undefined;
   const days = alarm.alarm_days_until;
   const imminent = days <= IMMINENT_DAYS;

@@ -14,10 +14,10 @@ import type { FiltersQuery } from "@src/schemas/filters";
  * row can perform on its own.
  *
  * Written beside the legacy `components/bookmarks/services/useBookmarks.ts` rather than on top of
- * it. That hook carries page number in `useState`, three `useEffect`s that re-derive it from
- * `window.location.search`, a zustand store remembering the last page, and the create / edit /
- * upload mutations with their redirects — all of which the screens the UI lot has not rebuilt still
- * depend on. Rewriting it under them would break four screens to deliver one.
+ * it, because four unrebuilt screens still depended on that hook — page number in `useState`, three
+ * `useEffect`s re-deriving it from `window.location.search`, a zustand store remembering the last
+ * page, and the create / edit / upload mutations with their redirects. **It is gone** (COS-319): the
+ * edit form was the last screen holding it up, and the whole legacy tree left with that ticket.
  *
  * So this one is deliberately small, and the difference is the point: **the URL is the state.**
  * `query` comes in already parsed from the address bar, so there is nothing to keep in sync, no

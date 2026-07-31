@@ -51,6 +51,14 @@ function BookmarkIndex() {
   useEffect(() => {
     const openOnShortcut = (event: KeyboardEvent) => {
       if (!event.altKey || event.metaKey || event.ctrlKey || event.code !== "KeyF") return;
+      /* ⚠️ **Not while another dialog is up** (COS-319). This listener is on `window`, so it kept
+         firing under the edit modal — which the index now sits beneath rather than navigating away
+         from — and opened the filter modal on top of a form, with two focus traps fighting over the
+         page. The ticket calls this the mutual exclusion the prototype got from a single piece of
+         state; with the edit modal carried by a route, the two surfaces no longer share one, so the
+         index asks the DOM instead. It is also correct for the filter modal itself: pressing `⌥F`
+         while it is open now does nothing rather than re-opening it. */
+      if (document.querySelector("[data-slot=dialog-content]")) return;
       event.preventDefault();
       setFiltersOpen(true);
     };

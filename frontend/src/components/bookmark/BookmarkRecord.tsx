@@ -8,6 +8,7 @@ import { Card } from "@components/ds/Card";
 import { Overline } from "@components/ds/Overline";
 import { ROUTES } from "@components/shared/config/constants";
 import { useBookmarkRecord } from "@src/services/useBookmarkRecord";
+import { decodeNote } from "@helpers/decodeNote";
 import { RECORD_TEXT } from "@text/record";
 import { useRouter } from "next/navigation";
 
@@ -65,7 +66,7 @@ function BookmarkRecord({ id }: { id: string }) {
           {/* 21px in the handoff, snapped to 20 (`text-xl`) by the DS 01 table. `max-w-155` is the
               620px the mockup caps it at — a title is read in lines, not across a desk. */}
           <h1 className="mt-1 mb-5 max-w-155 text-pretty text-xl font-semibold tracking-snug text-gr-fg-2">
-            {decodeURIComponent(record.title)}
+            {decodeNote(record.title)}
           </h1>
 
           <Overline className="mb-1.5 block">{RECORD_TEXT.sections.fields}</Overline>
