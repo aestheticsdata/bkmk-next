@@ -115,8 +115,19 @@ module.exports = async (req, res) => {
     sortPart = sortPart.slice(0, sortPart.length - 2);
   }
 
+  /* ⚠️ **The scope comes from the session, and `?userID=` is not read** (COS-322).
+   *
+   * This condition was always here — the query has never returned another account's rows by accident.
+   * What it filtered *on* was `req.query.userID`, the client's own claim about who it is, which an
+   * authenticated request can write to say anything. Since COS-294 the session holds the real
+   * identity and `sessionAuthMiddleware` puts it on `req.user`, so the value that decides what comes
+   * back is now the one the server issued rather than the one the caller typed.
+   *
+   * The parameter still arrives and is still validated (`listBookmarksQuerySchema`), it is simply
+   * inert — which is what keeps this fix invisible to the front: the query strings and the
+   * react-query keys built from them do not move. See the note in `schemas/bookmarks.js`. */
   const conditions = ["b.user_id = ?", "b.active = 1"];
-  const conditionParams = [req.query.userID];
+  const conditionParams = [req.user.id];
 
   if (title) {
     // The comma is the form's "or" separator, turned into a MySQL wildcard. It is part of
