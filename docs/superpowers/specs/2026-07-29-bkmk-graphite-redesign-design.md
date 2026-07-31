@@ -62,7 +62,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | UI 10 | COS-319 — modale d'édition d'un record, portée par une route | ✅ mergé (PR #28) |
 | hors lot | COS-341 — dialog : le corps défile, plus le panneau autour | ✅ mergé (PR #29) |
 | hors lot | COS-342 — dialog : la taille de base franchit le portail | ✅ mergé (PR #29) |
-| hors lot | index : glyphes dimensionnés à leur encre, bande alignée sur `added` | ✅ mergé (PR #29), sans ticket |
+| hors lot | COS-344 — index : glyphes dimensionnés à leur encre, bande alignée sur `added` | ✅ mergé (PR #29) |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -237,7 +237,11 @@ sont dessinés par la police système**, dont l'encre est une fraction de l'em �
 dans le sous-ensemble chargé, et aucun glyphe de ce design n'y est. Dans la même passe, `⌧` devient
 `✕` — U+2327 dessine un X dans un rectangle, indiscernable à cette taille du carré qu'un navigateur
 peint pour un glyphe absent — et la bande d'actions part du bord gauche de la colonne `added`, si bien
-que le survol **échange** au lieu de déplacer. Sans ticket : sorti d'une relecture de la ligne.
+que le survol **échange** au lieu de déplacer. **COS-344**, ouvert après le merge : la passe est
+sortie d'une relecture de la ligne et non d'un rapport, et le ticket existe pour la règle, qui vaut
+pour toute l'app. Deux choses qu'il écarte explicitement — élargir le sous-ensemble de police, qui est
+une décision de chargement touchant chaque page, et généraliser la taille aux autres glyphes sans les
+mesurer, ce qui casserait les `◔` et `◨` qui sortent justes.
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
