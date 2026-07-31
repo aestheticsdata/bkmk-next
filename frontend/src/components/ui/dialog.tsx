@@ -68,9 +68,17 @@ function DialogOverlay({ className, ...props }: React.ComponentProps<typeof Dial
  * `max-w-*` away, which is the point of leaving the fluid half fixed: a caller changes the cap, never
  * the gutter.
  *
- * `max-h-[calc(100dvh-1.5rem)]` is the handoff's `calc(100% - 24px)`, and with `overflow-auto` it is
- * what "fluid and scrollable" means on a short viewport — the whole panel scrolls, the header sticks
- * to its top, and a footer that wants to stay put says `sticky bottom-0`.
+ * `max-h-[calc(100dvh-1.5rem)]` is the handoff's `calc(100% - 24px)`, and what "fluid and scrollable"
+ * means on a short viewport is settled one level down: **the panel is a column that does not scroll,
+ * and `DialogBody` is the scroll container** (COS-341).
+ *
+ * It shipped the other way round — the panel itself scrolled, and the header and both consumers'
+ * footers pinned themselves back into place to compensate. Two things were wrong with that. The bar
+ * ran from the top edge of the header to the bottom edge of the footer, past chrome that has no
+ * reason to move; and its thumb was painted over the panel's own rounded corners, since a scroll
+ * container cannot clip what it is itself scrolling. `flex flex-col` with `overflow-hidden` here
+ * gives `rounded-2xl` its job back, and the pinning goes with it. The category rail was corrected
+ * the same way, and first (COS-300).
  *
  * The entrance is `bkmk-pop` by another name: `fade-in-0 zoom-in-95` over 200ms is the keyframe's
  * `opacity 0 → 1, scale .96 → 1` in `tw-animate-css`'s vocabulary. See `styles/animations.css`. */
@@ -93,7 +101,7 @@ function DialogContent({
              `body` that has none until the global reset lands — so the filter modal has been
              drawing in `-apple-system` since COS-300. Measured through CDP, on both portalled
              surfaces. */
-          "fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.25rem)] max-w-160 translate-x-[-50%] translate-y-[-50%] overflow-auto rounded-2xl border border-gr-border-2 bg-gr-panel font-mono text-gr-fg shadow-gr-modal duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          "fixed top-[50%] left-[50%] z-50 flex max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.25rem)] max-w-160 translate-x-[-50%] translate-y-[-50%] flex-col overflow-hidden rounded-2xl border border-gr-border-2 bg-gr-panel font-mono text-gr-fg shadow-gr-modal duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className,
         )}
         {...props}
@@ -115,8 +123,9 @@ function DialogContent({
 
 /* The header is the card's command bar again, not a stack of centred text (COS-291). All
  * three GRAPHITE modals open with the same strip: a title, a couple of overlines, the
- * close glyph pushed right. Sticky, because the content scrolls under it when a long form
- * outgrows the viewport.
+ * close glyph pushed right. Fixed chrome — it used to pin itself to the top of a panel
+ * that scrolled underneath it, and since COS-341 there is nothing to pin against: the body
+ * is the scroll container and the header is simply outside it.
  *
  * ⚠️ **No narrow-width variant, and it is not an oversight.** This carried a `@max-3xl:`
  * copy of `CommandBar`'s fold — 54px tall, 8px gap, 12px padding — which could never
@@ -143,7 +152,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-header"
       className={cn(
-        "sticky top-0 z-10 flex min-h-11.5 shrink-0 items-center gap-3 border-b border-gr-border bg-gr-panel-2 px-3.5 inset-shadow-gr-hair",
+        "flex min-h-11.5 shrink-0 items-center gap-3 border-b border-gr-border bg-gr-panel-2 px-3.5 inset-shadow-gr-hair",
         className,
       )}
       {...props}
@@ -153,12 +162,42 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
 
 /* Added to the shadcn set: with the padding moved off `DialogContent` — the header and
  * footer are flush to the modal's edges and would otherwise float inside a margin — the
- * body needs somewhere to carry its own. */
+ * body needs somewhere to carry its own.
+ *
+ * **And it is the modal's scroll container** (COS-341). `min-h-0` is what earns that: a flex
+ * child will not shrink below its content without it, so the panel would grow past its own
+ * `max-h-*` instead of the body scrolling inside it.
+ *
+ * Which makes the padding staying here matter twice over. On macOS Chrome the thumb is an
+ * *overlay* — painted over the content rather than given a reserved channel — so it is the
+ * scroll container's own edges that decide whether it lands on a field or beside one, and
+ * `mr-1.5` is what stops it from sitting flush against the panel's border, which is as wrong
+ * seen from the other side. Both are the category rail's answers, measured there in COS-300:
+ * 8px between a field's right edge and the bar, 7px between the bar and the panel. And no
+ * reserved channel — that is the margin on one side only which `gr-scroll` exists to remove.
+ *
+ * **The 6px the margin takes is given back out of the right padding**, `pl-5 pr-3.5` rather
+ * than the 20px on both sides this had before. Otherwise the fields end 6px short of the
+ * footer's buttons, which sit at the panel's own 20px — a step that was not there before the
+ * scrolling moved and would have been paid for by the layout rather than by the bar. 14 + 6
+ * is the rail's arrangement to the pixel, and it is what puts the thumb where COS-300
+ * measured it.
+ *
+ * ⚠️ **`relative`, and it is the half of this move that is easy to miss.** An absolutely
+ * positioned descendant is laid out against its nearest *positioned* ancestor, and without this
+ * class that ancestor is the panel — so it escapes the body's clip, counts as the panel's own
+ * overflow, and hands a panel that has just been told not to scroll 251px of scrollable height
+ * back. Nothing draws it, since there is no bar on a hidden overflow; **the keyboard finds it.**
+ * Focus scrolls whatever ancestor it must, hidden or not, and tabbing to the screenshot field's
+ * `sr-only` file input — `sr-only` being absolute positioning, which is the whole trick — pulled
+ * the header 238px above the top of the window with no way for anyone to bring it back. Measured
+ * across all 23 focus stops of the edit form. A scroll container has to be the containing block
+ * for what it scrolls. */
 function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-body"
-      className={cn("grid gap-4 px-5 py-4.5", className)}
+      className={cn("gr-scroll relative mr-1.5 grid min-h-0 gap-4 overflow-y-auto py-4.5 pr-3.5 pl-5", className)}
       {...props}
     />
   );

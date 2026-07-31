@@ -320,6 +320,7 @@ COS-300, on a design that is one typeface end to end. `font-mono` now sits on `D
 the dropdown menu's two contents. **Anything new that portals needs it too**, until `body` gets the
 family and this stops being a per-component chore.
 
+
 Two live consequences, both deliberate:
 
 - **`ui/dialog` has no width variants.** COS-291 gave its header and footer a copy of `CommandBar`'s
@@ -834,10 +835,44 @@ The first real modal in the system, and the screen's one piece of state that is 
 
 ```
 min(640px, 100% - 20px)   ·   max-h calc(100dvh - 24px)   ·   rounded-2xl   ·   shadow-gr-modal
-  header   FILTER · advanced · live · 27/1278 match · ×          CommandBar, sticky top
+  header   FILTER · advanced · live · 27/1278 match · ×          CommandBar, fixed
   body     title · categories · [stars | priority] · [reminder | contains] · expression
-  footer   filter — 27 results · reset · live · 14 ms            sticky bottom
+  footer   filter — 27 results · reset · live · 14 ms            fixed
 ```
+
+### The panel is a column, and only the body scrolls
+
+Corrected in COS-341, and it is `ui/dialog`'s geometry so it holds for all three modals. The panel
+shipped as the scroll container, with the header and both footers pinning themselves back into place
+to compensate. That put the native bar — 15px on macOS with a mouse, a light track, a thumb GRAPHITE
+never chose — from the top of the header to the bottom of the footer, painted over the panel's own
+rounded corners, since a box cannot clip what it is itself scrolling.
+
+So the panel is `flex flex-col` and `overflow-hidden`, which gives `rounded-2xl` its job back, and
+`DialogBody` takes `gr-scroll min-h-0 overflow-y-auto` — the insert screen's panes, class for class.
+The pinning came off with it. Same correction as the category rail's, and for the same reasons.
+
+Three details, all of them measured:
+
+- **`relative` on the body, or the fix is only half made.** An absolutely positioned descendant is
+  laid out against the nearest *positioned* ancestor, which was the panel — so it escaped the body's
+  clip and handed the panel 251px of scrollable height it had just been told not to have. Nothing
+  drew it, because a hidden overflow has no bar; the keyboard found it. Tabbing to the screenshot
+  field's `sr-only` file input — `sr-only` is absolute positioning — pulled the header 238px above the
+  top of the window, unrecoverably. A scroll container has to be the containing block for what it
+  scrolls.
+- **`pl-5 pr-3.5` with `mr-1.5`, not 20px on both sides.** The overlay thumb is painted over the
+  content, so the scroller's own edges decide whether it lands on a field; the margin is what keeps it
+  off the panel's border. The 6px it costs comes out of the right padding rather than out of the
+  layout, or the fields would end 6px short of the footer's buttons. 14 + 6 is the rail's arrangement
+  and lands on its numbers.
+- **`gr-scroll` on `ui/textarea` too**, since `resize-y` makes it a scroll container of its own.
+
+Measured on a record whose note outgrows the panel, at 1440×900 and 1440×600: the panel's
+`scrollHeight` equals its `clientHeight`, the body's does not, header and footer hold the same `y`
+after the body scrolls 365px, the bar is 6px, `save` is in reach at both heights, and none of the
+form's 23 focus stops moves the panel. The filter modal at 1100×460 is unchanged — 436px panel, its
+own body scrolling, footer where it was.
 
 ### A draft, not seven navigations
 
@@ -940,10 +975,12 @@ the input and `stopPropagation` inside the field is too late — that was the fi
 closed anyway, taking the draft. The supported hook is `onEscapeKeyDown` on `DialogContent`, which is a
 prop two levels up, so the search string lives there. On an empty field `esc` closes as usual.
 
-**No floating listbox.** A dropdown inside a modal whose panel is the scroll container gets clipped by
-that panel, or needs a portal and a second focus scope to escape it. A row that changes content needs
-neither and is one line of the same `Segment` the rest of the modal is built from. For the same reason
-it is not `role="combobox"`: with no listbox to own, the role would describe a widget that is not there.
+**No floating listbox.** A dropdown inside a modal gets clipped by the box that scrolls it, or needs a
+portal and a second focus scope to escape it. A row that changes content needs neither and is one line
+of the same `Segment` the rest of the modal is built from. For the same reason it is not
+`role="combobox"`: with no listbox to own, the role would describe a widget that is not there. COS-341
+moved the scrolling from the panel to the body and the verdict did not move with it — there are simply
+two clipping ancestors now instead of one, which is an argument for the row and not against it.
 
 ### Small things, decided
 

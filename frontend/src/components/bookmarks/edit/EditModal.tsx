@@ -131,9 +131,7 @@ function EditModal({ id }: { id: string }) {
           <EditBody editor={editor} />
         </DialogBody>
 
-        {/* Pinned to the bottom of the panel, which is the scroll container — a long note must not
-            push `save` out of reach. */}
-        <DialogFooter className="sticky bottom-0">
+        <DialogFooter>
           <EditFooter
             confirm={confirm}
             dirty={editor.dirty}
