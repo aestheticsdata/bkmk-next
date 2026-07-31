@@ -27,10 +27,10 @@ export const RECORD_TEXT = {
     open: "open url ↗",
     /** Same slot on a record with no url, so the bar keeps its shape. */
     noUrl: "no url on this record",
+    /** Opens the confirmation modal (COS-320), which carries its own words — `@text/delete.ts`. The
+     *  in-place `delete? / confirm / cancel` trio that stood here until UI 11 landed is gone with
+     *  it; three surfaces asking the same question in two vocabularies was the thing to avoid. */
     remove: "delete",
-    askRemove: "delete?",
-    confirm: "confirm",
-    cancel: "cancel",
   },
 
   /** The two captions of the left column, and the two of the right pane. */

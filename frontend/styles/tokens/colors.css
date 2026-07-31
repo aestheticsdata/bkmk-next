@@ -80,7 +80,9 @@
   --color-gr-scrim: rgb(28 30 27 / 0.4); /* modal backdrop, blurred 3px */
 
   /* Delete flow — the v2 handoff's oxide hues. Tokens rather than literals, so UI 11
-   * (COS-305) does not have to copy them screen by screen. */
+   * (COS-320) does not have to copy them screen by screen. It did not: the four are read
+   * once each, by `button`'s `danger-solid` variant, which is the only fill in the system
+   * that destroys. (DS 01 wrote COS-305 here, which is UI 09 / About.) */
   --color-gr-oxide-from: #8d4018;
   --color-gr-oxide-to: #763512;
   --color-gr-oxide-border: #5f2a0e;

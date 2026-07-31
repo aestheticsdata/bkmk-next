@@ -55,6 +55,7 @@ function BookmarkRecord({ id }: { id: string }) {
     <Card className="flex max-h-full min-h-0 flex-col @max-3xl:max-h-none @max-3xl:shrink-0">
       <RecordCommandBar
         id={id}
+        title={record.title}
         url={record.original_url ?? undefined}
         busy={remove.isPending}
         onRemove={() => remove.mutate(undefined, { onSuccess: () => router.replace(ROUTES.bookmarks.path) })}

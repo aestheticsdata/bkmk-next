@@ -9,10 +9,10 @@
  * were on, and inside a full card when the address is visited directly or reloaded. The words below
  * are shared by both; where a shell needs its own, it is named for the shell (`page.*`).
  *
- * ⚠️ **`delete record` confirms in place**, rather than opening the confirmation modal the handoff
- * draws. That modal is UI 11 (COS-320), and this is the same bridge the record's command bar and the
- * index's rows already built: the pair of mini buttons is deliberately the smaller thing to throw
- * away when the real flow lands. */
+ * ⚠️ **`delete record` opens the confirmation modal** (COS-320), whose words are in `@text/delete.ts`
+ * — shared with the record screen, since both ask the same question about the same thing. The pair of
+ * mini buttons that stood here until UI 11 landed is gone. `discard?` below is *not* the same
+ * question and keeps its pair: what it throws away is the draft in the fields, which is on screen. */
 
 export const EDIT_TEXT = {
   /** The header strip, shared by the modal and the card. */
@@ -30,16 +30,13 @@ export const EDIT_TEXT = {
     save: "save ⌘↵",
     saving: "saving…",
     cancel: "cancel",
+    /** Opens the confirmation modal, which carries the rest of the wording. */
     remove: "delete record",
     /** Leaving with changes in the form, confirmed in place — the insert screen's pattern, and
      *  `esc` and the backdrop go through the same door. */
     askDiscard: "discard?",
     discard: "discard",
     keep: "keep",
-    /** Deleting, confirmed in place — UI 11 replaces this pair with the handoff's modal. */
-    askRemove: "delete?",
-    confirm: "delete",
-    keepRecord: "cancel",
   },
 
   states: {

@@ -1,7 +1,7 @@
 "use client";
 
+import { DeleteConfirm } from "@components/bookmarks/DeleteConfirm";
 import { CommandBar } from "@components/ds/CommandBar";
-import { MiniButton } from "@components/ds/MiniButton";
 import { Overline } from "@components/ds/Overline";
 import { editHref, ROUTES } from "@components/shared/config/constants";
 import { Button } from "@components/ui/button";
@@ -15,10 +15,12 @@ import { useState } from "react";
  * edit route is intercepted, so a client navigation lays the dialog on top of the record instead of
  * replacing it. Closing goes back, and the record is still here, still scrolled where it was.
  *
- * **`delete` confirms in place**, the pattern the index row already uses: the button becomes
- * `delete? confirm cancel`, and nothing is destroyed on a single click. UI 11 (COS-320) replaces it
- * with the handoff's confirmation modal, which is where the record's title and url get repeated back
- * before it goes; the in-place pair is deliberately the smaller thing to throw away.
+ * **`delete` opens the confirmation modal** (COS-320), which is UI 11's second path. It shipped as
+ * the index row's in-place pair — `delete? confirm cancel` in the bar — and that was always the
+ * placeholder the ticket said it was. The reason it goes: an in-place pair works on a row because
+ * you are looking at the row, and here the thing being deleted is the whole screen behind the bar.
+ * The modal repeats the title and the url back, which is what tells you *which* record you are about
+ * to lose, and says what leaves with it.
  *
  * ⚠️ **The handoff's fourth button, `alarm`, is not here** — see the note in `@text/record.ts`.
  *
@@ -26,11 +28,13 @@ import { useState } from "react";
  * phone, and a command bar that does not wrap pushes `open url` off the card. */
 function RecordCommandBar({
   id,
+  title,
   url,
   busy,
   onRemove,
 }: {
   id: string;
+  title: string;
   url?: string;
   busy: boolean;
   onRemove: () => void;
@@ -59,27 +63,15 @@ function RecordCommandBar({
           <Link href={editHref(id)}>{RECORD_TEXT.actions.edit}</Link>
         </Button>
 
-        {confirming ? (
-          <>
-            <Overline className="text-gr-accent-2">{RECORD_TEXT.actions.askRemove}</Overline>
-            <MiniButton
-              danger
-              disabled={busy}
-              onClick={onRemove}
-            >
-              {RECORD_TEXT.actions.confirm}
-            </MiniButton>
-            <MiniButton onClick={() => setConfirming(false)}>{RECORD_TEXT.actions.cancel}</MiniButton>
-          </>
-        ) : (
-          <Button
-            variant="danger"
-            size="chrome"
-            onClick={() => setConfirming(true)}
-          >
-            {RECORD_TEXT.actions.remove}
-          </Button>
-        )}
+        {/* Outline oxide, not filled: this button opens a question, it does not delete. The filled
+            one is inside the modal, and there is exactly one of it. */}
+        <Button
+          variant="danger"
+          size="chrome"
+          onClick={() => setConfirming(true)}
+        >
+          {RECORD_TEXT.actions.remove}
+        </Button>
 
         {/* Disabled rather than absent on a record with no url, as in the index row: the bar keeps
             the same shape whichever record is open. */}
@@ -108,6 +100,18 @@ function RecordCommandBar({
           </Button>
         )}
       </div>
+
+      {/* Rendered from the bar because the bar is what asks, but it is portalled to `document.body`
+          either way — nothing about its position depends on sitting inside a `.gr-cmd`. */}
+      <DeleteConfirm
+        id={id}
+        title={title}
+        url={url}
+        open={confirming}
+        onOpenChange={setConfirming}
+        onConfirm={onRemove}
+        busy={busy}
+      />
     </CommandBar>
   );
 }

@@ -56,8 +56,30 @@ function BookmarkEdit({ id }: { id: string }) {
     router.push(record);
   };
 
+  /* ⚠️ **Both shortcuts go quiet while the delete confirmation is up** (COS-320), and on this shell
+     it is `esc` that makes it necessary rather than a nicety: a `window` listener is not a Radix
+     layer, so it fires under the confirmation as well as in it, and one press would close the
+     confirmation *and* run `leave` behind it — navigating away from the record you were still
+     deciding about, or arming `discard?` on a dirty form. `⌘↵` is silenced with it for the modal's
+     reason: saving a record while being asked whether to destroy it.
+
+     ⚠️ **`capture: true`, and that is the half without which the guard does not work.** It was
+     written on the bubble phase first and measured failing: Radix listens for `esc` on `document`
+     in the capture phase, so it had already closed the confirmation by the time this ran — and
+     React 19 flushes a discrete update *and* re-runs the effect synchronously, inside the same
+     event dispatch. So the listener reached at bubble time was a **fresh closure holding
+     `confirm === "none"`**, and the guard waved the keypress through. Probed through CDP, printing
+     `confirm` at each of the four phases: `window-capture` and `document-capture` still see
+     `remove`, `window-bubble` sees `none` while the panel is visibly still on screen.
+
+     Asking the DOM instead — the trick the index uses for `⌥F` — would fail the same way and worse:
+     the node is still there at bubble time only because its exit animation is playing, which makes
+     the check pass or fail on a timer. Running before Radix is the only version of this that does
+     not depend on when something else re-renders. */
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (confirm === "remove") return;
+
       if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         editor.commit();
@@ -71,9 +93,9 @@ function BookmarkEdit({ id }: { id: string }) {
       }
     };
 
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [editor.commit, leave]);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [editor.commit, leave, confirm]);
 
   return (
     <Card className="flex w-full max-w-170 shrink-0 flex-col self-center">
@@ -105,6 +127,9 @@ function BookmarkEdit({ id }: { id: string }) {
 
       <PagerBar className="@max-3xl:flex-wrap">
         <EditFooter
+          id={id}
+          title={editor.record?.title ?? ""}
+          url={editor.record?.original_url}
           confirm={confirm}
           dirty={editor.dirty}
           saving={editor.saving}

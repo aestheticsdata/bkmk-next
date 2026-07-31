@@ -66,17 +66,29 @@ function EditModal({ id }: { id: string }) {
 
   /* `⌘↵ save`. On `window` rather than on the form: the tags field swallows a bare `Enter` and the
    * footer is outside the fields, so binding it to a `<form>` would make the shortcut depend on
-   * where the focus happens to be. `esc` is Radix's, handled below. */
+   * where the focus happens to be. `esc` is Radix's, handled below.
+   *
+   * ⚠️ **Silent while the delete confirmation is up** (COS-320). A `window` listener is not a Radix
+   * layer, so it keeps firing under a dialog that has taken the focus — and `⌘↵` typed at a modal
+   * asking whether to destroy this record would save it instead. The index made the same correction
+   * for `⌥F` under the edit modal, and asked the DOM because the two surfaces had no shared state;
+   * here `confirm` *is* that state, so the guard is exact and costs no query.
+   *
+   * `capture: true` for the reason the full-page shell measured and writes out at length: a guard
+   * that reads render state has to run before whatever else is going to change that state in the
+   * same keypress. `⌘↵` does not close anything and would survive on the bubble phase, but the two
+   * shells sharing one rule is worth more than the distinction. */
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (confirm === "remove") return;
       if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey)) return;
       event.preventDefault();
       editor.commit();
     };
 
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [editor.commit]);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [editor.commit, confirm]);
 
   return (
     <Dialog
@@ -133,6 +145,9 @@ function EditModal({ id }: { id: string }) {
 
         <DialogFooter>
           <EditFooter
+            id={id}
+            title={editor.record?.title ?? ""}
+            url={editor.record?.original_url}
             confirm={confirm}
             dirty={editor.dirty}
             saving={editor.saving}
