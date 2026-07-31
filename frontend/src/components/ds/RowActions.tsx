@@ -45,7 +45,18 @@ function RowActions({ className, ...props }: React.ComponentProps<"span">) {
  *
  * **`asChild` for the one that navigates** (COS-299): `↗` opens the record's url, which is a link
  * and has to stay one — a button calling `window.open` loses middle-click, the context menu, and the
- * status bar preview of where it goes. */
+ * status bar preview of where it goes.
+ *
+ * ⚠️ **`text-lg`, not the handoff's 12px, and the box stays 22px.** None of these glyphs comes from
+ * Plex Mono: `next/font` loads the `latin` subset, which stops at U+00FF bar a short list, so every
+ * arrow and symbol in the app is drawn by the system fallback — and its ink is a fraction of the em.
+ * Measured through CDP at 12px, `↗` inks 5.07px tall and `⌧` 4.69px, *under the 5.68px x-height* of
+ * the 11px line they sit on. Fallback is not the fault by itself: the row's own `◔` and `◨` come from
+ * the same place, ink 7.2px at that size and read correctly. It is these particular glyphs that draw
+ * small, and the handoff's 12px was right for whatever font rendered its mockup. 18px puts `↗` at
+ * 7.61px against the line's 7.68px cap height — the size the owner asked for, reached by matching ink
+ * rather than em. `leading-none` keeps the 18px line box inside the 22px button; the ink is centred
+ * either way, this only stops the box from outgrowing it. */
 function RowAction({
   className,
   danger = false,
@@ -59,7 +70,7 @@ function RowAction({
       {...(asChild ? {} : { type: "button" as const })}
       data-slot="row-action"
       className={cn(
-        "inline-grid size-5.5 cursor-pointer place-items-center rounded-md text-xs text-gr-fg-3 transition-colors duration-120 outline-none",
+        "inline-grid size-5.5 cursor-pointer place-items-center rounded-md text-lg leading-none text-gr-fg-3 transition-colors duration-120 outline-none",
         "hover:bg-white/34 hover:text-gr-fg-2 hover:inset-shadow-gr-hair",
         "focus-visible:ring-3 focus-visible:ring-gr-ring",
         danger && "hover:text-gr-accent-2",

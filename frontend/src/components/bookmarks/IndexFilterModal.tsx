@@ -324,9 +324,7 @@ function FilterForm({
         </FieldGroup>
       </DialogBody>
 
-      {/* Sticky, so the primary action stays where it is when a short viewport makes the modal
-          scroll. The whole panel is the scroll container — see `DialogContent`. */}
-      <DialogFooter className="sticky bottom-0">
+      <DialogFooter>
         <Button
           asChild
           variant="primary"

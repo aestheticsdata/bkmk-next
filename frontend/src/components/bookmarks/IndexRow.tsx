@@ -188,10 +188,24 @@ function IndexRow({
         {bookmark.date_added && format(bookmark.date_added, "yyyy-MM-dd")}
       </div>
 
-      {/* Out of the flow, pinned to the row's right edge — `absolute` resolves against the row, which
-          is the `relative` one. Inside the last cell rather than beside it, so the row keeps six cells
-          and its ARIA structure. `z-1` puts it above the title link's overlay, which is why none of
-          these handlers needs `stopPropagation`.
+      {/* Out of the flow — `absolute` resolves against the row, which is the `relative` one. Beside
+          the six cells rather than inside one, so the row keeps its ARIA structure; an absolutely
+          positioned grid child takes no track. `z-1` puts it above the title link's overlay, which is
+          why none of these handlers needs `stopPropagation`.
+
+          ⚠️ **The two states are anchored to different things, and that is the point.** Hovering
+          swaps the date for the actions *in place*, so the glyphs have to start where the date starts
+          — `col-start-6 col-end-7` gives the strip the `added` column's grid area as its containing
+          block, and `left-0` is then that column's left edge, no measured offset anywhere. Pinned to
+          the row's right edge instead it landed 6px to the right of every date above and below it
+          (measured), which is exactly the misalignment you see when a swap is not a swap. The three
+          buttons are 70px in an 88px column, so they fit with room to spare. What is left is the
+          22px button's own padding around a ~8px glyph — the ink starts ~7px in — and that stays: it
+          is the control's box that aligns, not its ink, and closing the rest would take a negative
+          margin.
+
+          The confirm strip keeps `right-3`. Its label and two mini-buttons are twice the column, so
+          there is no column to start from — anchored left it would run off the row's right edge.
 
           ⚠️ **Below the fold it comes back into the flow** (COS-326). Out of the flow it was painted
           on top of the url — measured at 420px, 86px of glyphs over the end of the line — because the
@@ -199,8 +213,16 @@ function IndexRow({
           reserved the space. It takes the `auto` track of the folded grid instead: `relative` rather
           than `static`, because `z-index` does not apply to a static box and the title link's overlay
           would then swallow every click. `inset-auto` cancels the offsets, which a relative box would
-          otherwise honour — `right-3` alone would shift it 12px left of where it belongs. */}
-      <div className="absolute inset-y-0 right-3 z-1 flex items-center gap-2 @max-3xl:relative @max-3xl:inset-auto">
+          otherwise honour — `right-3` alone would shift it 12px left of where it belongs, and
+          `col-start-auto` / `col-end-auto` put it back in the folded grid's `auto` track, which has
+          no sixth column to be scoped to. */}
+      <div
+        className={cn(
+          "absolute inset-y-0 z-1 flex items-center gap-2",
+          "@max-3xl:relative @max-3xl:inset-auto @max-3xl:col-start-auto @max-3xl:col-end-auto",
+          confirming ? "right-3" : "left-0 col-start-6 col-end-7",
+        )}
+      >
         {confirming ? (
           <>
             <Overline className="text-gr-accent-2">{INDEX_TEXT.row.askRemove}</Overline>
@@ -266,13 +288,17 @@ function IndexRow({
                 ✎
               </Link>
             </RowAction>
+            {/* ⚠️ **`✕` (U+2715), not the handoff's `⌧`.** U+2327 draws as an X inside a rectangle,
+                and at this size that box is indistinguishable from the empty rectangle a browser
+                paints for a glyph it cannot find — the one action of the three that reads as a
+                rendering failure. Its neighbours are bare strokes; this one is too now. */}
             <RowAction
               danger
               title={INDEX_TEXT.row.remove}
               aria-label={INDEX_TEXT.row.remove}
               onClick={onAskRemove}
             >
-              ⌧
+              ✕
             </RowAction>
           </RowActions>
         )}
