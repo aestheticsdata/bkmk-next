@@ -52,6 +52,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | UI 13 | COS-328 — login : sur-titre `BKMK` + pitch | ✅ mergé (PR #20) |
 | UI 09 | COS-305 — écran About : les mentions légales en GRAPHITE | ✅ mergé (PR #21) |
 | hors lot | COS-321 — le menu de compte dans le chrome | ✅ mergé (PR #22) |
+| UI 05 | COS-301 — écran Record : la fiche en consultation | ✅ mergé (PR #23) |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -67,6 +68,17 @@ montrées plutôt que cachées parce que le menu est aussi la façon d'apprendre
 grisées plutôt que promises. Le même passage a **retiré les trois lectures inventées du chrome** sur
 demande du propriétaire : `IDX/2.4.1` et `uptime 04:12` côté application, `build 2.4.1 · tls on` côté
 auth (remplacé par le domaine de l'hôte). Voir le §8.1 plus bas, dont le point 1 est amendé.
+
+⚠️ **UI 05 a livré trois boutons sur les quatre, et corrigé deux défauts trouvés en route.** Le
+`alarm` de la maquette est le seul des quatre qui n'a rien à faire — armer un rappel écrit `reminder`
+sur le record, donc c'est le champ du formulaire d'édition, et l'écran legacy remplacé avait
+`back / edit / delete`. Les deux défauts : **aucune ligne de l'index ne pouvait être ouverte depuis
+UI 03** (le lien était construit sur `ROUTES.bookmarks.path`, qui porte `?page=0`, donc l'id
+atterrissait dans la query string), et **la note passait par `dangerouslySetInnerHTML`** avec une
+substitution d'URL par concaténation de chaînes, sans échappement, sur du texte saisi par le
+propriétaire du compte. Le volet droit, réduit à `preview`, garde la carte à la hauteur du record :
+mesuré en 1440×900, une carte pleine hauteur laissait 511px de volet vide sous la vignette, contre
+262 en épousant le contenu.
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
