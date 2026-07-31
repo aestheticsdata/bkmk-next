@@ -152,31 +152,12 @@ const useBookmarks = (from: string = "") => {
     },
   });
 
-  const uploadBookmarksService = async (f: any) => {
-    return privateRequest("/bookmarks/upload", {
-      method: "POST",
-      data: f,
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  };
-  const uploadBookmarks = useMutation({
-    mutationFn: (bookmarkFile: any) => uploadBookmarksService(bookmarkFile),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BOOKMARKS] });
-      router.push(`/${PAGES.BOOKMARKS}?page=0`);
-    },
-    onError: (e) => {
-      console.log("error uploading bookmark file : ", e);
-    },
-  });
-
   return {
     bookmarks,
     isLoading,
     createBookmark,
     deleteBookmark,
     editBookmark,
-    uploadBookmarks,
   };
 };
 
