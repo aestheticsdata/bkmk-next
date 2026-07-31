@@ -46,6 +46,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | UI 01 | COS-297 — écran Login | ✅ mergé (PR #14) |
 | UI 02 | COS-298 — écran Signup + passphrase de récupération | ✅ mergé (PR #15) |
 | UI 03 | COS-299 — écran Index : rail, table dense, pager | ✅ mergé (PR #16) |
+| UI 04 | COS-300 — modale de filtres | 🚧 en revue |
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
@@ -1330,8 +1331,9 @@ douze suppressions en ligne.
 **Ce qui n'est délibérément pas là**, avec le ticket qui l'apporte : les compteurs par catégorie et le
 bloc `storage` (DATA 05 / COS-310 — `all` porte le vrai total, le reste ne porte rien plutôt qu'un
 `0/0` permanent) · le bouton `filter ⌥F` et le champ de requête cliquable (UI 04 / COS-300 — un bouton
-qui n'ouvre rien est pire qu'un bouton pas encore arrivé) · le langage de requête `tag:demoscene
-stars:>3` de la maquette, remplacé par l'objet de filtres imprimé dans la même forme.
+qui n'ouvre rien est pire qu'un bouton pas encore arrivé ; arrivés depuis, cf. §6 bis) · le langage de
+requête `tag:demoscene stars:>3` de la maquette, remplacé par l'objet de filtres imprimé dans la même
+forme.
 
 **Trois scopes ont demandé du serveur.** `has shot` était exprimable, les trois autres non (`stars`
 compare à l'égalité, `reminder` à une fréquence exacte). Quatre cases dont une seule filtre est pire
@@ -1409,12 +1411,181 @@ densité, ce qui se lit bien.
 
 ---
 
+## 6 bis. UI 04 — la modale de filtres (COS-300)
+
+Le premier vrai modal du système, et le seul état de l'écran d'index qui **n'est pas dans l'URL**.
+
+**Un brouillon, pas sept navigations.** Partout ailleurs sur l'index un contrôle est un `<Link>` et un
+clic est une navigation, parce que la requête vit dans la barre d'adresse. Ici sept contrôles décrivent
+**un** filtre : appliquer chacun au clic ferait sept navigations et sept allers-retours pour atteindre
+une seule liste. La modale édite donc un brouillon en `useState`, le compte en direct, et l'applique
+d'un seul coup — ce que le pied de la maquette dit déjà, `filter — 27 results` étant un bouton et pas
+une ligne d'état. Le brouillon se résout quand même en **adresse** : l'action primaire est un `<Link>`,
+donc ⌘-clic ouvre l'index filtré dans un onglet et le retour arrière défait les sept filtres d'un pas.
+
+⚠️ **Le brouillon est semé à l'ouverture, et seulement là.** Radix démonte le contenu quand la modale
+est fermée, donc `useState(query)` dans `FilterForm` se réinitialise à chaque ouverture — c'est la seule
+raison pour laquelle le formulaire est un composant à part. Sans cette coupure, un brouillon modifié
+puis abandonné revient à l'ouverture suivante au lieu de la requête réellement à l'écran. Vérifié :
+`esc` après un changement, réouverture, les segments sont de nouveau ceux de l'URL.
+
+**`live · 14 ms` est mesuré, et tout sur cet écran doit l'être.** `useFilterCount` demande `rows=1` — la
+page la moins chère qui porte encore le `COUNT(DISTINCT b.id)` séparé du contrôleur — avec un debounce
+de 300ms sur *toute* la chaîne de requête, donc un mot tapé coûte une requête et un clic coûte la
+sienne tout de suite. Le chiffre du pied est le vrai aller-retour de cette requête. La maquette écrit un
+`4 ms` figé : une latence en dur est une affirmation de performance que personne n'a mesurée, et c'est
+le seul genre de décoration qui, en plus, trompe. Il reste vide jusqu'à avoir quelque chose à dire,
+plutôt que d'afficher `0`.
+
+**L'objet de filtres a perdu deux paramètres, et chaque contrôle possède exactement un champ.** COS-299
+avait donné au rail quatre scopes et au backend trois conditions. Construire les contrôles de la modale
+avec ça ne marchait pas, et la correction a été *moins* de paramètres, pas plus :
+
+| COS-299 | COS-300 | Pourquoi |
+|---|---|---|
+| `stars` comparé avec `=` | **`>=`** | Le groupe de la maquette est `any · 1+ · 2+ · 3+ · 4+ · 5`. Un minimum est ce que veut dire un filtre de note, et l'égalité ne pouvait pas l'exprimer : demander `3+` rendait les enregistrements à trois étoiles et cachait ceux à quatre et cinq. |
+| `starred`, un flag pour `stars > 0` | **supprimé** | Avec un minimum, « noté du tout » c'est `stars=1`. La ligne du rail et le segment `1+` de la modale écrivent le même filtre au lieu de deux orthographes d'un seul. |
+| `alarm`, un flag de présence | **une énumération**, `armed \| none \| due` | Le groupe rappel est un choix unique à quatre branches. Trois booléens peuvent se contredire — `?alarm=1&no_alarm=1` est une requête sans réponse — donc c'est un champ à trois valeurs, `any` étant son absence. |
+| `reminder`, une fréquence exacte | **supprimé** | Seul le menu déroulant de l'ancien panneau de filtres l'envoyait, et ce panneau est parti avec ce ticket. `alarm=due` répond à la question pour laquelle on l'ouvrait. |
+| `priority`, quatre niveaux | **cinq**, `none` compris | La modale dessine `—` pour un enregistrement sans niveau. `NULL` n'est pas une valeur que `IN` peut apparier, donc le contrôleur ressort `none` en **alternative** `IS NULL` — une condition avec un `OR`, pas deux qui se croiseraient en `AND` jusqu'au vide. |
+
+`alarm=due` est la seule condition de `getBookmarksController` qui calcule quelque chose. Une alarme n'a
+pas de colonne « prochaine sonnerie » : elle se répète tous les `frequency` jours depuis `date_added`,
+ce qui est la façon dont le contrôleur des rappels décide qu'une alarme sonne aujourd'hui. Le nombre de
+jours avant la prochaine est donc
+`MOD(frequency - MOD(DATEDIFF(CURDATE(), date_added), frequency), frequency)` — le `MOD` extérieur est ce
+qui fait sortir 0 pour une alarme qui sonne *aujourd'hui* plutôt qu'une période entière — et
+`frequency > 0` garde le modulo, parce que la colonne n'a aucune contrainte et que `MOD(x, 0)` vaut
+`NULL`, ce qui écarterait des lignes en silence au lieu d'échouer. La fenêtre est de 3 jours, et **ce
+nombre est écrit deux fois** : `REMINDER_DUE_DAYS` dans le contrôleur et le libellé `≤ 3d` dans
+`@text/index.ts`. Même arrangement recopié à la main que `FIELD_LIMITS`, signalé dans les deux fichiers.
+
+Un lien écrit avant tout ça — `?alarm=1`, `?starred=1` — dégrade vers *aucun filtre* et non vers une
+erreur : `catch(undefined)` sur l'énumération, et une clé inconnue est retirée.
+
+**Les deux nombres qui décident de la mise en page**, tous les deux mesurés, aucun des deux choisi :
+
+1. **6px entre les segments, pas 14.** La maquette donne `gap: 6` à une rangée de segments et `gap: 14`
+   aux cases `contains` ; c'est parti avec 14 partout, et les 8px d'écart suffisaient à faire passer
+   deux rangées à la ligne — `stars` a besoin de 272px sur une ligne et disposait de 291, mais à 14px
+   il en voulait 312, donc le `5` se retrouvait seul sous la rangée d'étoiles et le `low` sous celle des
+   priorités. Le bon écart est à la fois le fidèle et celui qui rentre. Les 14px survivent pour les
+   cases, et pour une raison : une pilule porte son propre bord, donc 6px se lisent comme une
+   séparation ; trois `[x] libellé` nus à 6px se lisent comme une seule chaîne.
+2. **`min-w-72` sur chaque moitié d'une paire.** 288px, le pas juste au-dessus des 272 dont la plus
+   large de ces rangées a besoin. La bascule devient binaire : soit les deux moitiés font au moins 288
+   et aucune ne se replie sur elle-même, soit elles s'empilent et chacune prend toute la largeur de la
+   modale. L'entre-deux — une colonne assez large pour tenir à côté de sa voisine mais trop étroite
+   pour son propre contenu — est exactement l'état qui imprimait le `5` tout seul. Mesuré après : deux
+   colonnes à 291px sur une modale de 640, les quatre rangées sur une ligne ; empilées à 358px sur un
+   viewport de 420, toujours une ligne chacune, 10px de gouttière des deux côtés.
+
+**La question laissée en suspens par le §7 du DS est tranchée, et la réponse était « ni l'un ni
+l'autre ».** On attendait soit un `@container` sur le contenu avec un seuil à l'échelle de la modale,
+soit la bascule dans le composant composé. C'est `flex-wrap` plus un `min-w-*` mesuré, sans aucune
+requête : le passage à la ligne est *déjà* conditionné au fait que le contenu ne rentre pas, ce qu'un
+seuil ne fait qu'approximer. Et un conteneur sur la modale elle-même aurait rendu `@max-3xl`
+**toujours vrai** — 640px est toujours sous 768 — donc pire que jamais.
+
+**Le sélecteur de catégories, après que le nuage a été jeté.** Le contrôle a été livré deux fois. La
+première version dessinait les **cinquante-trois** catégories en chips : sept rangées, 204px, plafonnées
+et défilantes. Verdict du propriétaire : « un gros pavé indigeste » — et c'était juste, personne ne lit
+cinquante-trois pilules pour trouver `dev`, et le simple multi-select de l'app legacy faisait mieux.
+`CategoryPicker` le remplace par **un champ à jetons dans lequel on tape, et une rangée de
+suggestions** : rien de tapé → les **dix plus utilisées**, classées par `bookmarks_count` (sur le vrai
+index : `dev 960`, `youtube 916`, puis une longue traîne, donc les deux catégories qui portent l'archive
+sont à un clic) ; en train de taper → les **dix meilleures correspondances**, alphabétiques, avec
+`+N more` au-delà. Ce qui est sélectionné reste dans le champ sous forme de jetons amovibles dans les
+deux cas, donc une catégorie hors du top dix ne peut pas être sélectionnée-mais-invisible. `↵` ajoute la
+première suggestion, `⌫` sur un champ vide retire le dernier jeton, et un jeton est **un seul bouton qui
+se supprime** — un bouton dans un bouton est du markup invalide, et le jeton entier est une cible plus
+grande qu'un glyphe de 10px.
+
+**« Most used » a demandé du serveur.** `GET /categories` rendait les lignes brutes de la table ; il
+porte maintenant un `COUNT(DISTINCT b.id)` par catégorie, avec `b.active = 1` dans la **condition de
+jointure** pour que les huit catégories que rien n'utilise reviennent à `0` au lieu de disparaître. Cela
+n'allume **pas** les compteurs du rail — ils restent vides et restent DATA 05 (COS-310) ; le nombre
+existe, simplement.
+
+⚠️ **`esc` vide la recherche sans fermer la modale, et l'état est remonté pour cette seule raison.**
+L'écouteur de fermeture de Radix est sur `document` en phase de **capture**, donc il passe avant que
+l'événement n'atteigne l'input : un `stopPropagation` dans le champ arrive trop tard — c'était la
+première tentative, et la modale se fermait quand même en emportant le brouillon. Le point d'accroche
+supporté est `onEscapeKeyDown` sur `DialogContent`, une prop deux niveaux au-dessus, donc la chaîne de
+recherche vit là. Sur un champ vide, `esc` ferme comme d'habitude.
+
+**Le rail est une colonne en trois parties et seule celle du milieu défile** (demande du propriétaire).
+La carte était le conteneur de défilement, ce qui faisait défiler tout : `INDEX · CAT` glissait sous le
+bord haut, et sur un vrai index de cinquante-trois catégories les quatre scopes se retrouvaient 1500px
+sous la ligne de flottaison — quatre filtres qui marchent, hors d'atteinte. Le libellé et le bloc de
+scopes sont maintenant `shrink-0`, la liste prend `min-h-0 flex-1 overflow-y-auto`. Mesuré : libellé et
+scopes au même y après avoir fait défiler la liste de 811px, et le `scrollHeight` de la carte égal à son
+`clientHeight`.
+
+**Et la place de la scrollbar, corrigée deux fois dans les deux sens** (demande du propriétaire).
+Un pouce en superposition — le défaut de Chrome sur macOS — est peint *par-dessus* le contenu au lieu de
+tenir un couloir réservé, donc ce sont les bords du conteneur de défilement qui décident s'il tombe sur
+une ligne ou à côté : le padding est passé de la carte au scroller (sur la carte, le bord droit de la
+liste tombait 14px à l'intérieur du panneau, c'est-à-dire sur les lignes, et la barre couvrait l'angle
+arrondi de la ligne survolée), puis le scroller a gagné `mr-1.5` parce que sans marge la barre venait se
+coller au bord du panneau, ce qui est aussi mauvais vu de l'autre côté. Mesuré : **8px** entre le bord
+droit d'une ligne et la barre, **7px** entre la barre et la bordure du panneau.
+
+⚠️ **Et `min-w-0` sur la ligne, qui est un tout autre bug déguisé en celui-là.** La taille minimale
+automatique d'un élément de grille est son `min-content` : une ligne du rail refusait donc d'être plus
+étroite que son libellé le plus long non tronqué — mesurée à **175,8px dans une piste de 166px**, avec
+9,8px de débordement à droite que `overflow-hidden` coupait. *C'est* ce qui transformait `all 1278` en
+`all 127` : la barre n'y était pour rien, elle rendait seulement le débordement visible. Le
+`min-w-0 flex-1 truncate` du libellé ne pouvait pas s'appliquer, puisqu'on ne demandait jamais à la ligne
+qui le contient de rentrer. La moitié « piste » du correctif est `grid-cols-1`, que Tailwind écrit
+`repeat(1, minmax(0, 1fr))` précisément pour ça.
+
+**Ce qui a été décidé au passage.** `⌥F` **ouvre et ne ferme jamais** :
+`event.code === "KeyF"` et non `event.key`, parce que sur macOS `Alt` est une touche de composition et
+`⌥F` produit `ƒ` ; la maquette fait basculer, mais la modale contient un champ texte et `⌥F` tapé dedans
+jetterait un brouillon. `esc`, le fond et le `×` ferment, ce qui fait déjà trois manières. Le hint de la
+barre d'état passe de `f filter` à `⌥f filter` — un hint qui nomme un raccourci inexistant est pire que
+pas de hint. `ui/dialog` porte désormais la géométrie GRAPHITE, `w-[calc(100%-1.25rem)] max-w-160`, à la
+place du `sm:max-w-lg` de shadcn : la gouttière est la moitié fluide et reste, une modale d'une autre
+taille change le plafond (`max-w-110` pour la confirmation de suppression, `max-w-170` pour l'édition).
+
+**Et `nuqs` n'entre pas**, alors que le ticket demandait de l'envisager. L'URL est déjà l'état et
+`helpers/indexQuery.ts` possède déjà toutes les conversions ; la bibliothèque remplacerait un fichier
+que ce système documente par une dépendance, et le brouillon de la modale est justement le seul état
+délibérément *hors* de l'URL.
+
+**QA locale, 53 assertions de fonctions pures + une passe navigateur.** Les assertions : lecture d'URL
+(`alarm` dans ses trois états, `alarm=1` d'avant qui dégrade, `priority` partiellement invalide qui
+garde le reste, `stars=9` écarté) · requête d'API (ordre stable des clés, flag faux absent, niveaux
+normalisés avec `none` en dernier) · l'expression (`stars:3+` et non `stars:3`, ordre fixe indépendant
+de l'ordre des clics) · les deux `href` (remplacement complet contre correctif partiel, filtre vidé qui
+disparaît, tri conservé, `reset` qui ne garde que le tri) · l'égalité entre le scope `starred` du rail
+et le segment `1+` de la modale · les libellés (singulier/pluriel de `N results`, `5` sans `+`).
+Les conditions SQL nouvelles sont prouvées **directement sur la vraie base** : `stars>=1` → 22,
+`stars>=3` → 21, `stars>=5` → 8 (monotone), `armed` 11 + `none` 1267 = 1278 (le total), `due<=3` → 8,
+`prio none` → 1266 et `low+none` → 1269 = 1266 + 3. La passe navigateur, en Chrome sans tête piloté en
+CDP sur un compte d'essai de 40 enregistrements créé puis supprimé : les deux ouvertures (bouton et
+champ de requête), les trois fermetures (`esc`, fond, `×`), `⌥F`, le focus qui tombe sur le champ titre,
+la frappe qui met à jour l'expression et le compte (`amiga` → 14 résultats), l'application qui navigue
+et ferme (`?title=amiga`, 14 lignes), la réouverture qui sème depuis l'URL, le brouillon abandonné qui
+ne revient pas, `reset` qui ramène 22 lignes, et la géométrie à 1440, 1100×460 (la modale à 436px =
+460 − 24, en-tête et pied collés, défilement interne) et 420px. `next build` passe, `tsc --noEmit`
+propre, lint front inchangé sur les fichiers touchés.
+
+⚠️ **Non vérifié : le jugement.** Les couleurs, la densité, le confort de lecture — la passe visuelle du
+propriétaire reste à faire, comme sur UI 01, UI 02 et UI 03.
+
+---
+
 ## 7. Ce que le handoff implique côté données
 
 - `hash`, `log` (événements horodatés), `related · same tags` — absents de `backend/src/db/bkmk.sql`.
   **Reportés** (§8.2) : blocs masqués dans la fiche, aucune migration MySQL dans ce chantier.
 - Pagination **serveur** 22 lignes/page (`?page=`) ; aujourd'hui cliente.
 - Objet de filtres : `title`, `categories[]`, `stars`, `priority[]`, `reminder`, `contains{shot,notes,url}`.
+  **Arrêté par COS-300** (§6 bis) : `stars` est un *minimum*, `reminder` devient `alarm` à trois états
+  (`armed | none | due`), `priority[]` accepte `none`, et le flag `starred` disparaît — six champs, un
+  par contrôle de la modale.
 - File d'import : fichier + entrées analysées + doublons **avant** commit.
 - Détection de doublons à la création.
 - Agrégats : `next 14 days · load`, `storage` (`shots 84/312`, `db 1.4 mb`), compteurs de catégories.

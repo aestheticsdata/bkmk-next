@@ -10,11 +10,11 @@ import Link from "next/link";
 
 import type { Category } from "@src/schemas/categories";
 import type { FiltersQuery } from "@src/schemas/filters";
-import type { Priority } from "@src/schemas/primitives";
+import type { PriorityFilter } from "@src/schemas/primitives";
 
 /** `prio high` covers `high` **and** `highest`: a shortcut named for the level below the top would
  *  hide the records that matter most. The controller receives both. */
-const HIGH_PRIORITY: Priority[] = ["high", "highest"];
+const HIGH_PRIORITY: PriorityFilter[] = ["high", "highest"];
 
 /* The rail (COS-299): what the index is currently cut down to, and every other cut one click away.
  *
@@ -49,13 +49,41 @@ function IndexRail({
     query.priority?.length === HIGH_PRIORITY.length && HIGH_PRIORITY.every((level) => query.priority?.includes(level));
 
   return (
-    /* `overflow-x-hidden`, not `overflow-auto`: nothing in this column is allowed to scroll sideways.
-       Every label truncates, so a horizontal bar could only ever mean something is mis-sized — and it
-       did, at the width the vertical bar takes. `gr-scroll` replaces the native bar; see the utility. */
-    <Card className={cn("gr-scroll flex flex-col gap-5 overflow-y-auto overflow-x-hidden px-3.5 py-4", className)}>
-      <nav aria-label={INDEX_TEXT.rail.categories}>
-        <Overline className="mb-2 block px-2">{INDEX_TEXT.rail.categories}</Overline>
-        <div className="grid gap-px">
+    /* ⚠️ **The card is not the scroll container — the category list is** (COS-300).
+     *
+     * It was the card, and that scrolled everything: `INDEX · CAT` slid up under the top edge and the
+     * four scopes sat 1500px below the fold on a real index of fifty-three categories, which made four
+     * working filters effectively unreachable. So the card is a three-part column now — a fixed
+     * caption, the list, a fixed block of scopes — and only the middle part moves. `min-h-0` on the
+     * list is what lets a flex child shrink far enough to scroll at all.
+     *
+     * `overflow-x-hidden` on the list, not `overflow-auto`: nothing in this column is allowed to
+     * scroll sideways. Every label truncates, so a horizontal bar could only ever mean something is
+     * mis-sized — and it did, at the width the vertical bar takes. `gr-scroll` replaces the native
+     * bar; see the utility.
+     *
+     * ⚠️ **The horizontal padding is on the three children, not on the card, and the scroller keeps a
+     * margin on its right.** Both halves were wrong once and in opposite directions:
+     *
+     * - with `px-3.5` on the *card*, the list's right edge — where the bar is painted — sat 14px inside
+     *   the panel, which is on top of the rows. macOS Chrome overlays its thumb instead of reserving a
+     *   channel, so the bar covered a row's rounded right corner.
+     * - moving the padding in without a margin then put the bar hard against the panel's border, which
+     *   reads just as wrong from the other side.
+     *
+     * So: padding inside the scroller keeps the rows clear of the bar, and `mr-1.5` keeps the bar clear
+     * of the border. Measured — 8px between a row's right edge and the bar, 7px between the bar and the
+     * panel's border. */
+    <Card className={cn("flex flex-col py-4", className)}>
+      <Overline className="mb-2 shrink-0 px-5.5">{INDEX_TEXT.rail.categories}</Overline>
+      <nav
+        aria-label={INDEX_TEXT.rail.categories}
+        className="gr-scroll mr-1.5 min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3.5"
+      >
+        {/* `grid-cols-1`, not a bare `grid`: Tailwind spells it `repeat(1, minmax(0, 1fr))`, and the
+            `0` minimum is what stops the implicit column from being sized by its widest label. It is
+            the track half of the `min-w-0` on the row below. */}
+        <div className="grid grid-cols-1 gap-px">
           <RailRow
             href={toIndexHref(pathname, query, { categories_id: undefined })}
             label={INDEX_TEXT.rail.all}
@@ -74,20 +102,27 @@ function IndexRail({
         </div>
       </nav>
 
-      <div>
+      {/* `shrink-0`, so the four scopes keep their room whatever the list above does. `px-3.5` here
+          rather than on the card — see the note above. */}
+      <div className="mt-5 shrink-0 px-3.5">
         <Overline className="mb-2 block px-2">{INDEX_TEXT.rail.scopes}</Overline>
         {/* `grid` rather than a list: four rows of one line each, and the gap is the design's 5px
             rounded to the scale's 4. */}
         <div className="grid gap-1">
+          {/* ⚠️ **`stars: 1`, not a `starred` flag of its own** (COS-300). `stars` is a minimum now,
+              so "rated at all" is the modal's `1+` segment and this row writes the same filter — one
+              concept, one parameter, and the rail and the modal cannot disagree about it. The row is
+              lit for any minimum, because any minimum *is* a star filter; clicking it clears
+              whatever the modal set rather than stepping down to 1. */}
           <ScopeRow
-            href={toIndexHref(pathname, query, { starred: !query.starred || undefined })}
+            href={toIndexHref(pathname, query, { stars: query.stars ? undefined : 1 })}
             label={INDEX_TEXT.rail.starred}
-            on={Boolean(query.starred)}
+            on={Boolean(query.stars)}
           />
           <ScopeRow
-            href={toIndexHref(pathname, query, { alarm: !query.alarm || undefined })}
+            href={toIndexHref(pathname, query, { alarm: query.alarm === "armed" ? undefined : "armed" })}
             label={INDEX_TEXT.rail.alarm}
-            on={Boolean(query.alarm)}
+            on={query.alarm === "armed"}
           />
           <ScopeRow
             href={toIndexHref(pathname, query, { screenshot: !query.screenshot || undefined })}
@@ -109,14 +144,22 @@ function IndexRail({
  * is a number in it — so the names do not shift when DATA 05 fills them in.
  *
  * `aria-current="page"` is the accessible half of the selected row's fill: a lighter background is
- * not information anyone can hear. */
+ * not information anyone can hear.
+ *
+ * ⚠️ **`min-w-0` on the row itself, and it is the fix for a bug that had nothing to do with the
+ * scrollbar.** A grid item's automatic minimum size is `min-content`, so this row refused to be
+ * narrower than its longest untruncated label: measured at **175.8px inside a 166px track**, overflowing
+ * 9.8px to the right, where the card's `overflow-hidden` clipped it. That is what turned `all 1278` into
+ * `all 127` — the count was not clipped by the bar, it had been pushed out of the panel. The label's own
+ * `min-w-0 flex-1 truncate` could never fire, because the row it lives in was never asked to fit.
+ * With the minimum released, the row is exactly the track and the label truncates as designed. */
 function RailRow({ href, label, count, on }: { href: string; label: string; count?: number; on: boolean }) {
   return (
     <Link
       href={href}
       aria-current={on ? "page" : undefined}
       className={cn(
-        "flex h-6 items-center gap-2 rounded-md px-2 text-2xs transition-colors duration-120 outline-none",
+        "flex h-6 min-w-0 items-center gap-2 rounded-md px-2 text-2xs transition-colors duration-120 outline-none",
         "focus-visible:ring-3 focus-visible:ring-gr-ring",
         on
           ? "bg-white/34 font-medium text-gr-fg-2 inset-shadow-gr-hair"
@@ -164,8 +207,8 @@ function ScopeRow({ href, label, on }: { href: string; label: string; on: boolea
 
 /* Below the fold the rail is gone and the categories come back as a horizontal scroller at the top
  * of the table card — the handoff's `.gr-mobrail`. The scopes do not follow it: four more segments
- * in a row that already scrolls would bury the categories, and they are reachable from the filter
- * modal (UI 04) on any width.
+ * in a row that already scrolls would bury the categories, and the filter modal reaches all four on
+ * any width — the `filter ⌥F` button beside this row is how (COS-300).
  *
  * `gr-scroll-none` is the handoff's invisible scrollbar. It stays a scroll container — only the bar is
  * hidden, and the row still scrolls by wheel, drag and keyboard. */

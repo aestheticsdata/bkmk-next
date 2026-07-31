@@ -7,9 +7,12 @@ import ToolsBar from "@components/shared/toolsBar/ToolsBar";
  * `app/(private)/layout.tsx`.
  *
  * All that remains is the old tool bar and sort bar, kept because nothing replaces them
- * yet: removing them here would cost the legacy screens their pagination, filters, back,
- * edit and delete controls several tickets before the GRAPHITE command bar arrives. They
- * leave screen by screen with the UI lot, and this file leaves with the last of them.
+ * yet: removing them here would cost the legacy screens their pagination, back, edit and
+ * delete controls several tickets before the GRAPHITE command bar arrives. They leave
+ * screen by screen with the UI lot, and this file leaves with the last of them.
+ *
+ * The `filters` flag is gone (COS-300): the inline filter panel it switched on has been replaced by
+ * the GRAPHITE filter modal, which belongs to the index screen and not to a wrapper.
  *
  * The `mt-*` offsets inside the legacy screens still clear a navigation bar that no longer
  * exists, so their content sits lower in the desk than it needs to. Not worth fixing on
@@ -20,7 +23,6 @@ interface LayoutProps {
   backButton?: boolean;
   editButton?: boolean;
   deleteButton?: boolean;
-  filters?: boolean;
   sortbar?: boolean;
   children: React.ReactNode;
 }
@@ -31,7 +33,6 @@ const Layout = ({
   backButton = false,
   editButton = false,
   deleteButton = false,
-  filters = false,
   sortbar = false,
   children,
 }: LayoutProps) => {
@@ -44,7 +45,6 @@ const Layout = ({
               backButton={backButton}
               editButton={editButton}
               deleteButton={deleteButton}
-              filters={filters}
             />
           </div>
           {sortbar && <SortBar />}

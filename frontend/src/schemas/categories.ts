@@ -17,6 +17,13 @@ export const CategorySchema = z.object({
   name: z.string(),
   color: z.string(),
   user_id: numberLikeSchema,
+  /** How many live records carry it (COS-300) — a `COUNT(DISTINCT b.id)`, so `0` for a category
+   *  nothing uses, never absent. The filter modal's picker ranks its suggestions by it.
+   *
+   *  `default(0)` rather than plain `optional`: it is the one field here that a caller does arithmetic
+   *  on, and a number that might be `undefined` would put a `?? 0` at every use. The default only
+   *  fires for a response written before this column existed. */
+  bookmarks_count: numberLikeSchema.default(0),
 });
 
 export type Category = z.infer<typeof CategorySchema>;

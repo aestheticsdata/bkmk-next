@@ -1,21 +1,21 @@
 import { FiltersQuerySchema } from "@src/schemas/filters";
-import { PRIORITY_LEVELS } from "@src/schemas/primitives";
+import { PRIORITY_FILTER_LEVELS } from "@src/schemas/primitives";
 
 import type { FiltersQuery } from "@src/schemas/filters";
-import type { Priority } from "@src/schemas/primitives";
+import type { PriorityFilter } from "@src/schemas/primitives";
 
 /* The index's query, in its three forms (COS-299).
  *
- * The URL is the state. There is no store: the rail writes `?categories_id=3&starred=1`, the pager
+ * The URL is the state. There is no store: the rail writes `?categories_id=3&stars=1`, the pager
  * writes `?page=2`, the column headers write `?sort=-date`, and the list is whatever the address
  * bar says. Which means the back button works, a filtered index can be bookmarked or sent to
  * yourself, and two components never disagree about what is being shown.
  *
  * So this file is the only place that knows how to move between the three forms that state takes:
  *
- * 1. the **URL** — `?page=2&categories_id=3&starred=1`, all strings, written by the screen;
+ * 1. the **URL** — `?page=2&categories_id=3&stars=1`, all strings, written by the screen;
  * 2. the **API query** — the same thing plus `rows` and `userID`, sent to `GET /bookmarks`;
- * 3. the **expression** — `cat:3 starred` shown in the command bar, for a human to read.
+ * 3. the **expression** — `cat:3 stars:1+` shown in the command bar, for a human to read.
  *
  * `queryString` is already a dependency (the legacy hook uses it), but it is not used here:
  * `URLSearchParams` builds and orders the same string, and ordering matters — see `toApiQuery`. */
@@ -42,7 +42,7 @@ function readIndexQuery(searchParams: URLSearchParams | { toString: () => string
 /** The API query string, **with its keys sorted**.
  *
  *  Sorted because this string is part of the cache key (`queryKeys.bookmarks.list`). Unsorted,
- *  `?starred=1&page=0` and `?page=0&starred=1` describe one page and would occupy two cache
+ *  `?stars=1&page=0` and `?page=0&stars=1` describe one page and would occupy two cache
  *  entries — the second arriving as a loading state for something already held.
  *
  *  `userID` is a parameter because every list controller still scopes on it; it is the client's
@@ -57,15 +57,13 @@ function toApiQuery(query: FiltersQuery, { rows, userID }: { rows: number; userI
   if (query.title) params.set("title", query.title);
   params.set("sort", query.sort ?? DEFAULT_SORT);
   if (query.stars != null) params.set("stars", String(query.stars));
-  if (query.reminder != null) params.set("reminder", String(query.reminder));
   if (query.categories_id?.length) params.set("categories_id", query.categories_id.join(","));
+  if (query.alarm) params.set("alarm", query.alarm);
 
   // The backend reads presence, so a false flag is an absent parameter, never `0`.
   if (query.screenshot) params.set("screenshot", "1");
   if (query.url) params.set("url", "1");
   if (query.notes) params.set("notes", "1");
-  if (query.starred) params.set("starred", "1");
-  if (query.alarm) params.set("alarm", "1");
   if (query.priority?.length) params.set("priority", sortLevels(query.priority).join(","));
 
   params.sort();
@@ -74,8 +72,8 @@ function toApiQuery(query: FiltersQuery, { rows, userID }: { rows: number; userI
 
 /** Normalises a level list into the palette's order, so `high,highest` and `highest,high` are one
  *  URL and one cache entry. */
-function sortLevels(levels: readonly Priority[]): Priority[] {
-  return PRIORITY_LEVELS.filter((level) => levels.includes(level));
+function sortLevels(levels: readonly PriorityFilter[]): PriorityFilter[] {
+  return PRIORITY_FILTER_LEVELS.filter((level) => levels.includes(level));
 }
 
 /** True when something other than the category selection is narrowing the list.
@@ -86,8 +84,6 @@ function hasScopeFilters(query: FiltersQuery): boolean {
   return Boolean(
     query.title ||
       query.stars != null ||
-      query.reminder != null ||
-      query.starred ||
       query.alarm ||
       query.screenshot ||
       query.url ||
@@ -134,11 +130,11 @@ function describeQuery(query: FiltersQuery, categoryNames?: Map<number, string>)
 
   if (query.title) terms.push(`title:${query.title}`);
   for (const id of query.categories_id ?? []) terms.push(`cat:${categoryNames?.get(id) ?? id}`);
-  if (query.stars != null) terms.push(`stars:${query.stars}`);
-  if (query.starred) terms.push("starred");
+  // `3+`, not `3`: the value is a minimum, and an expression that reads as an exact count would be
+  // the one line on the screen contradicting the control that wrote it.
+  if (query.stars != null) terms.push(`stars:${query.stars}+`);
   if (query.priority?.length) terms.push(`prio:${sortLevels(query.priority).join("|")}`);
-  if (query.reminder != null) terms.push(`every:${query.reminder}d`);
-  if (query.alarm) terms.push("alarm");
+  if (query.alarm) terms.push(`alarm:${query.alarm}`);
   if (query.screenshot) terms.push("shot");
   if (query.url) terms.push("url");
   if (query.notes) terms.push("notes");
@@ -159,17 +155,36 @@ function toIndexHref(pathname: string, query: FiltersQuery, patch: Partial<Filte
   if (next.title) params.set("title", next.title);
   if (next.sort) params.set("sort", next.sort);
   if (next.stars != null) params.set("stars", String(next.stars));
-  if (next.reminder != null) params.set("reminder", String(next.reminder));
   if (next.categories_id?.length) params.set("categories_id", next.categories_id.join(","));
+  if (next.alarm) params.set("alarm", next.alarm);
   if (next.screenshot) params.set("screenshot", "1");
   if (next.url) params.set("url", "1");
   if (next.notes) params.set("notes", "1");
-  if (next.starred) params.set("starred", "1");
-  if (next.alarm) params.set("alarm", "1");
   if (next.priority?.length) params.set("priority", sortLevels(next.priority).join(","));
 
   const search = params.toString();
   return search ? `${pathname}?${search}` : pathname;
+}
+
+/** The URL for a filter set the modal has finished editing (COS-300): the draft **replaces** the
+ *  current query rather than patching it.
+ *
+ *  A separate name for `toIndexHref(pathname, draft, {})`, because the difference between the two is
+ *  one empty object and the consequence of getting it wrong is silent. Every other control on the
+ *  screen changes one thing and leaves the rest alone, so it patches; the modal owns every filter at
+ *  once, and a filter the user has just cleared has to disappear from the URL — patching would keep
+ *  it, since an absent key in a patch means "unchanged". `sort` survives because the draft is seeded
+ *  from the live query and the modal has no control for it. */
+function toFilterHref(pathname: string, draft: FiltersQuery): string {
+  return toIndexHref(pathname, draft, {});
+}
+
+/** The same query with every filter dropped and nothing else changed — the modal's `reset`.
+ *
+ *  Written as an explicit object rather than by deleting keys, so a field added to the filter object
+ *  is reset by default: forgetting to clear one is how a `reset` button leaves a filter on. */
+function clearFilters(query: FiltersQuery): FiltersQuery {
+  return { page: 0, sort: query.sort };
 }
 
 /** `?sort=` for a header click: the same column flips direction, a new column starts descending.
@@ -188,6 +203,7 @@ function readSort(sort: FiltersQuery["sort"]): { column: string; descending: boo
 }
 
 export {
+  clearFilters,
   countedRow,
   DEFAULT_SORT,
   describeQuery,
@@ -198,5 +214,6 @@ export {
   readSort,
   sortLevels,
   toApiQuery,
+  toFilterHref,
   toIndexHref,
 };

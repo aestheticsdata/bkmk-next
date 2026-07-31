@@ -53,7 +53,10 @@ export const SHELL_TEXT = {
  * to a screen that does not exist yet (`detail` wants `record <id>`, which UI 05 / COS-301
  * will supply once it owns that route). Omitting it falls back to `status.index`. */
 export const SHELL_STATUS = {
-  list: { hints: ["j/k move", "enter open", "f filter", "n new"] },
+  /** `⌥f filter` and not the handoff's `f filter` (COS-300): the button in the command bar prints
+   *  `⌥F` and that is the combination the listener answers to. A hint naming a shortcut that does
+   *  nothing is worse than no hint. */
+  list: { hints: ["j/k move", "enter open", "⌥f filter", "n new"] },
   detail: { hints: ["esc back", "e edit", "a alarm", "x delete"] },
   /** The handoff writes `draft 2088`; the number is mock data, so only the word survives.
    *  UI 06 (COS-302) adds the real draft reference if the insert screen ever has one. */

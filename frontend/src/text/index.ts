@@ -33,6 +33,11 @@ export const INDEX_TEXT = {
     /** The label of the sort control, e.g. `added ▾`. The arrow is the direction, not decoration. */
     descending: "▾",
     ascending: "▴",
+    /** The button that opens the filter modal, and the shortcut printed on it in a dimmer ink. */
+    filter: "filter",
+    filterKey: "⌥F",
+    /** Both openings of the modal, for assistive tech: the button says it, and so does the field. */
+    openFilters: "open the filters",
   },
 
   /* ⚠️ **No `id` column, and a `shot` column the handoff does not draw** (owner's call).
@@ -54,8 +59,13 @@ export const INDEX_TEXT = {
   },
 
   /** The sort column, named as the command bar and the pager say it — `added`, not `date`. The keys
-   *  are the backend's column names (`getBookmarksController`'s `switch`); the four the table can
-   *  reach are first, the rest are reachable from the filter modal (UI 04). */
+   *  are the backend's column names (`getBookmarksController`'s `switch`).
+   *
+   *  ⚠️ **Nine entries, six columns.** `link`, `notes` and `alarm` are sort cases the backend has and
+   *  no control on the screen reaches — COS-299 predicted the filter modal would, and it does not:
+   *  the handoff's modal filters, it has no sort control, and adding one would put a second way to
+   *  sort next to the header row that already does it. They stay labelled because a hand-written
+   *  `?sort=notes` is a valid query, and the command bar has to be able to name what it is showing. */
   sortLabels: {
     date: "added",
     tags: "tags",
@@ -89,6 +99,89 @@ export const INDEX_TEXT = {
     /** The number after the slash is a link, as it was in the legacy pager. */
     lastPage: "last page",
     sortedBy: "sorted by",
+  },
+
+  /* The filter modal (COS-300). Seven controls, in the handoff's order.
+   *
+   * ⚠️ **`live · N ms` is the only number in this file that is measured, and it has to stay that
+   * way.** The handoff prints `live · 4 ms`, which is a mock; here it is how long the count request
+   * behind `filter — N results` actually took. A static `4 ms` would be a performance claim invented
+   * by a designer, which is the one kind of decoration that also misleads. */
+  filters: {
+    title: "filter",
+    /** Beside the title: what kind of filter panel this is, and that the count below is live. */
+    mode: "advanced · live",
+    /** After the header's `27/1278` — the denominator is the index's real total. */
+    match: "match",
+    close: "close the filters",
+
+    /* The category picker (owner's call, mid-COS-300). It first drew all fifty-three categories as a
+     * scrolling cloud of chips; a token field plus one row of suggestions replaced it. */
+    categories: {
+      search: "search categories",
+      placeholder: "type to search, ↵ to add",
+      /** The row under the field, in its two states. */
+      mostUsed: "most used",
+      matches: "matches",
+      noMatch: "no category matches",
+      /** Shown when the matches are more than the row holds. */
+      more: (rest: number) => `+${rest} more`,
+      remove: (name: string) => `remove ${name}`,
+    },
+
+    fields: {
+      title: "title contains",
+      titlePlaceholder: "substring match on title",
+      categories: "categories",
+      stars: "stars",
+      priority: "priority",
+      reminder: "reminder",
+      contains: "contains",
+      /** The read-only line at the bottom: the whole draft, in the command bar's own shorthand. */
+      expression: "resolved expression",
+    },
+
+    /** `any` is the absence of a filter, so it is a segment like the others but writes nothing. */
+    starLevels: {
+      any: "any",
+      /** `1+` … `4+` are minimums; `5` needs no `+`, there is nothing above it. */
+      min: (stars: number) => (stars < 5 ? `${stars}+` : "5"),
+    },
+
+    /** The four levels, shortened to the handoff's words, and `—` for a record with no level at all.
+     *  `none` is not a value the column holds — see `PRIORITY_FILTER_LEVELS`. */
+    priorityLevels: {
+      highest: "highest",
+      high: "high",
+      medium: "med",
+      low: "low",
+      none: "—",
+    } as Record<string, string>,
+
+    /** ⚠️ **`≤ 3d` and the backend's `REMINDER_DUE_DAYS` are one number written twice** — see the
+     *  constant in `getBookmarksController`. Same hand-copied arrangement as `FIELD_LIMITS`. */
+    reminderStates: {
+      any: "any",
+      armed: "armed",
+      none: "none",
+      due: "≤ 3d",
+    },
+
+    contains: {
+      screenshot: "screenshot",
+      notes: "notes",
+      url: "url",
+    },
+
+    footer: {
+      /** The primary action, carrying the live count: `filter — 27 results`. */
+      apply: (results: number) => `filter — ${results} ${results === 1 ? "result" : "results"}`,
+      /** Shown instead while the count is in flight, so the button never prints a stale number. */
+      applyPending: "filter",
+      reset: "reset",
+      /** The measured round trip of the count request. */
+      live: (ms: number) => `live · ${ms} ms`,
+    },
   },
 
   states: {

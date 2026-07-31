@@ -1,6 +1,14 @@
 const dbConnection = require("../../../db/dbinitmysql");
 const marshallCategories = require("./helpers/marshallCategories");
 
+/** The window behind the filter modal's `≤ 3d` reminder segment (COS-300): how many days from now a
+ *  reminder has to fire to count as due.
+ *
+ *  ⚠️ **The label is the other half of this number** — `filters.reminderStates.due` in
+ *  `frontend/src/text/index.ts` reads `≤ 3d`. Same hand-copied arrangement as `FIELD_LIMITS`; the two
+ *  move together. */
+const REMINDER_DUE_DAYS = 3;
+
 /* The filters are prepared, not interpolated (COS-295).
  *
  * The conditions are collected into an array alongside their values, so the fragment and the
@@ -24,15 +32,16 @@ const marshallCategories = require("./helpers/marshallCategories");
  * Everything else in the file still reads `req.query`; converting the rest belongs to the
  * DATA lot. */
 module.exports = async (req, res) => {
-  const { title, categories_id, stars, reminder, sort, priority } = req.query;
+  const { title, categories_id, stars, sort, priority } = req.query;
   /* Integers, guaranteed by `listBookmarksQuerySchema` — see the note on `LIMIT` above.
    *
-   * **The five flags come from `req.validated.query` too** (COS-299), and that is a fix rather than
+   * **The three flags come from `req.validated.query` too** (COS-299), and that is a fix rather than
    * tidiness: read off `req.query` they are raw strings, and `if ("0")` is true, so `?screenshot=0`
    * switched the filter on. `queryFlagSchema` now turns `0` and `false` into `false`, which only
-   * helps if the validated value is the one read. The remaining fields stay on `req.query` — that
-   * conversion belongs to the DATA lot. */
-  const { page, rows, screenshot, url, notes, starred, alarm } = req.validated.query;
+   * helps if the validated value is the one read. `alarm` joins them because it is an enum and this
+   * is where a value the schema has vouched for lives. The remaining fields stay on `req.query` —
+   * that conversion belongs to the DATA lot. */
+  const { page, rows, screenshot, url, notes, alarm } = req.validated.query;
 
   let sortPart = "";
   if (sort) {
@@ -121,38 +130,75 @@ module.exports = async (req, res) => {
   if (url) {
     conditions.push("b.url_id IS NOT NULL");
   }
-  if (reminder) {
-    conditions.push("a.frequency = ?");
-    conditionParams.push(decodeURIComponent(reminder));
-  }
+  /* ⚠️ **`>=`, not `=`** (COS-300). The filter modal's stars group reads `any / 1+ / 2+ / 3+ / 4+ / 5`
+   * — a minimum, which is what a rating filter means and what the equality could not express: asking
+   * for "3+" used to return exactly the three-star records and hide the four- and five-star ones.
+   *
+   * It also absorbs COS-299's `starred` scope, which was `b.stars > 0` under its own parameter:
+   * "rated at all" is `stars=1` now, so the rail's row and the modal's `1+` segment are the same
+   * filter rather than two spellings of it. `stars=0` is a no-op by construction. */
   if (stars) {
-    conditions.push("b.stars = ?");
+    conditions.push("b.stars >= ?");
     conditionParams.push(stars);
   }
   if (notes) {
     conditions.push("b.notes IS NOT NULL");
   }
 
-  /* The index rail's scopes (COS-299) — coarse cuts, next to the fine filters above.
+  /* The reminder filter (COS-300), one enum where COS-299 had a presence flag.
    *
-   * `starred` is `> 0` where `stars` is `=`: the scope asks "rated at all", the filter asks
-   * "rated exactly this". `alarm` is a presence test on the join column, not on `a.frequency`
-   * like `reminder` — a bookmark can have an alarm of any frequency.
+   * `armed` and `none` are the two sides of the join column. `due` is the modal's `≤ 3d`, and it is
+   * the only condition in this file that computes anything: an alarm has no next-fire column — it
+   * repeats every `frequency` days from `date_added`, which is how `getRemindersController` decides
+   * that one fires today (`differenceInDays % frequency === 0`).
    *
-   * `priority` is a list, so `IN` with one placeholder per level. The rail's `prio high` sends
-   * `high,highest`: a shortcut labelled "high" that hid the level above it would surprise, and
-   * this is the coarse control. `listBookmarksQuerySchema` accepts only the four literals, and
-   * every one of them still travels as a parameter. */
-  if (starred) {
-    conditions.push("b.stars > 0");
+   * So days-until-next-fire is `frequency - (days_elapsed mod frequency)`, wrapped in one more `MOD`
+   * so that an alarm firing **today** comes out 0 rather than a whole period. `frequency > 0` guards
+   * the modulo: the schema will not accept a zero, but this column has no constraint and `MOD(x, 0)`
+   * is `NULL`, which would silently drop rows instead of failing.
+   *
+   * `MOD(...)` and `DATEDIFF` are MySQL's; the window is a parameter like everything else. */
+  switch (alarm) {
+    case "armed":
+      conditions.push("b.alarm_id IS NOT NULL");
+      break;
+    case "none":
+      conditions.push("b.alarm_id IS NULL");
+      break;
+    case "due":
+      conditions.push(
+        "a.frequency > 0 AND MOD(a.frequency - MOD(DATEDIFF(CURDATE(), a.date_added), a.frequency), a.frequency) <= ?",
+      );
+      conditionParams.push(REMINDER_DUE_DAYS);
+      break;
+    default:
+      break;
   }
-  if (alarm) {
-    conditions.push("b.alarm_id IS NOT NULL");
-  }
+
+  /* `priority` is a list, so `IN` with one placeholder per level. The rail's `prio high` sends
+   * `high,highest`: a shortcut labelled "high" that hid the level above it would surprise, and that is
+   * the coarse control.
+   *
+   * **`none` is in the list but not in the column** (COS-300): the modal draws a fifth segment `—` for
+   * records with no priority, and `NULL` is not a value `IN` can match. It is split back out here into
+   * an `IS NULL` alternative, so `prio:low,none` is one condition with an `OR` rather than two
+   * conditions that would `AND` into nothing. `listBookmarksQuerySchema` accepts only these five
+   * literals, and each real level still travels as a parameter. */
   if (priority) {
     const levels = decodeURIComponent(priority).split(",");
-    conditions.push(`b.priority IN (${levels.map(() => "?").join(", ")})`);
-    conditionParams.push(...levels);
+    const named = levels.filter((level) => level !== "none");
+    const alternatives = [];
+
+    if (named.length > 0) {
+      alternatives.push(`b.priority IN (${named.map(() => "?").join(", ")})`);
+      conditionParams.push(...named);
+    }
+    if (levels.includes("none")) {
+      alternatives.push("b.priority IS NULL");
+    }
+    if (alternatives.length > 0) {
+      conditions.push(`(${alternatives.join(" OR ")})`);
+    }
   }
 
   // One `EXISTS` per selected category, so a bookmark has to carry them all rather than any

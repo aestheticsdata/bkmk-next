@@ -8,17 +8,23 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { Category } from "@src/schemas/categories";
 
-/* The categories, as the index rail reads them (COS-299): a sorted, typed list.
+/* The categories, as the index rail and the filter modal read them (COS-299): a sorted, typed list.
  *
  * Separate from `components/common/category/services/useCategories.ts`, which the create and edit
  * forms use: that one returns `any`, and mutates each row to add the `label` / `value` pair
  * `react-select` wants. Those forms are UI 06 (COS-302) and UI 10 (COS-319); when they are rebuilt
  * that hook goes and this one is what remains.
  *
- * ⚠️ **No counts.** The rail draws `dev 188` and this returns no number, because none exists:
- * `getCategoriesController` returns the rows of `category`, and counting bookmarks per category is
- * DATA 05 (COS-310). The rail leaves the column empty rather than inventing a figure — see the note
- * there. `all` is the exception: the list response's `total_count` is a real total. */
+ * ⚠️ **Each row now carries `bookmarks_count`** (COS-300), which it did not: the filter modal ranks its
+ * suggestions by "most used", and a most-used list without a count is an arbitrary ten. See
+ * `getCategoriesController`.
+ *
+ * That does **not** make the rail's `dev 188` counters this hook's business — the rail still shows
+ * nothing there, and lighting it up is DATA 05 (COS-310) along with the `storage` block. The number is
+ * simply available now.
+ *
+ * The alphabetical order comes from the controller's `ORDER BY c.name` rather than a `toSorted` here:
+ * ordering a list is what a database does. */
 function useCategoryList(): { categories: Category[]; isLoading: boolean } {
   const { privateRequest } = useRequestHelper();
   const userID = useAuth().user?.id;
@@ -27,10 +33,7 @@ function useCategoryList(): { categories: Category[]; isLoading: boolean } {
     queryKey: queryKeys.categories.list(),
     queryFn: async () => {
       const response = await privateRequest(`/categories?userID=${userID}`);
-      const categories = CategoryListSchema.parse(response.data);
-      // Sorted here rather than in the component: the order is a property of the list, and the rail
-      // is not the only screen that will show it.
-      return categories.toSorted((a, b) => a.name.localeCompare(b.name));
+      return CategoryListSchema.parse(response.data);
     },
     enabled: Boolean(userID),
     retry: false,
