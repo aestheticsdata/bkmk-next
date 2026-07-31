@@ -38,6 +38,29 @@ export const prioritySchema = z.enum(PRIORITY_LEVELS).nullable();
  *  not in the database, so it is checked here. */
 export const starsSchema = z.coerce.number().int().min(0).max(5);
 
+/** The levels the **filter** offers: the four above plus a word for "no level at all" (COS-300).
+ *
+ *  `none` is not a value the column can hold — it is `NULL` — but the modal draws it as a fifth
+ *  segment (`—`) and it travels in the same comma list as the others. The controller splits it back
+ *  out into an `IS NULL` alternative. Ordered like `PRIORITY_LEVELS`, with `none` last, so that
+ *  normalising a selection gives one URL and one cache entry. */
+export const PRIORITY_FILTER_LEVELS = [...PRIORITY_LEVELS, "none"] as const;
+
+export type PriorityFilter = (typeof PRIORITY_FILTER_LEVELS)[number];
+
+/** The reminder filter's three states, as the modal's `any / armed / none / ≤ 3d` group writes them
+ *  — `any` being the absence of the parameter (COS-300).
+ *
+ *  ⚠️ **One enum, not three flags.** The group is a single choice and the states contradict each
+ *  other: `?alarm=1&no_alarm=1` is a request with no answer. It replaces COS-299's `alarm` flag,
+ *  which could only ever say `armed`.
+ *
+ *  `due` is "fires within the next few days" and the number of days lives on the backend, in
+ *  `getBookmarksController` — the label `≤ 3d` in `@text/index.ts` is the other half of it. */
+export const ALARM_STATES = ["armed", "none", "due"] as const;
+
+export type AlarmState = (typeof ALARM_STATES)[number];
+
 /** A flag in a query string, where every value is a string (COS-299).
  *
  *  ⚠️ **Not `z.coerce.boolean()`**, which is `Boolean(value)` and therefore `true` for the string

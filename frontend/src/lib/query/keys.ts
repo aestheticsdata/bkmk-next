@@ -27,6 +27,10 @@ export const queryKeys = {
     list: (query: string) => [ROOTS.bookmarks, "list", query] as const,
     /** The chrome's `index NNN` — a one-row request for `total_count` only. */
     count: () => [ROOTS.bookmarks, "count"] as const,
+    /** How many records a *draft* filter would match (COS-300) — the number on the filter modal's
+     *  primary button. Its own branch rather than a `list` key: same endpoint, but one row instead of
+     *  a page, so it must not be served to the table or serve the table's entry back. */
+    filterCount: (query: string) => [ROOTS.bookmarks, "filter-count", query] as const,
   },
   bookmark: {
     all: [ROOTS.bookmark] as const,

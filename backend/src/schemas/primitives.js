@@ -25,6 +25,21 @@ const queryFlagSchema = z.string().transform((value) => value === "1" || value.t
 
 const starsSchema = z.coerce.number().int().min(0).max(5);
 
+/** The four levels of `bookmark.priority`, plus the word for "no level at all" (COS-300).
+ *
+ *  `none` is not a value the column can hold — it is `NULL` — but the filter modal draws it as a
+ *  fifth segment (`—`) and it has to travel in the same list as the other four. The controller
+ *  splits it back out into an `IS NULL` test. */
+const PRIORITY_FILTER_LEVELS = ["low", "medium", "high", "highest", "none"];
+
+/** The three states of the reminder filter (COS-300), as the modal's `any/armed/none/≤ 3d` group
+ *  writes them — `any` being the absence of the parameter.
+ *
+ *  ⚠️ **One enum, not three flags.** The group is a single choice and the states contradict each
+ *  other; `?alarm=1&no_alarm=1` would be a request with no answer. It replaces COS-299's `alarm`
+ *  flag, which could only say `armed`. */
+const ALARM_STATES = ["armed", "none", "due"];
+
 /** `bookmark.priority` — an empty string when nothing is picked; the form sends it that
  *  way and the controller tests `!== ""`. */
 const prioritySchema = z.enum(["low", "medium", "high", "highest"]).or(z.literal(""));
@@ -57,7 +72,9 @@ const categoriesJSONSchema = z.string().transform((value, ctx) => {
 });
 
 module.exports = {
+  ALARM_STATES,
   idSchema,
+  PRIORITY_FILTER_LEVELS,
   queryFlagSchema,
   starsSchema,
   prioritySchema,

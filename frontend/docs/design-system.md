@@ -303,7 +303,14 @@ That is not a rule to work around by reaching for `@media`, and not one to satis
 portalled element its own container either: a modal capped at 680px is *always* under 768px, so a
 self-container would make `@max-3xl` permanently true, which is worse than never. Either the fold
 belongs to the composed component, or it needs a threshold on the modal's own scale — a decision that
-needs a real layout, so it belongs to the ticket that builds one (COS-300, COS-319, COS-320).
+needs a real layout, so it belonged to the ticket that built one.
+
+**COS-300 built one, and the answer was neither.** The filter modal folds two pairs of side-by-side
+groups into one column, and it does it with `flex-wrap` and a `min-w-*` on each half — no container,
+no threshold, no query. Wrapping is *already* conditional on the content not fitting, which is the
+question a threshold approximates; the only number it needs is the width one half must have, and that
+is measurable. Same argument `DialogFooter` won on. So the standing answer for a portalled surface is:
+**reach for wrapping first, and only ask for a threshold when the fold changes more than the axis.**
 
 Two live consequences, both deliberate:
 
@@ -615,12 +622,19 @@ the rail at 196px, the table card filling the rest, `gap-3` between them.
 
 ```
 grid-cols-[--spacing(49)_1fr]      196px rail + table card
-  rail          index · cat · scopes            @max-3xl:hidden
+  rail          caption (fixed) · categories (scrolls) · scopes (fixed)   @max-3xl:hidden
   table card    mobile rail · command bar · table · pager
                    header row  h-7   28px
                    row         h-7.5 30px  ← the density IS the design
   columns       pri 36 · stars 62 · title 1fr · tags 188 · shot 44 · added 88   gap-x-2
 ```
+
+**The rail is a three-part column and only the middle part scrolls** (COS-300). The card was the scroll
+container first, which scrolled everything: `INDEX · CAT` slid up under the top edge, and on a real
+index of fifty-three categories the four scopes sat 1500px below the fold — four working filters, out of
+reach. Now the caption and the scopes block are `shrink-0` and the category list takes `min-h-0 flex-1
+overflow-y-auto`. Measured: the caption and the scopes stay at the same y after scrolling the list 811px,
+and the card's own `scrollHeight` equals its `clientHeight`.
 
 **Every column is left-aligned, and there is a gutter between them.** The handoff butts its columns
 together and right-aligns `added`; at these widths that printed `PRISTARS` in the header and touched
@@ -681,16 +695,17 @@ announce a control that does not exist, so a link gets `aria-current`.
 | the screenshot as a glyph beside the title | a **`shot` column**, 44px, sortable | Back from the legacy list, where it is a column of its own. A column is what makes it scannable down the page, and `screenshot` is one of the backend's sort cases, so the header does something. The alarm glyph stays beside the title — one row-level mark is enough there. |
 | `all 312`, `dev 188`, `demoscene 041` | one real count, on the row it describes | Per-category counts are DATA 05 (COS-310). There is exactly **one** number available — the current query's `total_count` — and pinning it to `all` regardless was a bug: selecting a category showed `all 002`. `countedRow` puts it on `all` when nothing is filtered, on a category when that is the only filter, and nowhere when no single row describes the query. |
 | `storage` — `shots 84/312` + gauge, `db 1.4 mb` | **absent** | Same ticket, and nothing to wire: a permanent `0/0` is worse than a block that arrives meaning something. |
-| a `filter ⌥F` button, and a query field that opens the modal | the field, read-only | The modal is UI 04 (COS-300). A button that opens nothing is worse than a button that has not arrived. |
-| `> tag:demoscene stars:>3` | `cat:demoscene starred prio:high\|highest` | That is a query *language*; the app has a filter object. `describeQuery` prints the object in the same shape, so the line is readable and also true. |
+| a `filter ⌥F` button, and a query field that opens the modal | both, since COS-300 | UI 03 shipped the field read-only, because a button that opens nothing is worse than a button that has not arrived. UI 04 brought the modal, and with it the button and the field's click — see §11. |
+| `> tag:demoscene stars:>3` | `cat:demoscene stars:1+ prio:high\|highest` | That is a query *language*; the app has a filter object. `describeQuery` prints the object in the same shape, so the line is readable and also true. |
 | chip colours from a `tagPalette` fixture | hue from `category.color` | The prototype has no database; bkmk does, and the colour is the user's own. GRAPHITE keeps the treatment — `hsl(hue 34% 32%)` — so eighteen chosen colours cannot turn a screen of greys into a pin board. Grey or unparseable falls back to a hash of the name, not to one shared default. |
 
 **Three scopes needed a server.** `has shot` was expressible (`screenshot` is a presence test);
-`starred`, `has alarm` and `prio high` were not — `stars` compares for equality and `reminder` for an
+`starred`, `has alarm` and `prio high` were not — `stars` compared for equality and `reminder` for an
 exact frequency. Four checkboxes of which one filters is worse than none, so
 `getBookmarksController` gained three parameterised conditions, in the shape DATA 01 (COS-306) will
 formalise. `prio high` sends `high,highest`: a shortcut named for the level below the top would hide
-the records that matter most.
+the records that matter most. **COS-300 finished the set and cost two of those parameters their
+shape** — see §11.
 
 **Every column sorts, as the legacy list had it** — which `tags` could not, until it was given a
 server-side order. It sorts on the aggregated category names (`categories_names`), so `amiga,css` comes
@@ -737,6 +752,25 @@ horizontal bar could only mean something is mis-sized — and it did, when a fix
 four-digit total to a plausible-looking `127` and pushed the row wide. `min-w-[3ch]` now: three digits
 is the handoff's padding, not a ceiling.
 
+**Where the bar sits is two numbers, and both were wrong once** (COS-300). An overlay thumb — macOS
+Chrome's default — is painted *over* the content instead of in a reserved channel, so the scroll
+container's own edges decide whether it lands on a row or beside one:
+
+- the padding is on the scroller, **not** on the card. On the card, the list's right edge sat 14px inside
+  the panel, which is on top of the rows, and the bar covered a row's rounded right corner;
+- the scroller keeps `mr-1.5`, because moving the padding in without it put the bar hard against the
+  panel's border, which reads just as wrong from the other side.
+
+Measured: **8px** between a row's right edge and the bar, **7px** between the bar and the panel's border.
+
+⚠️ **And `min-w-0` on the row, which is a different bug wearing the same clothes.** A grid item's
+automatic minimum size is `min-content`, so a rail row refused to be narrower than its longest
+untruncated label — measured at **175.8px inside a 166px track**, overflowing 9.8px to the right where
+`overflow-hidden` clipped it. *That* is what turned `all 1278` into `all 127`; the bar was never the
+cause, it only made the overflow visible. The label's own `min-w-0 flex-1 truncate` could not fire
+because the row it lives in was never asked to fit. The track half of the fix is `grid-cols-1`, which
+Tailwind spells `repeat(1, minmax(0, 1fr))` for exactly this reason.
+
 **The default sort is `-date`, and it stays out of the URL.** The backend's own default is no
 `ORDER BY` — "whatever the storage engine hands back", stable enough to look deliberate. An index
 wants the last thing you saved at the top, and the handoff's pager agrees (`sorted by added ▾`). Kept
@@ -744,7 +778,151 @@ out of the address bar so a clean link stays clean and one page stays one cache 
 
 ---
 
-## 11. What is still legacy
+## 11. The filter modal (COS-300)
+
+The first real modal in the system, and the screen's one piece of state that is **not** in the URL.
+
+```
+min(640px, 100% - 20px)   ·   max-h calc(100dvh - 24px)   ·   rounded-2xl   ·   shadow-gr-modal
+  header   FILTER · advanced · live · 27/1278 match · ×          CommandBar, sticky top
+  body     title · categories · [stars | priority] · [reminder | contains] · expression
+  footer   filter — 27 results · reset · live · 14 ms            sticky bottom
+```
+
+### A draft, not seven navigations
+
+Everywhere else on the index a control is a `<Link>` and a click is a navigation, because the query
+lives in the address bar (§10). Here seven controls describe **one** filter, and applying each as it is
+clicked would be seven navigations and seven round trips to reach one list. So the modal edits a draft
+in `useState`, counts it live, and applies it in a single move — which is what the handoff's footer
+already says it does: `filter — 27 results` is a button, not a status line.
+
+The draft still resolves to an **address**: the primary action is a `<Link>`, so ⌘-click opens the
+filtered index in a tab and the back button undoes all seven filters in one step. `toFilterHref` is
+what builds it, and it is deliberately a different function from `toIndexHref` even though one calls
+the other with an empty patch — every other control *patches* the query, the modal *replaces* it, and a
+filter the user has just cleared has to disappear rather than be treated as "unchanged".
+
+⚠️ **The draft is seeded when the modal opens, and only then.** Radix unmounts the content while
+closed, so `useState(query)` inside `FilterForm` re-initialises on every open — which is the only
+reason the form is a component of its own. Without that split, a draft edited and then abandoned would
+come back on the next open instead of the query actually on screen. Verified: `esc` after a change,
+reopen, and the segments are the URL's again.
+
+### `live · 14 ms` is measured, and everything on this screen has to be
+
+`useFilterCount` asks for `rows=1` — the cheapest page that still carries the controller's separate
+`COUNT(DISTINCT b.id)` — debounced 300ms on the *whole* API query string, so a typed word costs one
+request and a click costs one immediately. The elapsed figure in the footer is that request's real
+round trip. The handoff prints a static `4 ms`; a hard-coded latency is a performance claim nobody
+measured, and it is the one kind of decoration that also misleads. It stays blank until there is
+something to report rather than printing `0`.
+
+### The filter object lost two parameters, and each control owns exactly one field
+
+COS-299 gave the rail four scopes and the backend three new conditions. Building the modal's controls
+out of them did not work, and the fix was fewer parameters, not more:
+
+| COS-299 | COS-300 | Why |
+| --- | --- | --- |
+| `stars` compared with `=` | **`>=`** | The design's group is `any · 1+ · 2+ · 3+ · 4+ · 5`. A minimum is what a rating filter means, and the equality could not express it — asking for `3+` returned the three-star records and hid the four- and five-star ones. |
+| `starred`, a flag for `stars > 0` | **gone** | With a minimum, "rated at all" is `stars=1`. The rail's row and the modal's `1+` segment now write the same filter instead of two spellings of one. |
+| `alarm`, a presence flag | **an enum**, `armed \| none \| due` | The reminder group is a single four-way choice. Three booleans can contradict each other — `?alarm=1&no_alarm=1` is a request with no answer — so it is one field with three values, `any` being its absence. |
+| `reminder`, an exact frequency | **gone** | Only the legacy inline filter panel's dropdown ever sent it, and that panel left with this ticket. `alarm=due` answers the question it was reached for. |
+| `priority`, four levels | **five**, `none` included | The modal draws `—` for a record with no level. `NULL` is not a value `IN` can match, so the controller splits `none` back out into an `IS NULL` **alternative** — one condition with an `OR`, not two that would `AND` into nothing. |
+
+`alarm=due` is the only condition in `getBookmarksController` that computes anything. An alarm has no
+next-fire column: it repeats every `frequency` days from `date_added`, which is how the reminders
+controller decides one fires today. So days-until-next-fire is
+`MOD(frequency - MOD(DATEDIFF(CURDATE(), date_added), frequency), frequency)` — the outer `MOD` is what
+makes an alarm firing *today* come out 0 rather than a whole period — and `frequency > 0` guards the
+modulo, because the column has no constraint and `MOD(x, 0)` is `NULL`, which would drop rows silently
+instead of failing. The window is 3 days, and **that number is written twice**: `REMINDER_DUE_DAYS` in
+the controller and the `≤ 3d` label in `@text/index.ts`. Same hand-copied arrangement as
+`FIELD_LIMITS`, and flagged in both files.
+
+A link written before all this — `?alarm=1`, `?starred=1` — degrades to *no filter* rather than to an
+error: `catch(undefined)` on the enum, and an unknown key is stripped.
+
+### The two numbers that decide the layout
+
+**6px between segments, not 14.** The handoff gives a row of segments `gap: 6` and the `contains`
+checkboxes `gap: 14`; this shipped with 14 everywhere first, and the 8px difference was enough to wrap
+two rows — `stars` needs 272px on one line and had 291 to spend, but at 14px it wanted 312, so `5` sat
+alone under the star row and `low` under the priority row. The faithful gap is also the one that fits.
+14px survives for the checkboxes, and for a reason: a pill carries its own edge, so 6px reads as a
+separation; three bare `[x] label` pairs at 6px read as one string.
+
+**`min-w-72` on each half of a pair, and it is measured.** 288px is the next step above the 272 the
+widest of these rows needs. That makes the fold binary — either both halves are at least 288 wide and
+neither wraps internally, or they stack and each gets the modal's full width. The in-between, where a
+column is wide enough to sit beside its neighbour but too narrow for its own contents, is exactly the
+state that printed the lone `5`. Measured after: two columns at 291px each on a 640px modal, all four
+rows on one line; stacked at 358px each on a 420px viewport, still one line each, 10px of gutter on
+both sides.
+
+### The category picker, after the cloud was thrown out
+
+The categories control shipped twice. The first version drew **all fifty-three** as chips: seven rows,
+204px, capped and scrolled. The owner's verdict was *"un gros pavé indigeste"*, and it was right —
+nobody reads fifty-three pills to find `dev`, and the legacy app's plain multi-select was better at
+this. `CategoryPicker` replaced it with **a token field you type into, and one row of suggestions**:
+
+- nothing typed → the **ten most used**, ranked by `bookmarks_count`. On the live index that is
+  `dev 960`, `youtube 916`, then a long tail — so the two categories that carry the archive are one
+  click away, and the ranking is a real number.
+- typing → the **ten best matches**, alphabetical, with `+N more` when there are more than ten.
+- selected categories stay in the field as removable tokens either way, so one outside the top ten
+  cannot be selected-but-invisible.
+
+`↵` adds the first suggestion, `⌫` on an empty field removes the last token. A token is **one button
+that deletes itself**, not a chip with a nested `×` — a button inside a button is invalid markup, and
+the whole token is a bigger target than a 10px glyph.
+
+**Most used needed a server.** `GET /categories` returned bare table rows; it now carries
+`COUNT(DISTINCT b.id)` per category, with `b.active = 1` in the **join condition** so that the eight
+categories nothing uses come back as `0` instead of vanishing. That is the whole of it — the rail's
+`dev 188` counters are still empty and still DATA 05 (COS-310); the number merely exists now.
+
+⚠️ **`esc` clears the search without closing the modal, and the state is lifted for that one reason.**
+Radix's dismiss listener is on `document` in the **capture** phase, so it runs before the event reaches
+the input and `stopPropagation` inside the field is too late — that was the first attempt and the modal
+closed anyway, taking the draft. The supported hook is `onEscapeKeyDown` on `DialogContent`, which is a
+prop two levels up, so the search string lives there. On an empty field `esc` closes as usual.
+
+**No floating listbox.** A dropdown inside a modal whose panel is the scroll container gets clipped by
+that panel, or needs a portal and a second focus scope to escape it. A row that changes content needs
+neither and is one line of the same `Segment` the rest of the modal is built from. For the same reason
+it is not `role="combobox"`: with no listbox to own, the role would describe a widget that is not there.
+
+### Small things, decided
+
+- **`⌥F` opens and never closes.** `event.code === "KeyF"`, not `event.key`: on macOS `Alt` is a compose
+  key and `⌥F` produces `ƒ`. The handoff's own control toggles; this one does not, because the modal
+  contains a text field and `⌥F` typed into it would throw away a draft. `esc`, the backdrop and the `×`
+  all close it, which is three ways too many to need a fourth. The status bar's hint was corrected from
+  the handoff's `f filter` to `⌥f filter` — a hint naming a shortcut that does nothing is worse than no
+  hint.
+- **The close glyph is in the header row**, after the match count, as the handoff draws it.
+  `DialogContent`'s own is absolutely positioned and would sit on top of that count, so this modal
+  passes `showCloseButton={false}` and puts a `DialogClose` in the flow.
+- **`ui/dialog` carries the GRAPHITE width now**, `w-[calc(100%-1.25rem)] max-w-160`, replacing
+  shadcn's `sm:max-w-lg`. The gutter is the fluid half and stays; a modal that wants another size
+  changes the cap — `max-w-110` for the delete confirmation (COS-320), `max-w-170` for the edit modal
+  (COS-319). `alert-dialog.tsx` still has the stock width and no consumer; COS-320 is where it lands.
+- **The entrance is `bkmk-pop` under another name.** `fade-in-0 zoom-in-95` over 200ms is that
+  keyframe's `opacity 0 → 1, scale .96 → 1` written in `tw-animate-css`'s vocabulary, which is what
+  `styles/animations.css` already said.
+- **Mutual exclusion with the edit modal** — the handoff's `openEdit` closing this one — is COS-319's
+  to wire. It owns the state that would close this, and there is nothing to exclude until it exists.
+- **No `nuqs`**, which the ticket asked us to consider. The URL is already the state and
+  `helpers/indexQuery.ts` already owns every conversion; the library would replace a file this system
+  documents with a dependency, and the modal's draft is the one piece of state that is deliberately
+  *not* in the URL.
+
+---
+
+## 12. What is still legacy
 
 Three files still carry tokens from the old UI, marked as such: **15 colours** in `colors.css`,
 **2 shadows** in `elevation.css`, **3 sizes and 3 families** in `typography.css`. They are not this

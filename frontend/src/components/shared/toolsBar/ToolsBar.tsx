@@ -3,7 +3,6 @@
 import useBookmarks from "@components/bookmarks/services/useBookmarks";
 import DeleteConfirm from "@components/common/deleteConfirm/DeleteConfirm";
 import { PAGES, ROUTES } from "@components/shared/config/constants";
-import Filters from "@components/shared/toolsBar/filters/Filters";
 import Pagination from "@components/shared/toolsBar/pagination/Pagination";
 import ToolbarButton from "@components/shared/toolsBar/ToolbarButton";
 import { faAngleLeft, faPencilAlt, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
@@ -11,15 +10,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
+/* ⚠️ **No `filters` any more** (COS-300). This bar used to be able to render the inline filter
+ * panel; the GRAPHITE filter modal replaces it, it lives on the index screen, and no page had
+ * passed `filters` since UI 03 took that screen over — so the panel had been unreachable for a
+ * ticket already. The flag went with it rather than being left as a switch with nothing behind it. */
 interface ToolBarProps {
   backButton: boolean;
   editButton?: boolean;
   deleteButton?: boolean;
-  filters?: boolean;
   editionType?: string;
 }
 
-const ToolsBar = ({ backButton, editButton = false, deleteButton = false, filters = false }: ToolBarProps) => {
+const ToolsBar = ({ backButton, editButton = false, deleteButton = false }: ToolBarProps) => {
   const router = useRouter();
   const params = useParams<{ id?: string }>();
   const { deleteBookmark } = useBookmarks(PAGES.BOOKMARKS);
@@ -77,7 +79,6 @@ const ToolsBar = ({ backButton, editButton = false, deleteButton = false, filter
       ) : (
         <div className="flex">
           <Pagination />
-          {filters && <Filters />}
         </div>
       )}
     </div>

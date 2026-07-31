@@ -56,6 +56,24 @@ function DialogOverlay({ className, ...props }: React.ComponentProps<typeof Dial
   );
 }
 
+/* **The GRAPHITE geometry, set here rather than by each modal** (COS-300).
+ *
+ * `w-[calc(100%-1.25rem)] max-w-160` is the handoff's `min(640px, 100% - 20px)` written as two
+ * classes: the width is always the viewport less a 10px gutter each side, capped at 640. It replaces
+ * shadcn's `w-full max-w-[calc(100%-1.25rem)] sm:max-w-lg`, which pinned every modal to 512px above
+ * 640px of viewport and needed three overrides to unpin.
+ *
+ * 640 is the filter modal's number and also the middle of the system's three — the delete
+ * confirmation is `min(440px, …)` (COS-320) and the edit modal `min(680px, …)` (COS-319). Both are one
+ * `max-w-*` away, which is the point of leaving the fluid half fixed: a caller changes the cap, never
+ * the gutter.
+ *
+ * `max-h-[calc(100dvh-1.5rem)]` is the handoff's `calc(100% - 24px)`, and with `overflow-auto` it is
+ * what "fluid and scrollable" means on a short viewport — the whole panel scrolls, the header sticks
+ * to its top, and a footer that wants to stay put says `sticky bottom-0`.
+ *
+ * The entrance is `bkmk-pop` by another name: `fade-in-0 zoom-in-95` over 200ms is the keyframe's
+ * `opacity 0 → 1, scale .96 → 1` in `tw-animate-css`'s vocabulary. See `styles/animations.css`. */
 function DialogContent({
   className,
   children,
@@ -70,7 +88,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100%-1.25rem)] translate-x-[-50%] translate-y-[-50%] overflow-auto rounded-2xl border border-gr-border-2 bg-gr-panel text-gr-fg shadow-gr-modal duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg",
+          "fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.25rem)] max-w-160 translate-x-[-50%] translate-y-[-50%] overflow-auto rounded-2xl border border-gr-border-2 bg-gr-panel text-gr-fg shadow-gr-modal duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className,
         )}
         {...props}
@@ -101,22 +119,20 @@ function DialogContent({
  * the only element in the system declaring `container-type`, so the query had no container
  * and evaluated false at every width.
  *
- * It cannot simply be re-pointed, because the trigger does not exist yet:
+ * **COS-300 composed the first real modal and the variant stayed gone**, deliberately:
  *
  * - The 46 → 54px growth has no reason here in the first place. A card's command bar grows
  *   because it holds the search field, which is taller than its line box; a modal header
  *   holds a title and a close glyph. The handoff only gives it that rule by sharing the
- *   `.gr-cmd` class, and only ever renders its modal *inside* the screen.
- * - The 2–4px of tightening needs to fire on the modal's own width, and the modal's width
- *   is still shadcn's stock `sm:max-w-lg` — GRAPHITE's `min(680px, 100% - 20px)` lands with
- *   the composition, in UI 10 / UI 11. A self-container here would not help either: it
- *   would measure the modal, and a modal capped below 768px makes `@max-3xl` permanently
- *   true, which is worse than never.
- *
- * So whichever ticket composes a real modal (COS-300 filters, COS-319 edit, COS-320 delete)
- * decides it with a layout in hand: either `@container` on the content plus a threshold on
- * the modal's own scale, or the fold in the composed component. See §7 of
- * docs/design-system.md. */
+ *   `.gr-cmd` class, and only ever renders its modal *inside* the screen. At 420px the
+ *   filter modal's header holds its title, its mode, its count and its close glyph on one
+ *   46px line with room to spare — measured.
+ * - A self-container would not help: it would measure the modal, and a modal capped at 640px
+ *   is always under 768px, so `@max-3xl` would be permanently *true*, which is worse than
+ *   never.
+ * - What the filter modal's body needed was a fold in the other direction — two pairs of
+ *   groups becoming one column — and it got it from `flex-wrap` plus a measured `min-w-*`,
+ *   with no query at all. See §7 and §11 of docs/design-system.md. */
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

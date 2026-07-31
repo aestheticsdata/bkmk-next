@@ -1,6 +1,14 @@
 const { z } = require("zod");
 const { FIELD_LIMITS } = require("./fieldLimits");
-const { categoriesJSONSchema, idSchema, prioritySchema, queryFlagSchema, starsSchema } = require("./primitives");
+const {
+  ALARM_STATES,
+  categoriesJSONSchema,
+  idSchema,
+  PRIORITY_FILTER_LEVELS,
+  prioritySchema,
+  queryFlagSchema,
+  starsSchema,
+} = require("./primitives");
 
 /* Inputs of the bookmarks routes (COS-318).
  *
@@ -27,23 +35,30 @@ const listBookmarksQuerySchema = z.object({
     .string()
     .regex(/^\d+(,\d+)*$/, "categories_id must be a comma-separated list of integers")
     .optional(),
-  reminder: z.coerce.number().int().positive().optional(),
+  /** ⚠️ **A minimum, not an equality** (COS-300). The filter modal offers `any / 1+ / 2+ / 3+ / 4+ /
+   *  5`, which is what a rating filter means, and it is also what makes COS-299's separate `starred`
+   *  flag unnecessary: "rated at all" is `stars >= 1`. See the controller. */
   stars: starsSchema.optional(),
-  /* The index rail's three remaining scopes (COS-299). The screen draws four — `starred`,
-   * `has alarm`, `has shot`, `prio high` — and only `has shot` was expressible with what
-   * existed: `screenshot` above is a presence test, while `stars` compares for equality and
-   * `reminder` for an exact frequency. Four checkboxes of which one filters is worse than
-   * none, hence these.
+  /* The index's coarse cuts, as the rail and the filter modal write them.
    *
-   * They are a **down payment on the filter object DATA 01 (COS-306) will formalise**, and
-   * deliberately in its shape: presence flags beside `screenshot` / `url` / `notes`, and a
-   * list for `priority` because the spec's filter object writes `priority[]`. */
-  starred: queryFlagSchema.optional(),
-  alarm: queryFlagSchema.optional(),
+   * They arrived with COS-299, which had four checkboxes and only one expressible filter behind them
+   * (`screenshot` is a presence test; `stars` compared for equality and `reminder` for an exact
+   * frequency). COS-300 finished the set and cost two of them their earlier shape:
+   *
+   * - `starred` is **gone** — `stars` is a minimum now, so the scope is `stars=1`;
+   * - `alarm` is an **enum**, not a flag: the modal's reminder group is a single four-way choice
+   *   (`any / armed / none / ≤ 3d`) and three booleans could contradict each other;
+   * - `reminder` — the exact alarm frequency the legacy filter panel offered as a dropdown — is
+   *   **gone with that panel**. Nothing sends it; `alarm=due` answers the question people actually
+   *   asked it, "what is about to remind me".
+   *
+   * Still a down payment on the filter object DATA 01 (COS-306) will formalise, and still in its
+   * shape: presence flags beside `screenshot` / `url` / `notes`, a list for `priority`. */
+  alarm: z.enum(ALARM_STATES).optional(),
   priority: z
     .string()
     .regex(
-      /^(low|medium|high|highest)(,(low|medium|high|highest))*$/,
+      new RegExp(`^(${PRIORITY_FILTER_LEVELS.join("|")})(,(${PRIORITY_FILTER_LEVELS.join("|")}))*$`),
       "priority must be a comma-separated list of levels",
     )
     .optional(),

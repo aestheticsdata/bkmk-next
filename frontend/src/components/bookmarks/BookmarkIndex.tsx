@@ -2,6 +2,7 @@
 
 import { readIndexQuery } from "@components/bookmarks/helpers/indexQuery";
 import { IndexCommandBar } from "@components/bookmarks/IndexCommandBar";
+import { IndexFilterModal } from "@components/bookmarks/IndexFilterModal";
 import { IndexPager } from "@components/bookmarks/IndexPager";
 import { IndexMobileRail, IndexRail } from "@components/bookmarks/IndexRail";
 import { IndexTable } from "@components/bookmarks/IndexTable";
@@ -9,6 +10,7 @@ import { Card } from "@components/ds/Card";
 import { useBookmarkIndex } from "@src/services/useBookmarkIndex";
 import { useCategoryList } from "@src/services/useCategoryList";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 /* `List_Graphite` — the index (COS-299), and the heaviest screen of the lot.
  *
@@ -20,9 +22,10 @@ import { usePathname, useSearchParams } from "next/navigation";
  * query field reads, which page the pager is on. Nothing is mirrored into a store, so nothing can
  * disagree; the back button undoes a filter; a filtered index can be sent to someone.
  *
- * The one piece of state that is *not* in the URL is which row is awaiting delete confirmation, and
- * it lives in the table. It is not a property of the page — it is a gesture in progress, and a
- * reload should not resume it.
+ * Two pieces of state are *not* in the URL, and both for the same reason — they are gestures in
+ * progress rather than properties of the page, and a reload should not resume either: which row is
+ * awaiting delete confirmation, which lives in the table, and whether the filter modal is open,
+ * which lives here because two controls open it and neither owns it.
  *
  * `useSearchParams` is why this file is a client component and why the route wraps it in `Suspense`:
  * reading the query string opts the tree out of static prerendering. */
@@ -30,9 +33,31 @@ function BookmarkIndex() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const query = readIndexQuery(searchParams);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { rows, total, isLoading, isFetching, isError, remove } = useBookmarkIndex(query);
   const { categories } = useCategoryList();
+
+  /* `⌥F` — the shortcut printed on the filter button (COS-300).
+   *
+   * ⚠️ **`event.code`, not `event.key`.** On macOS `Alt` is a compose key: `⌥F` produces `ƒ`, so
+   * `event.key === "f"` is never true there. `code` is the physical key and is the same on every
+   * layout that has one.
+   *
+   * **It opens and never closes.** The handoff's own control toggles, but the modal contains a text
+   * field, and `⌥F` typed into it would throw away a draft in progress. `esc`, the backdrop and the
+   * `×` all close, which is three ways too many to need a fourth. `preventDefault` stops the `ƒ`
+   * from being inserted anywhere. */
+  useEffect(() => {
+    const openOnShortcut = (event: KeyboardEvent) => {
+      if (!event.altKey || event.metaKey || event.ctrlKey || event.code !== "KeyF") return;
+      event.preventDefault();
+      setFiltersOpen(true);
+    };
+
+    window.addEventListener("keydown", openOnShortcut);
+    return () => window.removeEventListener("keydown", openOnShortcut);
+  }, []);
 
   return (
     <div className="grid min-h-0 flex-1 grid-cols-[--spacing(49)_1fr] gap-3 @max-3xl:grid-cols-1 @max-3xl:gap-2">
@@ -57,6 +82,7 @@ function BookmarkIndex() {
           categories={categories}
           shown={rows.length}
           total={total}
+          onOpenFilters={() => setFiltersOpen(true)}
         />
         <IndexTable
           rows={rows}
@@ -75,6 +101,16 @@ function BookmarkIndex() {
           shown={rows.length}
         />
       </Card>
+
+      {/* Outside the two cards, and it does not matter where: Radix portals it to `document.body`.
+          It sits here rather than in the command bar because the shortcut opens it too. */}
+      <IndexFilterModal
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        query={query}
+        pathname={pathname}
+        categories={categories}
+      />
     </div>
   );
 }
