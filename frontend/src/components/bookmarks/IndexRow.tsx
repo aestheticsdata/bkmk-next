@@ -114,7 +114,7 @@ function IndexRow({
         {/* The link that covers the row. `truncate` on the anchor keeps a long title from pushing the
             url out of the cell. */}
         <Link
-          href={`${ROUTES.bookmarks.path}/${bookmark.id}`}
+          href={`${ROUTES.bookmarksRecord.path}/${bookmark.id}`}
           className="min-w-0 truncate rounded-sm text-gr-fg-2 outline-none after:absolute after:inset-0 after:content-[''] focus-visible:ring-3 focus-visible:ring-gr-ring"
         >
           {title}

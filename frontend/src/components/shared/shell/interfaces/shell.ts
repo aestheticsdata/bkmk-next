@@ -9,6 +9,15 @@ export type ShellScreen = "list" | "detail" | "create" | "upload" | "reminders" 
 
 export type ShellTab = "list" | "create" | "upload" | "reminders";
 
+/** What the shell reads off the address bar (COS-301). `recordId` is the record being looked at, and
+ *  it is `null` everywhere else — including on `/bookmarks/edit/<id>`, which is a `detail` screen
+ *  whose path segment is a word rather than an id. The status bar prints `record <id>` from it. */
+export interface ShellRoute {
+  screen: ShellScreen;
+  tab: ShellTab | null;
+  recordId: string | null;
+}
+
 /** Which real counter a tab carries, if any. `new` and `import` carry none. */
 export type ShellTabCount = "bookmarks" | "reminders";
 

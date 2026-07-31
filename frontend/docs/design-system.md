@@ -314,7 +314,7 @@ is measurable. Same argument `DialogFooter` won on. So the standing answer for a
 
 ⚠️ **A portal escapes the typeface as well, and that one was a bug** (found in COS-321, measured
 through CDP). `font-mono` lives on the screen root — `AppShell`, `AuthShell` — and `body` carries no
-font at all while the global reset waits for the last legacy screen (§12). So every portalled surface
+font at all while the global reset waits for the last legacy screen (§13). So every portalled surface
 came back `-apple-system, system-ui, …`: the filter modal had been drawing in the system sans since
 COS-300, on a design that is one typeface end to end. `font-mono` now sits on `DialogContent` and on
 the dropdown menu's two contents. **Anything new that portals needs it too**, until `body` gets the
@@ -473,8 +473,8 @@ arrives — `000` would be a wrong answer, not a pending one.
 `SHELL_STATUS` in `@text/shell.ts` holds each screen's hints and, where it is static, its right-hand
 value. A layout cannot take props from the page it renders, and the alternative — a store every
 screen writes into on mount — buys a flash of the wrong content and an effect per screen in exchange
-for a table of constants. Two screens compute their right-hand slot from the counters instead; the
-record screen's `record <id>` is left to COS-301, which owns that route.
+for a table of constants. Two screens compute their right-hand slot from the counters instead, and the
+record screen reads its `record <id>` off the address bar (COS-301) — see §12.
 
 ### The fold is narrow, not mobile
 
@@ -972,7 +972,78 @@ it is not `role="combobox"`: with no listbox to own, the role would describe a w
 
 ---
 
-## 12. What is still legacy
+## 12. The record (COS-301)
+
+One card, split: the record on the left, its screenshot on the right. It is **read-only** — §9 of the
+handoff makes editing a modal laid over whichever screen you are on (COS-319), not a second page with
+the same fields in inputs.
+
+### The card is as tall as the record
+
+`max-h-full`, where the index card is `flex-1`. That is the answer to the layout question the ticket
+raised: with `log` and `related · same tags` postponed (§8.2 of the spec, DATA 04 / COS-309), the
+right pane holds one 207px preview, and a card stretched to the desk left it above **511px of empty
+pane**, measured at 1440×900. Hugging the content takes that to 262px, which is the height of the
+fields table beside it — bounded by content rather than by the window.
+
+Filling the pane was tried first and does not do what it sounds like: `object-contain` still draws the
+image at 331×207, so the extra height only puts a **border** around the emptiness, and a record with
+no screenshot became a 700px dashed rectangle. `object-cover` fills honestly and crops a 16:10 page
+into a vertical strip.
+
+⚠️ **Below the fold the scrolling leaves the card.** The two sides stack, the pane's left rule becomes
+a top rule, and neither column scrolls: `@max-3xl:overflow-visible` on both, `@max-3xl:max-h-none` on
+the card, and the desk takes over. Two independent scrollers inside one card is a desktop
+arrangement — on a phone the card is the page.
+
+`@max-3xl:shrink-0` is what makes that safe, and it was found by measuring: the desk is a flex column,
+so a card taller than it shrinks to fit, and `Card` clips. Without it the end of a long note was cut
+off at 420px with nothing anywhere to scroll it back.
+
+### The preview keeps the shape of a screenshot
+
+16:10 — the ratio the capture produces — where the handoff's slot is 332×178, a shape nothing in this
+application has. The same ratio carries the three empty states, which are three different things: no
+capture was ever taken, one is on its way, and the file the record names could not be read. A capture
+pipeline that runs out of band needs all three.
+
+A plain `<img>` and the one `biome-ignore` in the codebase: the API answers with the file base64-encoded
+into a `data:` URL, which has nothing to optimise and no `next/image` loader.
+
+### Three actions, not the handoff's four
+
+`edit`, `delete`, `open url ↗`. The handoff draws an `alarm` button beside them, and it is the one of
+the four with nothing to do — arming a reminder writes `reminder` on the record, which is the edit
+form's field, and the legacy screen this replaces had `back / edit / delete` and no alarm control. The
+value is on the screen, in `fields`.
+
+`edit` links to the edit screen that exists today and `delete` confirms in place, both bridges until
+COS-319 and COS-320 replace them with modals — the same call the index row made for its `✎`. The
+in-place pair is deliberately the smaller thing to throw away.
+
+### Small things, decided
+
+- **`fields` is seven rows.** `hash` is the handoff's eighth and the column does not exist; it ships
+  hidden rather than as an invented digest.
+- **Every value uses the primitive the index uses** — `PriorityBars`, `Stars`, `Chip` — so a record
+  reads the same in a row and on its own page. `tags` is the exception and shows all of them: the row
+  stops at three because its column is 188px wide.
+- ⚠️ **The note is not `dangerouslySetInnerHTML` any more.** The legacy screen ran a regex over the
+  note, replaced every url with an `<a>` built by string concatenation, and injected the result — the
+  note is user input and nothing was escaped. The links are real elements built from a `split`, so the
+  text around them can only ever be text. Same behaviour, and it earns its keep: notes in this index
+  are full of urls.
+- **The status bar prints `record <id>`**, read off the address bar by `useShellRoute` rather than
+  passed down — a layout cannot take props from the page it renders (§9). `/bookmarks/edit/<id>` is a
+  `detail` screen whose next segment is a word, so the pattern only matches digits and that screen
+  falls back to the index counter.
+- **No keyboard hints.** The handoff's `esc back · e edit · a alarm · x delete` names four keys
+  nothing listens for; About made the same call for the same reason, and FIN 02 (COS-312) is what
+  makes them true.
+
+---
+
+## 13. What is still legacy
 
 Three files still carry tokens from the old UI, marked as such: **15 colours** in `colors.css`,
 **2 shadows** in `elevation.css`, **3 sizes and 3 families** in `typography.css`. They are not this
