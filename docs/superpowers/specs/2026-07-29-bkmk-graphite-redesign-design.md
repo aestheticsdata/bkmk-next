@@ -55,6 +55,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | UI 05 | COS-301 — écran Record : la fiche en consultation | ✅ mergé (PR #23) |
 | UI 06 | COS-302 — écran Insert : le formulaire de création | ✅ mergé (PR #25) |
 | hors lot | COS-329 — de-mock de l'écran Insert | ⏳ ouvert par UI 06 |
+| UI 07 | COS-303 — écran Import : dépôt, staging, formats | ✅ mergé (PR #26) |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -112,6 +113,28 @@ du brouillon, au lieu d'après que multer a interrompu la requête.
 `components/bookmarks/fields/`, le `Group` local de la modale de filtres est devenu `ds/FieldGroup`,
 et `ds/Segment` a gagné un troisième mode (`action`) pour les segments qui agissent et disparaissent
 au lieu de basculer. `CreateBookmarkPayloadSchema`, écrit par PLAT 05 et resté inutilisé, est branché.
+
+⚠️ **UI 07 n'a pas eu besoin d'un ticket de de-mock neuf : DATA 02 (COS-307) l'était déjà.** Il
+décrivait exactement les trois choses mockées ici — l'état `NEW`/`DUP` avec les moitiés `new` /
+`duplicate` du résumé, les trois options `on import`, et la ligne `last import`. Il porte maintenant
+le label `de-mock` et la liste de ce qui est en dur et où. **La règle est donc : chercher le ticket
+existant avant d'en créer un** ; sur ce chantier le lot DATA est très souvent déjà le de-mock du lot
+UI qui le précède.
+
+⚠️ **Le staging d'UI 07 est réel, et il duplique volontairement le parser du back.** Le fichier est lu
+et analysé dans le navigateur avant l'envoi, donc `title`, `host`, le nombre d'entrées et le nombre de
+lignes illisibles sont mesurés. Il n'existe aucun endpoint qui analyse sans écrire — c'est précisément
+COS-307 — et l'alternative était une table de cinq bookmarks inventés sous le nom du fichier qu'on
+vient de déposer. `parseImport.ts` part avec COS-307 ; d'ici là un changement dans l'un des deux
+parsers doit être fait dans les deux.
+
+⚠️ **Deux bugs d'import corrigés en route, tous les deux sur le chemin `.csv`.** Le format était
+décidé par `originalname.split(".")[1]` — le **deuxième** segment du nom, pas l'extension : un fichier
+`session_buddy.2026_07_11.csv` partait dans la branche Session Buddy et importait n'importe quoi sans
+échouer. Et la branche csv déstructurait chaque ligne puis appelait `.trim()` sur la seconde moitié,
+donc la chaîne vide que `split("\n")` laisse après un saut de ligne final produisait un `TypeError`
+→ **500**, après avoir déjà inséré les lignes précédentes. Quasiment tous les imports csv étaient
+concernés.
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
