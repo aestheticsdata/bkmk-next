@@ -1095,6 +1095,11 @@ quelles. Deux d'entre elles *pourraient* être réelles, mais pas ici : la page 
 qui n'a pas de session, donc le nombre d'enregistrements est inconnaissable, et un hôte réel à côté de
 deux nombres inventés se lirait comme un accident plutôt qu'une décision.
 
+⚠️ **Les trois lignes mono ne sont plus là depuis COS-328** (et le sur-titre `session` non plus) —
+voir la section de ce ticket plus bas. Le raisonnement ci-dessus tient toujours, il a seulement cessé
+de conclure « donc on les rend telles quelles » : sur la porte d'entrée, cette place valait mieux
+qu'un instrument qui ne mesure rien. Le `build 2.4.1 · tls on` du chrome, lui, reste du mobilier.
+
 **QA faite en local, 44 assertions** (données réelles intactes, compte d'essai créé puis supprimé) :
 les quatre réponses d'erreur — 401 en JSON sur mauvais mot de passe, **401 identique octet pour octet
 sur une adresse inconnue**, 400 du schéma sur une adresse malformée, 409 sur un doublon · l'écran de
@@ -1317,6 +1322,37 @@ tête avec `--remote-debugging-port`, et Node parle CDP tout seul (`WebSocket` e
 ce qui a tranché le dernier point — les boîtes du sur-titre, du titre et de la carte partent du même
 pixel, seule l'approche du glyphe diffère — au lieu d'une troisième correction à l'aveugle. À refaire
 avant d'affirmer quoi que ce soit sur une géométrie.
+
+### Ce qui a été posé (COS-328 — le sur-titre et le pitch, le 2026-07-31)
+
+Deux lignes de copie sur les écrans d'auth, décidées par le propriétaire. Le détail est dans
+**`frontend/docs/design-system.md` §9**, septième ligne du tableau des écarts.
+
+**Le sur-titre du login passe de `session` à `BKMK`.** `session` nommait un mécanisme que le visiteur
+n'a aucune raison de reconnaître ; la porte d'entrée porte le nom du produit. Le mot est donc à
+l'écran deux fois, ici et dans la marque du chrome — assumé, et **sans partager la constante de**
+`wordmark` : la marque identifie l'application, ce sur-titre étiquette l'écran, et leur chaîne
+identique est une coïncidence d'aujourd'hui. Le sur-titre de l'inscription (`new account`) ne bouge
+pas : il nomme la section, pas le produit.
+
+**Les trois lignes mono deviennent une phrase qui dit ce qu'est l'app.** `AUTH_TEXT.facts` est
+supprimé, `AUTH_TEXT.pitch` prend sa place et son emplacement (`mt-4`, `text-2xs`, `text-gr-fg-4`,
+entre la carte et le lien About). Ce n'est plus une grille de trois `<div>` en `whitespace-pre` mais
+un `<p>` : l'alignement à l'espace n'avait de sens que pour des lignes clé/valeur, et le retour à la
+ligne appartient maintenant au navigateur.
+
+**L'écran d'inscription suit, et rend la même constante.** Il partageait le bloc `facts` ; laisser
+trois nombres inventés sur le seul signup, à côté d'un jumeau qui n'en a plus, aurait été le pire des
+trois états possibles. Une constante, deux rendus.
+
+**Vérifié :** `tsc --noEmit` propre · `biome check` propre sur les trois fichiers touchés (les 36
+erreurs du front sont la ligne de base héritée, aucune ici) · plus aucun rendu de `facts` dans `src/`,
+la seule occurrence restante étant un commentaire qui dit où le tableau se trouvait.
+
+⚠️ **Non vérifié : le rendu.** Aucune mesure n'a été prise — ni capture, ni `getBoundingClientRect`
+en CDP. La contrainte que la copie doit tenir (**deux lignes à 480px**, sinon le lien About descend)
+est un raisonnement sur la largeur de glyphe du mono à 11px, pas une mesure. C'est le premier point à
+regarder à la QA visuelle, sur les deux écrans.
 
 ### Ce qui a été posé (COS-299 — l'index)
 

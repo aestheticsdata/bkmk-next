@@ -16,9 +16,9 @@ import type { SignInPayload } from "@src/schemas/auth";
 
 /* `Login_Graphite` — the sign-in screen (COS-297).
  *
- * A 480px block centred on the grey field: the `session` overline, the title closed by the
- * blinking caret, the auth card, then the three mono facts and the way out to About. The frame
- * is `AuthShell`, shared with sign-up.
+ * A 480px block centred on the grey field: the `BKMK` overline, the title closed by the blinking
+ * caret, the auth card, then the product line and the way out to About. The frame is `AuthShell`,
+ * shared with sign-up.
  *
  * The width is `w-120` with `max-w-full`, not a media query: 480px is the handoff's figure, and
  * below it the block simply takes the room it has. Nothing here needs to fold — two fields and a
@@ -58,17 +58,9 @@ export default function LoginPage() {
           error={error}
         />
 
-        {/* Aligned with spaces in the copy, so the whitespace has to survive. */}
-        <div className="mt-4 grid gap-1 text-2xs text-gr-fg-4">
-          {AUTH_TEXT.facts.map((fact) => (
-            <div
-              key={fact}
-              className="whitespace-pre"
-            >
-              {fact}
-            </div>
-          ))}
-        </div>
+        {/* One paragraph, not the three space-aligned lines it replaces (COS-328) — so no
+            `whitespace-pre` here, and the wrap is the browser's to make. */}
+        <p className="mt-4 text-pretty text-2xs leading-relaxed text-gr-fg-4">{AUTH_TEXT.pitch}</p>
 
         <Overline
           asChild

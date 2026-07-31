@@ -595,9 +595,9 @@ you type* that the copy has diverged. The form compares the pair itself and rais
 submit: two places may say it, neither can say it differently. Empty still means "nothing typed yet"
 rather than "different".
 
-**Six departures from the handoff on this screen**, the first three of the same kind — the mockup
-draws the look of a thing and not the thing; the last two are the owner's call on copy and on a
-field's states:
+**Seven departures from the handoff on this screen**, the first three of the same kind — the mockup
+draws the look of a thing and not the thing; the last three are the owner's call on copy, twice, and
+on a field's states:
 
 | Handoff | Here | Why |
 | --- | --- | --- |
@@ -605,7 +605,8 @@ field's states:
 | no such field | `recovery passphrase`, revealable **and** confirmed | Recovery by email is abandoned (COS-298); this pair replaces it. A mistyped key costs one more attempt; a mistyped passphrase is found the day it is needed, which is the day it cannot be repaired. The reveal catches the typo you go looking for, the confirm the one you do not. One toggle per pair, at the end of the pair's label line, unmasking both halves — a single control over a pair is what that placement means. |
 | `[x] import my Session Buddy export after signup` | **gone** | Built, then dropped: registering and importing are two decisions, and tying the second to a checkbox on the first only buys a redirect to a screen the chrome already reaches. `ui/checkbox` went back to the registry version with it — nothing renders it yet, and repainting a component no screen uses is groundwork pretending to be work. |
 | `keys stored locally` · `self-hosted · no tracking` · `tab next field` | **gone** | Decoration. The first is also untrue on its face — it reads as a claim about browser storage, which since AUTH 04 holds nothing — and Tab moves between fields in every form on the web. What the freed spot in the action row now carries is the server's refusal. |
-| `create an index` · `sign in to the index` | `create an account` · `sign in` | The handoff's titles rest on "the index" being the product's word for the collection, which it is — About and the facts block both use it. The screens still name the act rather than the thing behind it: a visitor with no account has no index to create. One line each in `text/auth.ts`. |
+| `create an index` · `sign in to the index` | `create an account` · `sign in` | The handoff's titles rest on "the index" being the product's word for the collection, which it is — About and the paragraph under the card both use it. The screens still name the act rather than the thing behind it: a visitor with no account has no index to create. One line each in `text/auth.ts`. |
+| `session` above the title, and `host bkmk.local:8443` · `index 312 records · 1.4 mb` · `sync last 12s ago` under the card | `BKMK`, and one sentence saying what bkmk is | COS-328, on the owner's call. `session` named a mechanism rather than the product — it is the front door, so it carries the name, even though that puts the word on screen twice with the chrome's mark. The three mono lines were readings nobody could take: the page is served without a session, so the count is unknowable, and a real host beside two invented numbers would read as an accident. What that slot is worth on a front door is what the app *is*. **Both screens carry the same sentence from one constant** — they share the frame and the block, and three invented numbers left standing on sign-up alone would have been worse than either. It is a `<p>`, so the wrap is the browser's; two lines at 480, fewer at sign-up's 576. |
 | `.gr-in:focus` swaps `border-color` to the accent **and** rings the field | the 3px ring alone, `focus-visible` and `aria-invalid` both | Two edges for one state: a soft band, then a hard hairline biting the box inside it — and on an invalid field that hairline is the only saturated colour on a panel of greys. The ring says it once. `transition-[box-shadow]` follows, since no border colour is left to animate. Applies to `ui/input` **and** `ui/textarea`; buttons still tint their border on keyboard focus, where the ring alone would vanish into the teal fill. |
 
 The strength score is a **heuristic and says so in its own file** (`helpers/passwordStrength.ts`):

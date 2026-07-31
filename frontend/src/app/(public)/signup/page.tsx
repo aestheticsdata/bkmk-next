@@ -70,17 +70,9 @@ export default function SignUpPage() {
           error={error}
         />
 
-        {/* Aligned with spaces in the copy, so the whitespace has to survive. */}
-        <div className="mt-4 grid gap-1 text-2xs text-gr-fg-4">
-          {AUTH_TEXT.facts.map((fact) => (
-            <div
-              key={fact}
-              className="whitespace-pre"
-            >
-              {fact}
-            </div>
-          ))}
-        </div>
+        {/* The sign-in screen's paragraph, verbatim (COS-328): the two screens share the frame and
+            the block, and the sentence is about the product, not about the act. */}
+        <p className="mt-4 text-pretty text-2xs leading-relaxed text-gr-fg-4">{AUTH_TEXT.pitch}</p>
 
         <Overline
           asChild
