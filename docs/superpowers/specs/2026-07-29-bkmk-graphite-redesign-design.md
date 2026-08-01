@@ -67,7 +67,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-322 — le périmètre d'un contrôleur vient de la session, plus de la requête | ✅ mergé (PR #30) |
 | hors lot | COS-345 — sécurité, ouvert par l'audit de COS-322 | ⏳ ouvert |
 | hors lot | COS-346 — plateforme, ouvert par l'audit de COS-322 | ⏳ ouvert |
-| DATA 01 | COS-306 — la page se décrit elle-même, et `?userID=` quitte le fil | 🔍 en revue |
+| DATA 01 | COS-306 — la page se décrit elle-même, et `?userID=` quitte le fil | ✅ mergé (PR #31) |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
