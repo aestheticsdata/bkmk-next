@@ -69,6 +69,19 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-346 — plateforme, ouvert par l'audit de COS-322 | ⏳ ouvert |
 | DATA 01 | COS-306 — la page se décrit elle-même, et `?userID=` quitte le fil | ✅ mergé (PR #31) |
 | DATA 02 | COS-307 — staging d'import : parse, commit, options, `last import` | ✅ mergé (PR #32) |
+| hors lot | COS-338 — DATA 09 : forme normale d'url, colonne `host`, backfill | ✅ mergé (PR #34) |
+| DATA 03 | COS-308 — détection de doublons à la création | ✅ mergé (PR #35) |
+
+⚠️ **DATA 03 n'a qu'un étage sur les deux que son ticket décrit, et c'est une mesure qui l'a
+tranché.** Le premier — même url normalisée — trouve 17 groupes et 56 fiches sur l'index réel. Le
+second — même host, titre proche — en trouve **7 paires, et les 7 sont fausses** : deux vidéos
+YouTube distinctes qui partagent un titre, une recherche Google à côté de son propre résultat
+d'images, `Software Engineering Anxiety | Prime Reacts` contre `Software Engineering Anxiety`. Un
+index à 78 % d'un seul hôte est exactement l'endroit où « même host » cesse de vouloir dire quelque
+chose. Et il ne *peut* pas être honnête aujourd'hui : les titres sont encore stockés
+percent-encodés pour toute ligne importée ou héritée, donc la comparaison tournerait contre
+`Solving%20Distributed%20Systems…`. Arbitrage du propriétaire : livrer cet étage-ci, rouvrir l'autre
+après DATA 07 (COS-334), qui décode la colonne. Détail en §6 ter.
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -2030,6 +2043,60 @@ propre, lint front inchangé sur les fichiers touchés.
 
 ⚠️ **Non vérifié : le jugement.** Les couleurs, la densité, le confort de lecture — la passe visuelle du
 propriétaire reste à faire, comme sur UI 01, UI 02 et UI 03.
+
+---
+
+## 6 ter. DATA 03 — les doublons avant le commit (COS-308)
+
+Ce que ça pose : **`GET /bookmarks/duplicates?url=…`**, le hook `useDuplicateCandidates`, et le bloc
+`InsertDuplicates` sous le récapitulatif de l'écran de création. C'est aussi le **de-mock du point 2
+de COS-329** — la ligne `2 duplicate candidates in index` était le `2` de la maquette, en dur dans
+`CREATE_TEXT.mock`, parce que rien ne cherchait. COS-329 se réduit à deux points : la capture
+automatique et le titre récupéré depuis le `<title>`.
+
+La question est posée sur `url.normalised`, c'est-à-dire sur le helper de COS-338, celui-là même
+qu'appelle le staging d'import. C'est tout l'intérêt d'avoir pris DATA 09 avant : les deux écrans ne
+peuvent pas être en désaccord sur ce qu'est un doublon.
+
+⚠️ **Le second étage est refusé, pas oublié** — la mesure et l'arbitrage sont au §0. Le refus est
+écrit dans l'en-tête du contrôleur, avec les chiffres, pour que personne ne le rouvre sans les
+relire.
+
+⚠️ **Les candidats sont listés, ce que la maquette ne fait pas, et la raison est dans ses trois
+derniers mots.** « Review before commit » est une consigne qu'on ne peut pas suivre depuis un
+nombre : il faut voir ce qu'il a compté. Une ligne par candidat, le titre et le jour où il a été
+enregistré — le plus petit ajout qui rend la ligne actionnable. **Chaque lien s'ouvre dans un
+onglet** : réviser un doublon veut dire quitter un formulaire rempli, et rien ici ne sauve un
+brouillon qui part.
+
+⚠️ **`no duplicate in index` est dessiné aussi, plutôt que rien.** Un bloc absent ne se distingue pas
+d'une vérification qui n'a pas tourné, et « l'index ne l'a pas encore » est précisément ce que veut
+savoir quelqu'un en train de remplir ce formulaire. Le seul cas où le bloc disparaît est le champ
+vide, où il n'y a effectivement rien à dire.
+
+**Trois bornes qui se lisent dans le code :** l'endpoint renvoie **cinq** candidats au plus et le
+compte entier à côté (le volet fait 340px, l'écran est un formulaire, et il n'existe pas encore
+d'écran qui les liste tous — ce sera COS-335) ; il répond **200 avec zéro** à une url vide, absente
+ou illisible, parce que l'écran demande à chaque frappe stabilisée et qu'un 400 mettrait une erreur
+sous un formulaire simplement pas fini ; et `b.active = 1`, donc une fiche supprimée n'est pas une
+raison d'en refuser une nouvelle — la même lecture que l'index, les alarmes, la fiche et l'import.
+
+**QA faite en local, 39 assertions sur l'API réelle**, **deux** comptes jetables créés puis
+supprimés, index retrouvé à ses 1 243 urls et 1 331 fiches : la même page reconnue par cinq écritures
+différentes (chaîne identique, sans `www.`, avec barre finale, en `http`, avec un autre paramètre de
+tracking), un vrai paramètre de requête qui en fait une autre page, le second compte qui ne voit pas
+les fiches du premier ni l'inverse, sept copies comptées et cinq renvoyées, l'ordre du plus récent,
+une fiche retirée qui sort du compte, `/duplicates` qui n'est pas lu comme un identifiant de fiche,
+une url plus longue que la colonne refusée en 400, et une requête sans session refusée en 401.
+
+⚠️ **La QA visuelle n'a pas été faite, et pas faute d'avoir essayé.** L'extension Chrome n'est pas
+connectée ; en Chrome sans tête piloté par CDP, le bac à sable de cette session laisse le rendu
+joindre l'origine qu'il a chargée et **rien d'autre**, donc tout XHR de 3100 vers 3101 meurt en
+`Failed to fetch`. Un proxy d'une seule origine (`/api` vers 3101, le reste vers 3100 — la forme
+qu'a la production) rend bien l'API joignable depuis la page, et `curl` à travers lui se connecte en
+200 ; la même requête émise par le navigateur répond 500, ce qui n'a pas été reproduit ailleurs et
+n'a pas été poursuivi. **Ce qui précède est du markup et du CSS, pas une capture** — même formule
+qu'UI 01.
 
 ---
 

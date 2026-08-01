@@ -7,6 +7,7 @@ const validate = require("../../middlewares/validate");
 const {
   bookmarkIdParamsSchema,
   createBookmarkBodySchema,
+  duplicatesQuerySchema,
   listBookmarksQuerySchema,
   screenshotQuerySchema,
   updateBookmarkBodySchema,
@@ -16,6 +17,7 @@ const getBookmarksController = require("../controllers/bookmarks/getBookmarksCon
 const getBookmarkController = require("../controllers/bookmarks/getBookmarkController");
 const postBookmarkController = require("../controllers/bookmarks/postBookmarkController");
 const deleteBookmarkController = require("../controllers/bookmarks/deleteBookmarkController");
+const getDuplicatesController = require("../controllers/bookmarks/getDuplicatesController");
 const editBookmarkController = require("../controllers/bookmarks/editBookmarkController");
 const parseImportController = require("../controllers/bookmarks/parseImportController");
 const commitImportController = require("../controllers/bookmarks/commitImportController");
@@ -52,6 +54,11 @@ router.post(
   catchAsync(commitImportController),
 );
 router.get("/import/last", catchAsync(getLastImportController));
+
+/** Is this page already in the index (COS-308). Declared above `/:id` for the same reason the import
+ *  routes are: `/duplicates` under a `/:id` route is a request for the record numbered `duplicates`,
+ *  refused with a 400 by `bookmarkIdParamsSchema`. */
+router.get("/duplicates", validate({ query: duplicatesQuerySchema }), catchAsync(getDuplicatesController));
 
 router.get("/:id", validate({ params: bookmarkIdParamsSchema }), catchAsync(getBookmarkController));
 // `validate` after multer: multer is what fills `req.body` on multipart requests.
