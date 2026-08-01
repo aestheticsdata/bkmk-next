@@ -32,6 +32,11 @@ const marshallCategories = require("./helpers/marshallCategories");
  * **`b.active` stays out of the `WHERE`**, unchanged: a soft-deleted record is still readable by its
  * owner through a direct link, which is the behaviour this screen has always had. Whether it should
  * is a question for the DATA lot, not for a scoping fix. */
+
+/* ⚠️ **And scoping the row was not enough** (COS-345). `AND c.user_id = b.user_id` on the category
+ * join: the record is the session's, the categories hanging off it were whatever `bookmark_category`
+ * pointed at. See `getBookmarksController` for why the predicate sits in the join rather than the
+ * `WHERE`. */
 module.exports = async (req, res) => {
   const getSingleBookmarkSQL = `
       SELECT b.*,
@@ -44,7 +49,7 @@ module.exports = async (req, res) => {
       FROM bookmark b
       LEFT JOIN url u ON b.url_id = u.id
       LEFT JOIN bookmark_category bc ON b.id = bc.bookmark_id
-      LEFT JOIN category c ON bc.category_id = c.id
+      LEFT JOIN category c ON bc.category_id = c.id AND c.user_id = b.user_id
       LEFT JOIN alarm a ON b.alarm_id = a.id
       WHERE b.id = ? AND b.user_id = ?
       GROUP BY b.id;

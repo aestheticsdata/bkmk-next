@@ -250,11 +250,21 @@ module.exports = async (req, res) => {
     }
   }
 
+  /* ⚠️ **`AND c.user_id = b.user_id` is COS-345, and it is what COS-322's scoping does not reach.**
+   *
+   * The `WHERE` above stops the *rows*: every record here is the session's. The join brings columns
+   * back alongside them, and `bookmark_category` has no owner of its own — so a link to another
+   * account's category concatenated that account's name and colour into this response. Six such links
+   * exist in the live database. Scoping the join is what stops them rendering.
+   *
+   * **In the join condition, not the `WHERE`**, for the reason `getCategoriesController` spells out at
+   * length: at the `WHERE` the outer join turns inner and every untagged record disappears from the
+   * index. Here that would be most of it. */
   const commonSQLParts = `
     FROM bookmark b
         LEFT JOIN url u ON b.url_id = u.id
         LEFT JOIN bookmark_category bc ON b.id = bc.bookmark_id
-        LEFT JOIN category c ON bc.category_id = c.id
+        LEFT JOIN category c ON bc.category_id = c.id AND c.user_id = b.user_id
         LEFT JOIN alarm a ON b.alarm_id = a.id
     WHERE ${conditions.join(" AND ")}
   `;

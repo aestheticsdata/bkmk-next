@@ -13,6 +13,19 @@ const DELETE_SCREENSHOT = "delete";
 
 const today = () => format(new Date(), "yyyy-MM-dd");
 
+/** A refusal that has to travel out through a transaction (COS-345).
+ *
+ * The helpers below run inside `beginTransaction`, so the only way for one of them to refuse *and*
+ * take back what the statements above it wrote is to throw. A plain `throw` would land in the
+ * handler's `catch` and be flattened into the 500 it writes for anything unexpected — which is the
+ * right rollback with the wrong status. Carrying `status` is what lets that `catch` tell a decision
+ * from an accident.
+ *
+ * The key is not invented here: `utils/errorHandlerMiddleware` already answers `err.status ?? 500`.
+ * This route never reaches it — it catches its own errors, because it has a transaction to close
+ * first — so the same convention is read locally rather than a second one introduced. */
+const httpError = (status, msg) => Object.assign(new Error(msg), { status });
+
 /* The url the record should end up pointing at, given the one it points at now.
  *
  * `url` lives in its own table behind `bookmark.url_id`, so "no url" is a null column and a missing
@@ -72,7 +85,21 @@ const applyCategories = async (conn, bookmark, incoming) => {
   for (const category of incoming) {
     const existingId = Number(category.id ?? category.value);
 
+    /* ⚠️ **`Number.isFinite` says the value is a number, not that the category is yours** (COS-345).
+     *
+     * Two doors lead into this branch — `id` and `value`, both written by the form — and neither was
+     * checked against anything. `bookmark_category`'s foreign key accepts any category that exists, so
+     * a save could link a stranger's tag to this record and the index would then draw its name and its
+     * colour. The owner is `bookmark.user_id`, read from the scoped `SELECT` in the handler, which is
+     * to say from the session and not from the request. */
     if (Number.isFinite(existingId)) {
+      const [[owned]] = await conn.execute("SELECT id FROM category WHERE id=? AND user_id=? LIMIT 1", [
+        existingId,
+        bookmark.user_id,
+      ]);
+
+      if (!owned) throw httpError(404, "category not found");
+
       keep.add(existingId);
       continue;
     }
@@ -239,6 +266,17 @@ module.exports = async (req, res) => {
     return res.status(200).json({ msg: "bookmark edited" });
   } catch (e) {
     await conn.rollback().catch(() => {});
+
+    /* ⚠️ **A refused category is a 404, and the rollback above it is the point** (COS-345).
+     *
+     * `applyCategories` throws from *inside* the transaction, after the `UPDATE` that wrote the title,
+     * the notes and the stars. Both halves matter and they are easy to get half-right: refusing
+     * without the rollback saves a record the caller was told was not saved, and refusing as a 500
+     * reads as a server fault for what is a decision. `status` is only ever set by `httpError`. */
+    if (e.status) {
+      return res.status(e.status).json({ msg: e.message });
+    }
+
     return res.status(500).json({ msg: "error editing bookmark : " + e });
   } finally {
     await conn.end();
