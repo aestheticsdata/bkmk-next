@@ -72,6 +72,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-338 — DATA 09 : forme normale d'url, colonne `host`, backfill | ✅ mergé (PR #34) |
 | DATA 03 | COS-308 — détection de doublons à la création | ✅ mergé (PR #35) |
 | AUTH 05 | COS-324 — récupération par passphrase : écran `/recover` et route | ✅ mergé (PR #40) |
+| DATA 05 | COS-310 — compteurs du rail, bloc `storage`, charge des 14 jours | ✅ mergé (PR #41) |
 
 ⚠️ **DATA 03 n'a qu'un étage sur les deux que son ticket décrit, et c'est une mesure qui l'a
 tranché.** Le premier — même url normalisée — trouve 17 groupes et 56 fiches sur l'index réel. Le
@@ -436,6 +437,52 @@ colonne à 480.
 dans la même passe — les trois refus identiques, une passphrase de moins de 20 caractères refusée
 par `validate` *sans* être comptée, la colonne réellement réécrite, aucun `csrfToken` dans le corps,
 la session effacée de Redis, et `401 401 401 401 401 429` avec 900 s de TTL derrière.
+
+✅ **DATA 05 est fait, et deux de ses trois parties étaient des soustractions.**
+
+**Les compteurs du rail n'ont rien demandé au back.** `bookmarks_count` est sur chaque ligne depuis
+COS-300 — la modale de filtres classe son sélecteur avec — et le rail ne le lisait simplement pas.
+Ce qui manquait vraiment, c'est le nombre de la ligne `all` : le `total` de l'index est celui de la
+**requête en cours**, donc affiché sur `all` il aurait dit 188 dès qu'une catégorie est choisie.
+D'où `GET /bookmarks/stats`, et le départ de `countedRow`, qui n'existait que pour décider à quelle
+ligne unique le seul nombre disponible appartenait.
+
+**Le bloc `storage` arrive sans sa troisième ligne.** `shots 24/1278` et sa jauge sont deux comptes
+sur l'index entier — même raison qu'au-dessus : un ratio de captures dont le dénominateur suit le
+filtre mesure le filtre. `db 1.4 mb` est de la déco et part comme `uptime` et `IDX/2.4.1` au §8.1,
+sur arbitrage du propriétaire ; le contrôleur consigne les trois choses que ce nombre aurait pu
+vouloir dire et pourquoi aucune ne vaut une ligne dans un rail aussi dense.
+
+⚠️ **La charge des 14 jours est un déplacement, pas un dé-mock, et le ticket le disait.** UI 08
+comptait déjà de vraies alarmes, correctement, dans le navigateur — `GET /reminders` renvoie tout
+sans pagination, donc le client tenait l'ensemble complet. Ce qu'il ne survit pas, c'est que cela
+cesse d'être vrai : la liste paginée, le graphique aurait continué à dessiner quatorze barres en
+n'en comptant qu'une page. La règle est inchangée et devient du SQL — une alarme est une répétition,
+donc `MOD(offset - days_until, frequency) = 0` en est la totalité — et les offsets viennent d'une
+CTE récursive, ce qui garantit quatorze lignes quelle que soit la donnée, y compris un compte sans
+rien d'armé. `alarmLoad.ts` et `alarmsToday` partent avec ; le second ne servait qu'à retrouver le
+`CURDATE()` du serveur par soustraction.
+
+**Deux choses demandées par le ticket ne sont pas là**, les deux parce qu'il a été dépassé : le bloc
+`system` de l'About a été retiré par UI 09 (COS-305) **après** son écriture — « none of that is this
+page's job » — donc il n'est pas ressuscité, et la ligne `db` ci-dessus.
+
+**Mesuré, et le contrôle qui compte est une égalité :** sur le vrai index, les quatorze barres
+calculées par le serveur sont identiques **barre pour barre** à l'algorithme client supprimé —
+`3,4,4,3,3,3,4,3,3,5,3,4,3,4`. Avec : `records` ignore la corbeille, `shots` ignore la capture d'une
+fiche supprimée, un compte sans alarme garde ses quatorze lignes à zéro, et la première barre est
+bien le `CURDATE()` du serveur.
+
+⚠️ **Le rendu n'a pas été vérifié, et c'est écrit ici parce que ça ne se voit pas dans le diff.**
+Chrome 150 refuse en headless qu'une page sur un port localhost en appelle un autre ; ni les
+drapeaux ni un proxy même-origine n'en sont venus à bout, donc les écrans privés n'ont pas été
+regardés. Le risque est nommé : le rail est une colonne flex dont seul le milieu défile, ce ticket y
+ajoute un troisième bloc, et le `shrink-0` qui doit tenir la liste de catégories est **raisonné et
+non mesuré**.
+
+**Relevé au passage, pour COS-336 :** `category.name` porte une clé unique **globale**, pas
+`(user_id, name)` — deux comptes ne peuvent pas avoir une catégorie du même nom. La description du
+ticket parle de doublons à l'intérieur d'un compte ; le problème mord aussi entre eux.
 
 ⚠️ **DATA 01 était déjà livré à 90 %, et le reliquat ne ressemblait pas à son titre.** La pagination
 serveur, l'objet de filtres à six champs et la sérialisation vers l'expression de la barre de commande
