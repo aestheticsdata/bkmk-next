@@ -12,7 +12,9 @@ const dbConnection = require("../../../db/dbinitmysql");
  *   are eight of those in the live database and they are still the user's categories.
  * - `b.active = 1` sits in the **join condition, not the `WHERE`**. In the `WHERE` it would drop the
  *   rows where `b` is `NULL` and turn the outer join into an inner one — the empty categories would
- *   vanish, which is the mistake this note exists to prevent.
+ *   vanish, which is the mistake this note exists to prevent. `b.user_id = c.user_id` is beside it for
+ *   the same reason, and it is COS-345: the count asked how many records carry this category, not how
+ *   many of *yours* do, so a link from another account inflated the owner's number.
  * - `COUNT(DISTINCT b.id)`, because `bookmark_category` has no unique constraint on the pair.
  *
  * `GROUP BY` names all four selected columns rather than relying on `c.id` being the primary key.
@@ -33,7 +35,7 @@ module.exports = async (req, res) => {
     SELECT c.*, COUNT(DISTINCT b.id) AS bookmarks_count
     FROM category c
         LEFT JOIN bookmark_category bc ON bc.category_id = c.id
-        LEFT JOIN bookmark b ON b.id = bc.bookmark_id AND b.active = 1
+        LEFT JOIN bookmark b ON b.id = bc.bookmark_id AND b.active = 1 AND b.user_id = c.user_id
     WHERE c.user_id = ?
     GROUP BY c.id, c.user_id, c.name, c.color
     ORDER BY c.name;

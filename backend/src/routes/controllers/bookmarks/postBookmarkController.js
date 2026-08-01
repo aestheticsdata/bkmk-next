@@ -22,6 +22,34 @@ module.exports = async (req, res) => {
 
   const conn = await dbConnection();
 
+  /* ⚠️ **A category id is a claim, and the foreign key does not check it** (COS-345).
+   *
+   * `bookmark_category` only asks that the category *exist*, never that it be yours — so an id typed
+   * into this payload attached another account's category to a record here, and the read side then
+   * concatenated that account's name and colour beside it. The neighbouring branch below, the one that
+   * creates a category from a name, has always carried `user_id`; this is the branch that did not.
+   *
+   * **The check runs before the first `INSERT`, not beside the link it guards.** This controller has
+   * no transaction — that is COS-353 — so a refusal raised down at `bookmark_category` would answer
+   * 404 and still leave an alarm, a url and a record behind it. Asked here, a refusal writes nothing
+   * at all, and it costs one `SELECT` per named category on a path that already runs several.
+   *
+   * `if (!category.id)` is the same test the loop below sorts the two branches on, deliberately: the
+   * ids checked here are exactly the ids that will be linked, and a falsy one is a creation. */
+  for (const category of categories) {
+    if (!category.id) continue;
+
+    const [[owned]] = await conn.execute("SELECT id FROM category WHERE id=? AND user_id=? LIMIT 1", [
+      category.id,
+      userID,
+    ]);
+
+    if (!owned) {
+      await conn.end();
+      return res.status(404).json({ msg: "category not found" });
+    }
+  }
+
   let alarmID = null;
   if (reminder) {
     const sqlAlarm = `

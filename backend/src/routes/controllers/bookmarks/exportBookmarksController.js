@@ -21,6 +21,12 @@ const marshallCategories = require("./helpers/marshallCategories");
  * holds 1 280 records, whose json is a few hundred kilobytes — one query and one string. If an index
  * ever reaches the size where that is not true, the answer is a streamed response, not a page
  * parameter: half an export is not an export.
+ *
+ * ⚠️ **`AND c.user_id = b.user_id` is COS-345, and this file is the reason it is worth naming here.**
+ * The ticket lists the two read controllers it found; this one was written the day after it and
+ * inherited the join whole, unscoped predicate included. An export is also the worst place for it —
+ * the file is kept, and a stranger's category name would have been copied into it rather than merely
+ * shown once. Same predicate, same reason it belongs in the join and not the `WHERE`.
  */
 
 /** `attachment`, so the browser saves the file rather than rendering it — a Netscape bookmark file is
@@ -37,7 +43,7 @@ const RECORDS = `
     FROM bookmark b
     LEFT JOIN url u ON b.url_id = u.id
     LEFT JOIN bookmark_category bc ON b.id = bc.bookmark_id
-    LEFT JOIN category c ON bc.category_id = c.id
+    LEFT JOIN category c ON bc.category_id = c.id AND c.user_id = b.user_id
     LEFT JOIN alarm a ON b.alarm_id = a.id
    WHERE b.user_id = ? AND b.active = 1
 GROUP BY b.id
