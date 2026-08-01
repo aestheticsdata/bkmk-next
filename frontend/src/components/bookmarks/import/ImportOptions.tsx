@@ -6,22 +6,23 @@ import { IMPORT_TEXT } from "@text/import";
 
 import type { ImportOptions as Options } from "@src/schemas/import";
 
-/* `on import` (COS-303, de-mocked by COS-307) — the three switches the handoff puts under the staged
- * table.
+/* `on import` (COS-303, de-mocked by COS-307) — the switches under the staged table.
  *
- * ⚠️ **Two of the three are live and travel with the commit.** `skip duplicates` decides what the
- * import passes over — the same `DUP` the table draws, decided server-side at commit time, because a
- * state the client sends back is a state the client could have edited. `tag as imported` puts every
- * new record under one category named `imported`, so that a file can be found again after the fact.
+ * **Both are live and travel with the commit.** `skip duplicates` decides what the import passes
+ * over — the same `DUP` the table draws, decided server-side at commit time, because a state the
+ * client sends back is a state the client could have edited. `tag as imported` puts every new record
+ * under one category named `imported`, so that a file can be found again after the fact.
  *
- * ⚠️ **`capture shots` stays drawn and disabled, and its ticket is COS-393, not this one.** Nothing
- * anywhere in this application captures a screenshot from a url: the only path to that column is a
- * file the account uploads by hand. The API does not accept the flag, precisely so that no caller
- * can believe it does. Same call the account menu made for its unbuilt entries (COS-321) — shown, so
- * the row teaches what the import will one day do, and greyed rather than doing nothing when
- * pressed.
+ * ⚠️ **The handoff draws three, and the third is gone** (COS-394). `capture shots` stood here drawn
+ * and disabled, on the reasoning the account menu used for its unbuilt entries (COS-321): show the
+ * row, so it teaches what the screen will one day do, and grey it rather than have it do nothing.
+ * That reasoning depends entirely on "one day" being true. The owner has settled that screenshots
+ * stay manual and cancelled the capture ticket, so the switch was teaching something that will never
+ * happen — and a control that can never light up is worse than an absent one, because it reads as
+ * broken rather than as out of scope. `IMPORT_TEXT.options.pending` went with it: it was the line
+ * beside the caption that explained why the switch was inert.
  *
- * **The lit states of the two live switches are the screen's defaults, not the handoff's picture.**
+ * **The lit states of the two switches are the screen's defaults, not the handoff's picture.**
  * `skip duplicates` starts on because importing a file twice is the reason the state column exists;
  * `tag as imported` starts off, as the handoff draws it, since it writes a category the account did
  * not ask for. */
@@ -38,23 +39,13 @@ function ImportOptions({
   const toggle = (key: keyof Options) => () => onChange({ ...options, [key]: !options[key] });
 
   return (
-    <FieldGroup
-      label={IMPORT_TEXT.sections.options}
-      hint={IMPORT_TEXT.options.pending}
-    >
+    <FieldGroup label={IMPORT_TEXT.sections.options}>
       <Segment
         on={options.skipDuplicates}
         disabled={disabled}
         onClick={toggle("skipDuplicates")}
       >
         {IMPORT_TEXT.options.skipDuplicates}
-      </Segment>
-
-      <Segment
-        on={false}
-        disabled
-      >
-        {IMPORT_TEXT.options.captureShots}
       </Segment>
 
       <Segment

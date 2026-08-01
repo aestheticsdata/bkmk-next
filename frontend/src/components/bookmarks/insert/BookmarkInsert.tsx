@@ -31,11 +31,12 @@ import type { BookmarkDraft } from "@components/bookmarks/draft";
  * prop, which is why half of it was `useEffect`s copying a record into the form. Editing is a modal
  * now (COS-319), so this creates and only creates.
  *
- * ⚠️ **One of the handoff's readings is still mocked, and it is marked where it is drawn — COS-393.**
- * The automatic capture does not exist on either side of the wire; it is kept as the mockup writes it
- * rather than dropped, which is the owner's rule for this redesign. The other two are real: **the
- * duplicate count since COS-308** (`InsertDuplicates`) and **the fetched title since COS-329**, which
- * is the blur handler below.
+ * ⚠️ **Nothing on this screen is mocked any more, and the three readings that were ended three
+ * different ways.** The duplicate count became real with COS-308 (`InsertDuplicates`). The fetched
+ * title became real with COS-329, which is the blur handler below. And the automatic capture was
+ * **abandoned** with COS-394 — screenshots stay manual by the owner's decision, so its two readings
+ * came off `ShotField` rather than sit there promising a pipeline nobody will build. A mock is a
+ * placeholder for data that is coming; when it is settled that none is, it leaves with the feature.
  *
  * **The five controls that are not text inputs live in `bookmarks/fields/`**, because the edit modal
  * needs exactly the same five. What is here is the layout, the draft and the commit.

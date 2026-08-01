@@ -8,12 +8,18 @@
  *
  * ⚠️ **Three things the handoff draws had nothing behind them, and they were mocked rather than
  * dropped** (the owner's call, and the difference from UI 09): `auto capture`, the duplicate count,
- * and the title fetched from the page's `<title>`. Two of the three are real now — **the duplicate
- * count since COS-308**, which moved out of `mock` into `duplicates` below, and **the fetched title
- * since COS-329**, which was never a mocked *reading* but an absent function, and whose placeholder
- * goes back to the handoff's own words with it. What is left is `auto capture`, marked at its use
- * site and carried by **COS-393**; whatever holds a hard-coded reading stays grouped under `mock`, so
- * that nothing can quietly read as measured.
+ * and the title fetched from the page's `<title>`. **None of the three is a mock any more, and they
+ * ended three different ways.** The duplicate count became real with COS-308 and moved into
+ * `duplicates` below. The fetched title became real with COS-329 — it was never a mocked *reading*
+ * but an absent function, and its placeholder went back to the handoff's own words with it. And
+ * `auto capture` was **abandoned** (COS-394): the owner keeps taking screenshots by hand, so the
+ * capture pipeline will not be built, and its two readings came off the screen rather than sit there
+ * promising it for ever.
+ *
+ * ⚠️ **That last one is the rule's exit, not an exception to it.** "What does not exist yet gets
+ * mocked, and a de-mock ticket takes it back" assumes the data eventually arrives. When it is decided
+ * that it never will, the mark leaves with the feature — which is what makes the rule safe to apply
+ * in the first place.
  *
  * ⚠️ **The segments hold the real values, not the mockup's.** The handoff writes three priorities
  * (`high · med · low`) where the column has four, and four alarm offsets (`T-1d · T-3d · T-7d ·
@@ -92,8 +98,10 @@ export const CREATE_TEXT = {
   },
 
   shot: {
-    /** ⚠️ **Mock — COS-393.** The handoff's caption for a capture pipeline that does not exist. */
-    autoCapture: "auto capture",
+    /** What the slot says before a file is picked, and it is the record screen's own word for the
+     *  same absence (`RECORD_TEXT.states.noShot`) — the two screens describe one missing file the
+     *  same way. It replaces the handoff's `queued · 1280×800`; see the header. */
+    empty: "no screenshot",
     choose: "choose a file",
     replace: "replace",
     remove: "remove",
@@ -105,7 +113,7 @@ export const CREATE_TEXT = {
      *  file — the record screen's own note — and this field is being edited, not consulted. */
     captured: "captured",
     recapture: "re-capture",
-    /** What the slot says before a file is picked. See `mock.shotQueued`. */
+    /** Beside the file button: what the picker and `jimpHelper` both accept. */
     accept: "png or jpeg",
     tooLarge: "file is over 10 mb",
     wrongType: "png or jpeg only",
@@ -171,16 +179,10 @@ export const CREATE_TEXT = {
     untitled: "untitled",
   },
 
-  /* ─── Mocked readings — COS-393 ──────────────────────────────────────────────────────────
-   * Hard-coded values that look measured and are not. They are here, together and named for
-   * what they are, so that the de-mock ticket has one place to start from and so that nobody
-   * reads one of them in a component and takes it for data. */
-  mock: {
-    /** The capture slot's state, and the size the handoff prints under it. Nothing captures and
-     *  nothing measures: `bookmark.screenshot` holds a filename, and the only way an image gets
-     *  there is the upload right beside this line. */
-    shotQueued: "queued · 1280×800",
-  },
+  /* ⚠️ **The `mock` block was here and it is gone with the last value in it** (COS-394). It held
+   * `queued · 1280×800`, the capture slot's invented state, kept apart from the real copy so that
+   * nobody could read it in a component and take it for data. That grouping did its job: when the
+   * automatic capture was abandoned, there was exactly one place to look for what had to go with it. */
 
   aria: {
     stars: (stars: number) => `${stars} out of 5`,

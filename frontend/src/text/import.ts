@@ -6,11 +6,12 @@
  * and a `<pre>` holding a raw `sed -n 'l'` dump of a Session Buddy export; it is the same content
  * here, in the right pane, as two shape blocks and a sentence.
  *
- * ⚠️ **The `mock` block is gone, and with it three of the four things this screen was inventing.**
- * The state of each entry and the `new` / `duplicate` halves of the summary are the API's answer, the
- * two live options travel with the commit, and `last import` is read from `import_run`. What is left
- * disabled is `capture shots`, because nothing in the application captures a screenshot from a url —
- * that one is COS-393, and it is said in one line beside the caption rather than promised here. */
+ * ⚠️ **The `mock` block is gone, and so is everything this screen was inventing.** The state of each
+ * entry and the `new` / `duplicate` halves of the summary are the API's answer, both options travel
+ * with the commit, and `last import` is read from `import_run`. The last hold-out was `capture
+ * shots`, drawn and disabled because nothing here captures a screenshot from a url; COS-394 removed
+ * it outright once the owner settled that screenshots stay manual. Nothing on this screen is drawn
+ * for a feature that does not exist. */
 
 export const IMPORT_TEXT = {
   command: {
@@ -77,13 +78,13 @@ export const IMPORT_TEXT = {
     duplicate: "dup",
   },
 
+  /** ⚠️ **`captureShots` and `pending` were here** — the third switch the handoff draws, and the line
+   *  beside the caption that explained why it was inert. Both left with COS-394: screenshots stay
+   *  manual, so the capture is not coming and a permanently disabled switch reads as broken rather
+   *  than as unbuilt. Two switches now, both live. */
   options: {
     skipDuplicates: "skip duplicates",
-    captureShots: "capture shots",
     tagAsImported: "tag as imported",
-    /** The one switch still drawn and disabled — no route accepts it, because nothing captures a
-     *  screenshot from a url. Said once beside the caption, as it was when all three were inert. */
-    pending: "capture not wired yet",
   },
 
   formats: {

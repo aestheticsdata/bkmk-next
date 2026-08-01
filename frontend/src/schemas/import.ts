@@ -83,9 +83,10 @@ export const LastImportResponseSchema = z.object({
 
 export type LastImport = z.infer<typeof LastImportResponseSchema>["lastImport"];
 
-/** The two switches the commit accepts. `captureShots` is not among them: nothing in this
- *  application captures a screenshot from a url, so the API does not pretend to take the flag and
- *  the screen leaves it disabled — COS-393 is where that capture gets built. */
+/** The two switches the commit accepts, and now the only two the screen draws. `captureShots` was
+ *  never among them — nothing in this application captures a screenshot from a url, so the API never
+ *  pretended to take the flag — and since COS-394 it is not drawn either: screenshots stay manual by
+ *  the owner's decision, so the switch had nothing left to be waiting for. */
 export type ImportOptions = {
   skipDuplicates: boolean;
   tagAsImported: boolean;

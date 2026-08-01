@@ -17,12 +17,13 @@ const ACCEPTED_TYPES = ["image/png", "image/jpeg"];
 
 /* `shot` — the screenshot, and the right pane's first block (COS-302).
  *
- * ⚠️ **`auto capture` and `queued · 1280×800` are mocked — COS-393.** The handoff describes a capture
- * taken from the url by the server; nothing in bkmk takes one. What the application has, and what
- * this ships, is the manual upload the legacy form had: `bookmark.screenshot` holds a filename, and
- * the only thing that ever writes one is the file on this line. The caption and the slot's reading
- * are the mockup's words kept over a real control, which is the owner's call for everything the
- * design promises and the code does not yet have.
+ * ⚠️ **`auto capture` and `queued · 1280×800` were drawn here and are gone** (COS-394). The handoff
+ * describes a capture taken from the url by the server; nothing in bkmk takes one, and the owner has
+ * decided nothing will — screenshots stay manual, so COS-393 was cancelled rather than scheduled. A
+ * mocked reading is a placeholder for data that is coming; once it is settled that none is, the words
+ * are simply false and they leave with the feature. What the field says now is what it does: a file
+ * you choose, `bookmark.screenshot` holding its name, and the empty slot saying `no screenshot` in
+ * the record screen's own words.
  *
  * The raw `<input type="file">` does not survive the repaint: it draws its own button in the
  * browser's chrome, at the browser's size, in the browser's colours — the one control on the screen
@@ -99,9 +100,6 @@ function ShotField({
     <div className={cn("grid gap-2", className)}>
       <div className="flex h-4 items-center gap-1.5 leading-4">
         <Overline>{CREATE_TEXT.sections.shot}</Overline>
-        {/* ⚠️ Mock — COS-393. Dimmed rather than in the label's own ink: it names a pipeline that
-            does not run, and it should not read as a setting that is on. */}
-        <Overline className="text-gr-fg-4">· {CREATE_TEXT.shot.autoCapture}</Overline>
         {/* The state, in the header row where `Field` puts its own messages. Teal when the record
             carries a capture, dim when it does not — the handoff's `captured` / `none` pair, as a
             read-out rather than as two segments, because it is one and pressing it does nothing. */}
@@ -125,9 +123,9 @@ function ShotField({
            record's preview, this one is a reserved space with nothing in it yet, and the pane's
            layout should not move when a file lands in it. */
         <ShotSlot className="h-36.5 w-full px-4 text-center">
-          {/* A record that has one says so; a record that has none carries the mockup's reading.
-              ⚠️ Mock — COS-393. Neither the queue nor the dimensions exist. */}
-          {captured ? CREATE_TEXT.shot.captured : CREATE_TEXT.mock.shotQueued}
+          {/* A record that has one says so; a record that has none says that, in the record screen's
+              own word for the same absence. */}
+          {captured ? CREATE_TEXT.shot.captured : CREATE_TEXT.shot.empty}
         </ShotSlot>
       )}
 
