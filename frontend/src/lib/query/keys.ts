@@ -41,6 +41,11 @@ export const queryKeys = {
      *  entries answering the same thing, which is cheaper than shipping the rule to the browser.
      *  Under the bookmarks root, so committing a record refreshes it. */
     duplicates: (url: string) => [ROOTS.bookmarks, "duplicates", url] as const,
+    /** The rail's `storage` block (COS-310) — records held and how many carry a screenshot. Under
+     *  the bookmarks root, so creating, importing or deleting a record refreshes it with the same
+     *  invalidation that refreshes the list. It is not a `list` key and must not be: the numbers
+     *  ignore the query, which is the whole reason they are asked for separately. */
+    stats: () => [ROOTS.bookmarks, "stats"] as const,
   },
   bookmark: {
     all: [ROOTS.bookmark] as const,
@@ -57,5 +62,9 @@ export const queryKeys = {
   },
   reminders: {
     all: [ROOTS.reminders] as const,
+    /** The fourteen-day chart (COS-310), aggregated by the database rather than counted from the
+     *  list. Its own entry under the reminders root: arming or clearing an alarm changes both, and
+     *  one invalidation covers them. */
+    load: () => [ROOTS.reminders, "load"] as const,
   },
 } as const;

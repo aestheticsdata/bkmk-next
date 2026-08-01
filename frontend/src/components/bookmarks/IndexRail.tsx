@@ -1,9 +1,10 @@
 "use client";
 
-import { countedRow, toIndexHref } from "@components/bookmarks/helpers/indexQuery";
+import { toIndexHref } from "@components/bookmarks/helpers/indexQuery";
 import { Card } from "@components/ds/Card";
 import { Overline } from "@components/ds/Overline";
 import { Segment } from "@components/ds/Segment";
+import { Progress } from "@components/ui/progress";
 import { cn } from "@lib/utils";
 import { INDEX_TEXT } from "@text/index";
 import Link from "next/link";
@@ -11,6 +12,7 @@ import Link from "next/link";
 import type { Category } from "@src/schemas/categories";
 import type { FiltersQuery } from "@src/schemas/filters";
 import type { PriorityFilter } from "@src/schemas/primitives";
+import type { IndexStats } from "@src/schemas/stats";
 
 /** `prio high` covers `high` **and** `highest`: a shortcut named for the level below the top would
  *  hide the records that matter most. The controller receives both. */
@@ -23,28 +25,37 @@ const HIGH_PRIORITY: PriorityFilter[] = ["high", "highest"];
  * button undo a filter, and the whole thing work before hydration. `toIndexHref` builds each target
  * from the current query, which is also how a scope survives choosing a category.
  *
- * ⚠️ **Two of the handoff's three blocks are here, and the third is not.** `storage`
- * (`shots 84/312` + gauge, `db 1.4 mb`) needs a screenshot count and a database size; neither is
- * computed anywhere, and both are DATA 05 (COS-310). It is left out rather than mocked — a permanent
- * `0/0` is worse than a block that arrives when it means something. The category counters are the
- * same story and the same ticket — with one honest exception: the current query's `total` is a
- * real number, so it is shown against the row that *is* the query (`all` when nothing is filtered, a
- * category when it is the only filter) and nowhere else. See `countedRow`. */
+ * ⚠️ **All three of the handoff's blocks are here now, and the counters mean something they did not**
+ * (COS-310). Until DATA 05 the column held one number — the current query's `total`, shown against
+ * the row that *was* the query and nowhere else, because it was the only honest one available. Every
+ * row carries its own count now, and the difference is not cosmetic: `dev 188` is how many records
+ * that category holds, always, where the old number said "how many the screen is showing" under a
+ * label that reads like the first. The two were the same only when nothing else was filtered, which
+ * is exactly when nobody needed to be told.
+ *
+ * So `countedRow` is gone with this ticket, and `all` reads `stats.records` rather than `total`: the
+ * whole index, not the page's slice of it.
+ *
+ * **`storage` is the third block, minus its third line.** `shots 24/1278` and its meter are counted
+ * by `GET /bookmarks/stats`. The handoff also draws `db 1.4 mb`; that one is decoration — the
+ * owner's call on 2026-08-01 — and it goes where §8.1 sent `uptime` and `IDX/2.4.1`. See
+ * `getStatsController` for the three things it could have meant and why none of them earns a line. */
 function IndexRail({
   categories,
   query,
   pathname,
-  total,
+  stats,
   className,
 }: {
   categories: Category[];
   query: FiltersQuery;
   pathname: string;
-  total?: number;
+  /** The whole index's numbers (COS-310) — `undefined` until they arrive, and the block that reads
+   *  them is not drawn before then. */
+  stats?: IndexStats;
   className?: string;
 }) {
   const selected = query.categories_id ?? [];
-  const counted = countedRow(query);
   const isHighOnly =
     query.priority?.length === HIGH_PRIORITY.length && HIGH_PRIORITY.every((level) => query.priority?.includes(level));
 
@@ -87,7 +98,7 @@ function IndexRail({
           <RailRow
             href={toIndexHref(pathname, query, { categories_id: undefined })}
             label={INDEX_TEXT.rail.all}
-            count={counted?.kind === "all" ? total : undefined}
+            count={stats?.records}
             on={selected.length === 0}
           />
           {categories.map((category) => (
@@ -95,7 +106,10 @@ function IndexRail({
               key={category.id}
               href={toIndexHref(pathname, query, { categories_id: [category.id] })}
               label={category.name}
-              count={counted?.kind === "category" && counted.id === category.id ? total : undefined}
+              /* `bookmarks_count` has been on every row since COS-300 — the filter modal's picker
+                 ranks by it — and the rail simply never read it. It is a `COUNT(DISTINCT b.id)` over
+                 live records, so a category nothing uses reads `000` rather than going blank. */
+              count={category.bookmarks_count}
               on={selected.includes(category.id)}
             />
           ))}
@@ -136,7 +150,45 @@ function IndexRail({
           />
         </div>
       </div>
+
+      {stats && <RailStorage stats={stats} />}
     </Card>
+  );
+}
+
+/* The `storage` block (COS-310) — the handoff's third block in the rail, and the last one to arrive.
+ *
+ * `shots 24/1278` over a meter, and the meter is the pair drawn: the fill is shots over records,
+ * which is the same number the line above states. A gauge saying something the text beside it does
+ * not is how a panel starts lying quietly.
+ *
+ * ⚠️ **Rendered only when the numbers exist**, which is why it takes `stats` rather than reading the
+ * hook: the rail was written without this block precisely to avoid a permanent `0/0`, and a loading
+ * state that draws an empty meter would put it back for the length of a request.
+ *
+ * `records === 0` guards the division: a new account has an empty index, and `0/0` is `NaN`, which
+ * Radix would hand to `aria-valuenow`. An empty index is a meter at zero, which is true.
+ *
+ * `px-3.5` on this block like the scopes above it, and `shrink-0` for the same reason: the category
+ * list is the only part of this card allowed to give up room. */
+function RailStorage({ stats }: { stats: IndexStats }) {
+  const percent = stats.records === 0 ? 0 : (stats.shots / stats.records) * 100;
+
+  return (
+    <div className="mt-5 shrink-0 px-3.5">
+      <Overline className="mb-2 block px-2">{INDEX_TEXT.rail.storage}</Overline>
+      <div className="grid gap-1.5 px-2">
+        <div className="flex items-center justify-between text-2xs text-gr-fg-3">
+          <span>{INDEX_TEXT.rail.shots}</span>
+          {/* `tabular-nums`, so the pair does not reflow as the counts change under it. */}
+          <span className="tabular-nums text-gr-fg-4">{`${stats.shots}/${stats.records}`}</span>
+        </div>
+        <Progress
+          aria-label={INDEX_TEXT.rail.shotsMeter}
+          value={percent}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -216,15 +268,14 @@ function IndexMobileRail({
   categories,
   query,
   pathname,
-  total,
+  stats,
 }: {
   categories: Category[];
   query: FiltersQuery;
   pathname: string;
-  total?: number;
+  stats?: IndexStats;
 }) {
   const selected = query.categories_id ?? [];
-  const counted = countedRow(query);
 
   return (
     <nav
@@ -240,7 +291,7 @@ function IndexMobileRail({
           className="h-8 shrink-0"
         >
           {INDEX_TEXT.rail.all}
-          {counted?.kind === "all" && total != null && <span className="ml-1.5 opacity-60">{total}</span>}
+          {stats && <span className="ml-1.5 opacity-60">{stats.records}</span>}
         </Link>
       </Segment>
       {categories.map((category) => (
@@ -254,6 +305,9 @@ function IndexMobileRail({
             className="h-8 shrink-0"
           >
             {category.name}
+            {/* The count rides the chip here rather than sitting in a right-aligned column: this row
+                scrolls sideways and has no column to align to. Same number as the rail's. */}
+            <span className="ml-1.5 opacity-60">{category.bookmarks_count}</span>
           </Link>
         </Segment>
       ))}

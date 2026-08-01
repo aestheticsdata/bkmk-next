@@ -100,24 +100,15 @@ function isFiltered(query: FiltersQuery): boolean {
   return hasScopeFilters(query) || Boolean(query.categories_id?.length);
 }
 
-/** The rail row the current total belongs to, if any (COS-299).
+/* ⚠️ **`countedRow` left with DATA 05 (COS-310), and it is worth saying what it was for.**
  *
- *  ⚠️ There is exactly **one** count available — `total` for the query on screen — and it is not
- *  `all`'s. Pinning it to `all` regardless is the bug this exists to prevent: selecting `hebergeur`
- *  showed `all 002`, which reads as an index of two records.
+ * COS-299 had exactly one number to put in the rail — `total`, the count for the query on screen —
+ * and it is not `all`'s. Pinning it to `all` regardless was the bug the helper existed to prevent:
+ * selecting `hebergeur` showed `all 002`, which reads as an index of two records. So it worked out
+ * which single row the number described, and left the column blank whenever no single row did.
  *
- *  So the number is shown against the row that *is* the query, and nowhere otherwise: `all` when
- *  nothing is filtered, a category when it is the only thing filtered. Two categories, or a category
- *  plus a scope, describe no single row — the column stays empty until DATA 05 (COS-310) counts each
- *  category for real. */
-function countedRow(query: FiltersQuery): { kind: "all" } | { kind: "category"; id: number } | undefined {
-  if (hasScopeFilters(query)) return undefined;
-
-  const categories = query.categories_id ?? [];
-  if (categories.length === 0) return { kind: "all" };
-  if (categories.length === 1) return { kind: "category", id: categories[0] };
-  return undefined;
-}
+ * Every row has its own count now, from `GET /bookmarks/stats` and the `bookmarks_count` each
+ * category already carried, so there is no longer one number looking for a home. */
 
 /** The expression under `query` in the command bar.
  *
@@ -207,7 +198,6 @@ function readSort(sort: FiltersQuery["sort"]): { column: string; descending: boo
 
 export {
   clearFilters,
-  countedRow,
   DEFAULT_SORT,
   describeQuery,
   hasScopeFilters,

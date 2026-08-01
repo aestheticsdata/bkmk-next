@@ -9,6 +9,7 @@ import { IndexTable } from "@components/bookmarks/IndexTable";
 import { Card } from "@components/ds/Card";
 import { useBookmarkIndex } from "@src/services/useBookmarkIndex";
 import { useCategoryList } from "@src/services/useCategoryList";
+import { useIndexStats } from "@src/services/useIndexStats";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -37,6 +38,9 @@ function BookmarkIndex() {
 
   const { rows, total, pageCount, isLoading, isFetching, isError, remove } = useBookmarkIndex(query);
   const { categories } = useCategoryList();
+  /* The rail's own numbers (COS-310). Deliberately **not** derived from `total` above: that one is
+     what the current query matched, and the rail states what the index holds. See `useIndexStats`. */
+  const { stats } = useIndexStats();
 
   /* `⌥F` — the shortcut printed on the filter button (COS-300).
    *
@@ -73,7 +77,7 @@ function BookmarkIndex() {
         categories={categories}
         query={query}
         pathname={pathname}
-        total={total}
+        stats={stats}
         className="@max-3xl:hidden"
       />
 
@@ -82,7 +86,7 @@ function BookmarkIndex() {
           categories={categories}
           query={query}
           pathname={pathname}
-          total={total}
+          stats={stats}
         />
         <IndexCommandBar
           query={query}

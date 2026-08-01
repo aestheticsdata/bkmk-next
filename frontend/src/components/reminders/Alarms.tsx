@@ -40,7 +40,10 @@ function Alarms() {
         />
       </Card>
 
-      <AlarmsLoad alarms={alarms} />
+      {/* Since COS-310 the chart asks the server for its fourteen rows rather than counting the list
+          above it. What it still takes from here is **whether anything is armed at all** — flat bars
+          mean either that or a fortnight with no firing in it, and only the second gets a message. */}
+      <AlarmsLoad armed={alarms.length} />
     </div>
   );
 }
