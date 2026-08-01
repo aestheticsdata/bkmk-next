@@ -8,7 +8,6 @@ import { PriorityBars } from "@components/ds/PriorityBars";
 import { RowAction, RowActions } from "@components/ds/RowActions";
 import { Stars } from "@components/ds/Stars";
 import { editHref, ROUTES } from "@components/shared/config/constants";
-import { decodeNote } from "@helpers/decodeNote";
 import { cn } from "@lib/utils";
 import { INDEX_TEXT } from "@text/index";
 import { format } from "date-fns";
@@ -79,7 +78,7 @@ function IndexRow({
   onConfirmRemove: () => void;
   busy?: boolean;
 }) {
-  const title = decodeNote(bookmark.title);
+  const title = bookmark.title;
   const url = bookmark.original_url ?? undefined;
 
   return (

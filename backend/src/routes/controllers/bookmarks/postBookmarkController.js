@@ -3,6 +3,7 @@ const dbConnection = require("../../../db/dbinitmysql");
 const { normaliseUrl } = require("../../../helpers/normaliseUrl");
 const jimpHelper = require("./helpers/jimpHelper");
 const generateHexColor = require("./helpers/generateHexColor");
+const { storedText } = require("./helpers/storedText");
 
 module.exports = async (req, res) => {
   const { title, url, categories: categoriesString, notes, stars, priority, reminder, group } = req.body;
@@ -57,7 +58,11 @@ module.exports = async (req, res) => {
 
   /* Prepared, not interpolated (COS-295). `title`, `notes`, `priority` and `url` above are
    * the client's own text, and the empty-string checks that used to decide whether to wrap a
-   * value in quotes now decide whether the value is `null` — which is what they always meant. */
+   * value in quotes now decide whether the value is `null` — which is what they always meant.
+   *
+   * The two text columns go through `storedText` (COS-334), which is one `replaceAll` and a long
+   * comment: `multipart/form-data` turns every newline in a field into `CRLF`, and this is where that
+   * is undone. Nothing encodes them any more, which is the change that made it visible. */
   const sqlBookmark = `
     INSERT INTO bookmark (url_id, user_id, alarm_id, title, priority, notes, stars, screenshot, date_added)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -69,9 +74,9 @@ module.exports = async (req, res) => {
       urlID,
       userID,
       alarmID,
-      title,
+      storedText(title),
       priority !== "" ? priority : null,
-      notes !== undefined ? notes : null,
+      notes !== undefined ? storedText(notes) : null,
       Number(stars),
       screenshotFilename !== null ? String(screenshotFilename) : null,
       format(new Date(), "yyyy-MM-dd"),

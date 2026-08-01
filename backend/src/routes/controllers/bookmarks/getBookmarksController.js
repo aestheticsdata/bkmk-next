@@ -130,11 +130,31 @@ module.exports = async (req, res) => {
   const conditions = ["b.user_id = ?", "b.active = 1"];
   const conditionParams = [req.user.id];
 
+  /* ⚠️ **This line is the defect COS-334 was opened for, and it had two halves.**
+   *
+   * The pattern was `decodeURIComponent(title)`, matched against a column holding
+   * `Solving%20Distributed%20Systems` for every imported and legacy row — so a search containing a
+   * space could not match the rows that are most of the index. The column holds the text itself
+   * since `2026-08-01-decode-text.js`, and the two sides finally spell the same thing.
+   *
+   * The decode was also a **second** one. Express has already unescaped the query string by the time
+   * a controller reads it, so `?title=100%25` arrives here as `100%` — and `decodeURIComponent` on a
+   * `%` that is not an escape throws. Searching for `100%` answered 500 through `catchAsync`. Both
+   * halves go with the same character.
+   *
+   * ⚠️ **And removing that decode uncovered a third thing, so it is fixed here rather than left.**
+   * The input is interpolated into a `LIKE` pattern, where `%` and `_` are wildcards. `_` has always
+   * been one silently — `a_command` matches `a Command`. `%` used to be the 500 above, so nobody ever
+   * saw what it did; without the decode it stops throwing and starts matching anything, which is a
+   * search for `100%` quietly answering with rows that have nothing to do with it. Trading a crash
+   * for a wrong answer is not a fix, so both are escaped, backslash first because it is the escape
+   * character. The comma is mapped **after** that, since it is the one wildcard this search means:
+   * it is the form's "or" separator, and it is part of the pattern, so it goes in the value rather
+   * than in the SQL. */
   if (title) {
-    // The comma is the form's "or" separator, turned into a MySQL wildcard. It is part of
-    // the pattern, so it goes in the value, not in the SQL.
+    const pattern = title.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_").replaceAll(",", "%");
     conditions.push("b.title LIKE ?");
-    conditionParams.push(`%${decodeURIComponent(title).replaceAll(",", "%")}%`);
+    conditionParams.push(`%${pattern}%`);
   }
   if (screenshot) {
     conditions.push("b.screenshot IS NOT NULL");
@@ -195,9 +215,15 @@ module.exports = async (req, res) => {
    * records with no priority, and `NULL` is not a value `IN` can match. It is split back out here into
    * an `IS NULL` alternative, so `prio:low,none` is one condition with an `OR` rather than two
    * conditions that would `AND` into nothing. `listBookmarksQuerySchema` accepts only these five
-   * literals, and each real level still travels as a parameter. */
+   * literals, and each real level still travels as a parameter.
+   *
+   * The `decodeURIComponent` that wrapped this and the categories below went with the title's
+   * (COS-334) — the same second decode, over two inputs zod constrains to lowercase letters, digits
+   * and commas. Neither could throw and neither could change a character: a habit rather than a bug.
+   * They are gone all the same, because two spellings of one mistake in one file is how the next
+   * reader learns the wrong one. */
   if (priority) {
-    const levels = decodeURIComponent(priority).split(",");
+    const levels = priority.split(",");
     const named = levels.filter((level) => level !== "none");
     const alternatives = [];
 
@@ -216,9 +242,7 @@ module.exports = async (req, res) => {
   // One `EXISTS` per selected category, so a bookmark has to carry them all rather than any
   // of them. The subquery's alias is `bc2`: `bc` would shadow the outer join's.
   if (categories_id) {
-    for (const categoryId of decodeURIComponent(categories_id)
-      .split(",")
-      .map((catId) => parseInt(catId, 10))) {
+    for (const categoryId of categories_id.split(",").map((catId) => parseInt(catId, 10))) {
       conditions.push(
         "EXISTS (SELECT 1 FROM bookmark_category bc2 WHERE b.id = bc2.bookmark_id AND bc2.category_id = ?)",
       );

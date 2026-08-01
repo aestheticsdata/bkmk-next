@@ -19,6 +19,18 @@ pnpm migrate:status          # what has run, what has not
 pnpm migrate                 # apply everything pending, in filename order
 ```
 
+A `.js` migration can also be **read before it is run**, when it says it knows how:
+
+```
+pnpm migrate:dry-run 2026-08-01-decode-text.js
+```
+
+It prints what it would write and writes nothing, and it records nothing either — a previewed
+migration is still pending. The runner refuses a `.sql` (handing the statements to MySQL *is*
+running them) and refuses a `.js` that has not opted in, because a dry run over a file that ignores
+the flag is a full apply with a reassuring word in front of it. COS-334 is where this came from: it
+rewrites the text of 1 177 values, and a rewrite that size should be readable before it happens.
+
 Settings come from `HOST` / `DB_USER` / `DB_PASSWORD` / `DB` if they are set, and otherwise from
 `ecosystem.config.js` — untracked, and the place bkmk keeps its environment. `NODE_ENV=production`
 picks `env_production`; anything else, including nothing at all, picks `env_dev`. A runner that
@@ -44,20 +56,30 @@ Production is neither: it has none of these changes, so `pnpm migrate` applies t
 ## Writing one
 
 A `.sql` file is handed to MySQL whole, several statements and all. A `.js` file exports a function
-taking the connection:
+taking the connection and the run's options:
 
 ```js
-module.exports = async (conn) => {
+const migration = async (conn, { dryRun = false } = {}) => {
   const [rows] = await conn.execute("SELECT id, title FROM bookmark");
   // …
 };
+
+// Only if it really does read `dryRun` and write nothing when it is set.
+migration.dryRun = true;
+
+module.exports = migration;
 ```
 
-The `.js` case is not hypothetical, and `2026-08-01-add-url-normal-form.js` is the first of them:
-MySQL cannot parse a url — there is no function that reads a host out of one or drops a
-`?utm_source=` — so the backfill is the same JavaScript the controllers call, run once over the
-table. The text normalisation still queued behind it (DATA 07) has the same shape and the same
-reason.
+The `.js` case is not hypothetical, and there are two of them. `2026-08-01-add-url-normal-form.js`
+was the first: MySQL cannot parse a url — there is no function that reads a host out of one or drops
+a `?utm_source=` — so the backfill is the same JavaScript the controllers call, run once over the
+table. `2026-08-01-decode-text.js` is the second and the same shape for the same reason, MySQL having
+no url decoder either.
+
+**Whether a schema change belongs in `bkmk.sql` too depends on what it is.** Both `.js` migrations so
+far touch data as well as columns; `bkmk.sql` describes an empty database, so it carries their
+columns and none of their backfill. A migration that only moves data — `2026-08-01-decode-text.js` —
+has nothing to add there at all, since there are no rows in a fresh install to decode.
 
 Each file opens with the ticket it comes from and **what breaks if it has not been run** — that
 sentence is what a deploy reads when something answers 500.

@@ -77,9 +77,10 @@ export type BookmarkList = z.infer<typeof BookmarkListSchema>;
  * `pageCount` is. */
 export const DuplicateCandidateSchema = z.object({
   id: numberLikeSchema,
-  /** Stored percent-encoded for every imported and legacy row, like every title in this
-   *  application — the caller decodes it with `decodeNote`, as the index does. DATA 07 (COS-334) is
-   *  what ends that. */
+  /** The title as it reads. It was stored percent-encoded for every imported and legacy row and the
+   *  caller decoded it, like every title in this application; DATA 07 (COS-334) ended that, and the
+   *  second tier this endpoint deliberately left out — same host, close title — has the column it
+   *  needed to be honest. */
   title: z.string(),
   /** `u.original`: the link as it was saved, not the key it was matched on. */
   url: z.string().nullish(),
@@ -96,9 +97,10 @@ export const DuplicateCandidatesSchema = z.object({
 /** `GET /bookmarks/export?format=…` (COS-333). Mirror of the backend's `exportQuerySchema`; the
  *  response is a file, so there is nothing else to describe on this boundary.
  *
- *  `json` is the faithful one — it carries the text as the database holds it, percent-encoding and
- *  all, which is what makes it a backup and the diagnostic DATA 07 (COS-334) needs. `csv` is the
- *  shape this application's own import reads, `html` the one browsers read; both are decoded. */
+ *  `json` is the backup — every column of a record, including the ones the other two cannot carry.
+ *  `csv` is the shape this application's own import reads, `html` the one browsers read. All three
+ *  carry the same text since DATA 07 (COS-334): `json` used to be the faithful one, meaning the
+ *  percent-encoded one, and that distinction went with the encoding. */
 export const EXPORT_FORMATS = ["json", "csv", "html"] as const;
 
 export type ExportFormat = (typeof EXPORT_FORMATS)[number];

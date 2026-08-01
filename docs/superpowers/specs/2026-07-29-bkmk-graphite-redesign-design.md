@@ -2211,6 +2211,15 @@ Vérifiés dans le code, pas déduits.
    colonne : toute recherche contenant une espace rate donc toutes les lignes importées, qui sont
    l'essentiel de l'index. Six sites de rendu appellent `decodeURIComponent` pour défaire ça, dont un
    dans un `try/catch` parce qu'un `%` littéral lève (`RecordNote.tsx:41`).
+   ⚠️ **Trois inexactitudes relevées en faisant le ticket** (COS-334), gardées ici parce que le
+   constat, lui, était juste. Le formulaire legacy n'encodait **que** les notes — le
+   `encodeURIComponent` de `CreateBookmark.tsx:122` était dans la branche `else if (name === "notes")`,
+   tout le reste passait par un `append` nu (relu dans `b4bd2005^`). Les sites de rendu sont **neuf
+   appels dans huit fichiers**, pas six : « six » est ce que compte un `grep decodeURIComponent`, qui
+   rate les sept appels passant par le helper `decodeNote` et compte deux fois le contrôleur. Et
+   `uploadBookmarksController.js` n'existait déjà plus : COS-307 l'a remplacé par le staging, qui
+   stocke le titre brut — deux des trois « retirer les `encodeURIComponent` » du ticket étaient déjà
+   faits avant qu'il ne soit pris.
 2. **Il n'y a pas de champ de recherche.** Le champ `query` de la barre de commande est un
    `<button>` qui ouvre la modale de filtres (`IndexCommandBar.tsx:55`), et le filtre derrière ne
    regarde que `b.title` — ni les notes, ni l'url. Or l'url est le seul texte que possède la plupart
@@ -2229,7 +2238,7 @@ plus de la refonte GRAPHITE ».
 |---|---|---|
 | COS-332 | PLAT 06 — Runner de migrations et table `schema_migrations` | — |
 | COS-333 | DATA 06 — Export de l'index (json · csv · netscape html) ✅ | — |
-| COS-334 | DATA 07 — Normaliser le texte en base (titres et notes décodés) | COS-332 |
+| COS-334 | DATA 07 — Normaliser le texte en base (titres et notes décodés) ✅ | COS-332 |
 | COS-335 | UI 14 — La barre de commande devient un champ de recherche (titre, notes, url) | COS-334 |
 | COS-336 | DATA 08 — Catégories : dédupe des noms et contrainte d'unicité | COS-332 |
 | COS-337 | UI 15 — Gestion des tags : renommer, fusionner, recolorer, purger | COS-336 |
@@ -2248,6 +2257,9 @@ Trois choses à retenir de ce découpage :
   montre l'ampleur des dégâts avant que quoi que ce soit ne réécrive 1 280 lignes.
 - **DATA 07 ne peut pas être un `.sql`** — MySQL n'a pas de fonction de décodage d'URL. C'est un
   script Node, premier écart à la convention des migrations à la main, et la raison d'être du runner.
+  ✅ **Fait (COS-334)** — `2026-08-01-decode-text.js`, 1 177 valeurs réécrites en une transaction.
+  Détail en 10.2 quinquies. L'écart n'était déjà plus le premier : COS-338 avait pris la même sortie
+  deux tickets plus tôt, pour la même raison, MySQL ne sachant pas non plus lire une url.
 
 Deux pièges de migration, identiques dans leur forme : l'`UNIQUE (user_id, name)` de COS-336 et
 l'éventuel index unique sur l'url normalisée de COS-338 **échouent tant que les doublons existent**.
@@ -2339,7 +2351,10 @@ schéma qui dit la même chose.
 ⚠️ **Et le robinet est fermé, sinon le balayage est un nettoyage daté.** `postBookmarkController`
 insère l'url *avant* le bookmark et n'a pas de transaction : un échec sur la seconde requête laissait
 la première derrière. Trois lignes le reprennent. Le même chemin fabrique aussi une `alarm` orpheline
-— pas dans ce ticket, à ouvrir.
+— pas dans ce ticket, et c'est **COS-353** qui le prend. Mesuré depuis : la base de dev n'a **aucune**
+alarme orpheline, donc pas de migration ; ce que la mesure a trouvé à la place est plus gros, la
+boucle de catégories tourne après le commit du bookmark et un échec y laisse une fiche créée
+derrière un 500.
 
 ⚠️ **`host` perd son `www.`, y compris là où il est affiché.** `parseImportFile` calculait le sien
 avec `new URL(link).host` : la table de staging annonçait `www.youtube.com` là où la colonne stocke
@@ -2433,6 +2448,112 @@ n'est pas lu comme un identifiant de fiche ; et une requête sans session refus�
 
 ⚠️ **QA visuelle non faite**, même empêchement qu'au §6 ter — le menu et son bouton sont du markup et
 du CSS, pas une capture.
+
+### 10.2 quinquies DATA 07 (COS-334) — le texte en base, fait le 2026-08-01
+
+`backend/src/db/migrations/2026-08-01-decode-text.js`, **1 177 valeurs réécrites en une transaction**
+sur les 1 331 lignes de l'index de dev : 1 154 titres et 23 notes. Les encodages partent de l'écriture
+(`useBookmarkCreate.ts`, seul restant des trois que listait le ticket), les décodages de la lecture
+(neuf appels, huit fichiers, plus le helper `decodeNote` supprimé), et le `FIELD_LIMITS.notes * 3` de
+l'API redevient `FIELD_LIMITS.notes` — le facteur 3 ne couvrait que le gonflement de l'encodage.
+
+⚠️ **Un seul décodage, jamais une boucle, et l'index en fournit la preuve deux fois.** Ce n'est pas
+une précaution de principe : « décoder tant que ça change » casse deux lignes réelles.
+`bookmark 1` est une note qui contient une url LinkedIn, et cette url porte ses propres échappements
+dans sa query string (`?trackingId=…%2F…%3D%3D`) ; stockée, elle lit `%252F` — **un**
+encodage d'une chaîne qui en contenait déjà, pas deux encodages. Une passe rend la note telle qu'elle
+a été tapée, url intacte ; une seconde mangerait l'échappement de l'url et rendrait un lien mort.
+`bookmark 275` dit la même chose autrement : stocké
+`YouTube%20to%20Mp3%20Converter%20(up%20to%20320kbps)%20%5B100%25%20Working%5D`, il décode proprement
+en `YouTube to Mp3 Converter (up to 320kbps) [100% Working]` et **lève** à la seconde passe, `%20W`
+n'étant pas un échappement. C'est une ligne que la migration réécrit, et à laquelle elle ne doit plus
+jamais toucher.
+
+⚠️ **La migration est sélective, et la clause qui ne servait à rien est celle qui sert maintenant.**
+Une valeur contenant une espace littérale a été écrite en clair — `encodeURIComponent` transforme une
+espace en `%20` et ne peut donc pas en produire — et la décoder mangerait un `%20` que son auteur a
+tapé. **Avant** la passe : 137 valeurs portaient une espace, et **aucune** n'aurait été réécrite sans
+cette clause ; elle ne protégeait rien. **Après** : 1 310 en portent, et elle est ce qui sépare deux
+d'entre elles — les deux ci-dessus — d'une seconde passe qui les corromprait. Le script imprime les
+deux comptes à chaque exécution, donc la garde dit elle-même si elle sert. Rejouée, la migration
+trouve **0 valeur à réécrire**, ce qui compte : le runner n'enregistre rien pour un fichier qui a
+échoué, donc une reprise repart du début.
+
+⚠️ **Une transaction, et c'est la migration qui pouvait en avoir une.** `migrate.js` n'en enveloppe
+délibérément aucune, parce que MySQL ne la donnerait pas : le DDL commit implicitement et un
+`ALTER TABLE` dans une transaction la termine (§10.2 bis). Ce fichier-ci n'a **aucun** DDL — 1 177
+`UPDATE` — donc il prend la sienne. Un index à moitié décodé est le mauvais résultat ici : les lignes
+resteraient lisibles, rien n'échouerait, et rien ne dirait quelle moitié est passée.
+
+⚠️ **Une cinquième commande au runner, `dry-run`, et elle est opt-in par fichier.** Le ticket demandait
+de pouvoir lire les ~1 280 lignes avant de les écrire ; `pnpm migrate:dry-run <fichier>` imprime le
+diff et n'écrit rien — et n'enregistre rien non plus, une migration prévisualisée reste en attente.
+Le runner refuse un `.sql` (donner les statements à MySQL, *c'est* les exécuter) et refuse un `.js`
+qui n'a pas déclaré `migration.dryRun = true`, parce qu'un dry run sur un fichier qui ignore l'option
+est une application complète avec un mot rassurant devant. `2026-08-01-add-url-normal-form.js` ne le
+déclare pas et est refusé, ce qui est le comportement voulu.
+
+⚠️ **Deux des trois « retirer les `encodeURIComponent` » étaient déjà faits**, ce que le ticket ne
+pouvait pas savoir : `uploadBookmarksController.js` a disparu avec COS-307 et `CreateBookmark.tsx`
+avec COS-319. Il restait `useBookmarkCreate.ts:52`, partagé par la création et l'édition.
+
+⚠️ **Le round-trip d'édition était une migration à la main, en cours depuis COS-319.** `fromRecord`
+décodait le titre **et** les notes, `toBookmarkFormData` ne ré-encodait que les notes : donc
+**enregistrer une fiche décodait silencieusement son titre en base**, une ligne à la fois, au gré de
+ce que quelqu'un éditait. C'est exactement ce que la migration fait en une passe, sauf qu'elle le
+fait pour tout le monde et qu'elle le dit.
+
+⚠️ **Deux choses trouvées en dehors de la liste du ticket, prises parce que ce ticket les touchait.**
+La première : `decodeURIComponent(title)` était un **second** décodage — Express a déjà déséchappé la
+query string — donc chercher `100%` répondait 500. En le retirant, la ligne cesse de lever et se met
+à traiter le `%` de l'utilisateur comme un joker `LIKE` : un crash échangé contre une réponse fausse
+n'est pas une correction, donc `%`, `_` et `\` sont échappés, la virgule étant mappée **après** puisque
+c'est le seul joker que cette recherche veut dire. Le `_` était déjà un joker silencieux avant le
+ticket. La seconde : `multipart/form-data` réécrit tout saut de ligne d'un champ texte en `CRLF`, ce
+que l'encodage cachait (`\n` voyageait en `%0A`). Les 8 notes multi-lignes de l'index portent `\n` ;
+sans `helpers/storedText.js`, une note enregistrée après ce ticket aurait été la seule ligne de la
+colonne avec l'autre convention — la forme même du défaut que le ticket ferme, réintroduite par sa
+correction.
+
+⚠️ **Et un octet NUL littéral dans `draft.ts`**, séparateur de `sameDraft` depuis COS-319. Il est
+correct — aucun nom de catégorie ne peut le contenir — mais un fichier qui en contient un est un
+**fichier binaire** pour git et pour grep : `git diff` imprimait `Bin 6499 -> 6798 bytes` et aucune
+ligne, `grep -rn` répondait `Binary file … matches`. Le seul module partagé par l'écran insert et la
+modale d'édition était le seul fichier illisible en revue. Écrit `"\u0000"`, même valeur.
+
+⚠️ **Ce que le ticket ne répare pas, et il le disait :** `anyASCII` supprimait aussi les accents à
+l'import, donc `Café` était déjà `Cafe` dans le fichier arrivé en base. Le décodage rend les espaces
+et la ponctuation, il ne rend pas ce qui n'a jamais été écrit.
+
+**La recherche, mesurée avant/après sur les 1 331 lignes** — c'est le constat 1 du §10.1 :
+`React Hook Form` 7 → 13, `Google Search` 11 → 36, `Stack Overflow` 0 → 6, `a Command` 1 → 4,
+`de la` 2 → 5. Les lignes qu'elle atteignait déjà sont celles que l'écran insert et les imports depuis
+COS-307 avaient écrites en clair. Le tri en profite sans que rien ne le demande : `?sort=title`
+comparait `%` (0x25) à l'espace (0x20) sur une colonne mixte, donc il n'a jamais été alphabétique.
+En revanche **aucun écran n'affichait `Framework%20reimagined`** : les neuf décodages de rendu
+faisaient leur travail. Le défaut était dans les comparaisons, pas à l'écran.
+
+**QA faite en local, 52 assertions sur l'API réelle**, compte jetable créé puis supprimé, index
+retrouvé à ses 1 331 fiches, 1 280 actives et 1 243 urls : la migration relue ligne à ligne contre un
+instantané pris avant elle — **chaque réécriture est exactement un décodage de ce qui était là, et
+chacune se ré-encode exactement en ce qui était là**, donc la passe est réversible et prouvée telle ;
+le titre et les notes écrits verbatim à la création comme à l'édition, saut de ligne compris ; une
+recherche contenant un `%` littéral qui répond 200 et trouve la fiche ; `%` et `_` littéraux qui ne
+sont plus des jokers ; la virgule qui l'est toujours ; l'ancienne orthographe encodée qui ne trouve
+plus rien ; 1 000 caractères acceptés et 1 001 refusés en 400 ; les trois formats d'export qui portent
+le même texte, le json sans son champ `textEncoding` ; les doublons et les rappels qui rendent le
+titre tel quel.
+
+⚠️ **QA visuelle non faite**, même empêchement qu'au §6 ter.
+
+**Reliquats, sans ticket.** Deux notes actives dépassent la borne des 1 000 caractères une fois
+décodées (id 93 à 1 322, id 1399 à 2 071) : elles ne pouvaient pas être enregistrées depuis le
+formulaire avant ce ticket — le front validait déjà la note décodée contre 1 000 — et elles ne le
+peuvent pas davantage après. Le ticket ne change pas leur sort, il rend la limite lisible. Et
+**COS-308 récupère la moitié de son objection** : le second étage (même hôte, titre proche) était
+refusé pour deux raisons, dont « les titres sont encodés » ; celle-là tombe. L'autre — 7 paires
+trouvées, 7 fausses, un index à 78 % un seul hôte — est intacte, et c'est une nouvelle mesure qui doit
+trancher, pas la colonne devenue lisible.
 
 ### 10.3 Ajustements sur des tickets existants (pas de nouveau ticket)
 

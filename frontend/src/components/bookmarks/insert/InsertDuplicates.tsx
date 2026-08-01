@@ -1,7 +1,6 @@
 "use client";
 
 import { ROUTES } from "@components/shared/config/constants";
-import { decodeNote } from "@helpers/decodeNote";
 import { useDuplicateCandidates } from "@src/services/useDuplicateCandidates";
 import { CREATE_TEXT } from "@text/create";
 import { format } from "date-fns";
@@ -61,7 +60,7 @@ function InsertDuplicates({ url }: { url: string }) {
         >
           {/* The title takes what is left and truncates into it, as the index row's does — a long
               title must not push the date out of a 340px pane. */}
-          <span className="min-w-0 truncate">{decodeNote(candidate.title) || CREATE_TEXT.duplicates.untitled}</span>
+          <span className="min-w-0 truncate">{candidate.title || CREATE_TEXT.duplicates.untitled}</span>
           {candidate.addedAt && (
             <span className="shrink-0 tabular-nums text-gr-fg-4">{format(candidate.addedAt, "yyyy-MM-dd")}</span>
           )}

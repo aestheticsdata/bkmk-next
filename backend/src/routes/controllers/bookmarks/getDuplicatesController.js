@@ -16,10 +16,14 @@ const { normaliseUrl } = require("../../../helpers/normaliseUrl");
  * Measured on the real index before a line was written: it finds 7 pairs and **all 7 are wrong**. Two
  * different YouTube videos that share a title, a Google search beside its own image results,
  * `Software Engineering Anxiety | Prime Reacts` against `Software Engineering Anxiety` — an index
- * that is 78 % one host is exactly where "same host" stops meaning anything. It also cannot be
- * honest yet: titles are still stored percent-encoded for every imported and legacy row, so the
- * comparison would be run against `Solving%20Distributed%20Systems…`. The owner's call was to ship
- * this tier and reopen the other after DATA 07 (COS-334) decodes the column.
+ * that is 78 % one host is exactly where "same host" stops meaning anything. It also could not be
+ * honest then: titles were stored percent-encoded for every imported and legacy row, so the
+ * comparison would have run against `Solving%20Distributed%20Systems…`. The owner's call was to ship
+ * this tier and reopen the other once DATA 07 decoded the column.
+ *
+ * ✅ **COS-334 has decoded it**, so the second half of that objection is gone and the measurement can
+ * be taken again on text that is text. The first half is not: 78 % of one host was never about the
+ * encoding, and a re-measurement is what should decide the tier rather than the column being ready.
  *
  * **`active = 1`, because deletion is soft** — the same reading `markImportDuplicates`, the index,
  * the alarms and the record all use. A record you deleted is not a reason to refuse a new one.
