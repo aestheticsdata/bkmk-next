@@ -2228,7 +2228,7 @@ plus de la refonte GRAPHITE ».
 | Ticket | Titre | Dépend de |
 |---|---|---|
 | COS-332 | PLAT 06 — Runner de migrations et table `schema_migrations` | — |
-| COS-333 | DATA 06 — Export de l'index (json · csv · netscape html) | — |
+| COS-333 | DATA 06 — Export de l'index (json · csv · netscape html) ✅ | — |
 | COS-334 | DATA 07 — Normaliser le texte en base (titres et notes décodés) | COS-332 |
 | COS-335 | UI 14 — La barre de commande devient un champ de recherche (titre, notes, url) | COS-334 |
 | COS-336 | DATA 08 — Catégories : dédupe des noms et contrainte d'unicité | COS-332 |
@@ -2379,6 +2379,60 @@ par-dessus une base qui l'a déjà ne change rien. Les deux bases jetables sont 
 **Reliquat, sans ticket :** `url.short` n'est plus renseigné nulle part — les trois seules lignes qui
 en avaient une étaient orphelines et sont parties avec le balayage. La colonne reste, personne ne la
 lit.
+
+### 10.2 quater DATA 06 (COS-333) — la sortie, faite le 2026-08-01
+
+`GET /bookmarks/export?format=json|csv|html`, trois écritures dans
+`helpers/exportFormats.js`, et un menu `export` sur la barre de commande de l'index. bkmk savait
+importer et pas sortir : la seule copie lisible d'un compte était le `mysqldump` que le cron envoie
+en SFTP deux fois par jour.
+
+⚠️ **`json` est fidèle, les deux autres sont lisibles — c'est une décision, pas une incohérence.**
+Les titres et les notes sont stockés percent-encodés : **1 154 des 1 280 fiches actives** de l'index
+de dev, et les 19 notes sur 19. `json` écrit ce que la base contient, sans décoder — c'est la
+sauvegarde *et* le diagnostic pour lequel ce ticket passe avant DATA 07, puisque savoir quelles
+lignes portent l'encodage disparaît à la seconde où quelque chose les décode. `csv` et `html` sont
+lus par autre chose que bkmk — son propre import, et un navigateur — donc ils portent le texte comme
+on le lit. Le fichier json le dit lui-même, dans un champ `textEncoding` qui partira avec COS-334.
+
+⚠️ **L'index entier, pas la vue filtrée.** La jointure est celle de `getBookmarksController` moins
+ses filtres et moins son `LIMIT`. Un export se prend quand on s'en va ou qu'on sauvegarde, et un
+contrôle qui rend discrètement un sous-ensemble est la seule chose qu'une sauvegarde ne doit pas
+faire. Le menu l'annonce **avant** d'être ouvert (`the whole index`), parce que la barre juste à côté
+peut porter un filtre. Exporter un filtre est une autre fonctionnalité, et il lui faut une surface
+qui dise lequel.
+
+⚠️ **Une fiche sans url est dans le `json` et dans aucun des deux autres** — 43 des fiches actives.
+`title;` relu par l'import est une ligne comptée malformée, et `<A HREF="">` est un lien vers la page
+où l'on est. Le format fidèle les garde, les formats d'échange ne peuvent pas les porter. Les
+captures d'écran sont des **noms de fichiers** partout : mettre du base64 dans une sauvegarde la
+multiplierait par la seule chose dedans que personne ne lit.
+
+⚠️ **Le bouton est placé, pas recopié : le handoff ne dessine aucun contrôle d'export.** Sur la barre
+de commande, à côté de `filter`, qui est l'autre contrôle agissant sur la liste entière. L'écran
+About — l'autre suggestion du ticket — est servi **sans session** et ne pouvait pas porter un
+contrôle qui en demande une.
+
+⚠️ **Le téléchargement passe par `privateRequest`, pas par une ancre `download`.** L'ancre marche —
+GET, cookie `SameSite=lax`, navigation de premier niveau — et c'est le problème : elle court-circuite
+la redirection 401 → `/login`, donc une session expirée enregistre une page de connexion nommée
+`bkmk-2026-08-01.csv`. Le blob est récupéré puis remis au navigateur. Le compte de fiches voyage sur
+un en-tête `X-Record-Count`, exposé par `Access-Control-Expose-Headers` — sans quoi le front, qui est
+sur un autre port en dev, lit `undefined`.
+
+**QA faite en local, 50 assertions sur l'API réelle**, deux comptes jetables créés puis supprimés,
+index retrouvé à ses 1 243 urls, 1 331 fiches et 1 280 actives : les trois formats servis avec leur
+`Content-Type`, leur `Content-Disposition` daté et leur compte ; le json qui garde le titre encodé
+tel quel, la fiche sans url, les étoiles, la priorité, la fréquence d'alarme, le tag et sa couleur,
+et qui ne laisse fuir ni `user_id` ni `active` ; le csv décodé, une ligne par fiche avec url,
+séparateur retiré du titre ; **le csv relu par l'import de l'application, 4 entrées, 0 malformée, le
+titre revenu tel qu'il était écrit** ; le html avec son `DOCTYPE` Netscape, un `ADD_DATE` en secondes,
+les `TAGS`, la note en `<DD>` sur deux lignes et le balisage échappé dans les titres ; une fiche
+retirée qui quitte l'export ; un format inconnu et un format absent refusés en 400 ; `/export` qui
+n'est pas lu comme un identifiant de fiche ; et une requête sans session refusée en 401.
+
+⚠️ **QA visuelle non faite**, même empêchement qu'au §6 ter — le menu et son bouton sont du markup et
+du CSS, pas une capture.
 
 ### 10.3 Ajustements sur des tickets existants (pas de nouveau ticket)
 

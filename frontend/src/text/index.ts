@@ -40,6 +40,27 @@ export const INDEX_TEXT = {
     openFilters: "open the filters",
   },
 
+  /* The way out of the index (COS-333). The handoff draws no export control anywhere — bkmk could
+   * not export at all — so this is placed rather than copied: on the command bar, beside the filter,
+   * because that bar is what the index is looked at through.
+   *
+   * ⚠️ **`the whole index` is a promise, not a caption.** The bar right beside it can carry a filter,
+   * and an export that quietly handed you the filtered subset is the one mistake a backup must not
+   * make. The menu says which it is before it is opened, not after. */
+  export: {
+    button: "export",
+    caption: "the whole index",
+    formats: {
+      json: "json · everything",
+      csv: "csv · title;url",
+      html: "html · for a browser",
+    },
+    /** While the file is being built and sent. One word: the bar is 26px and the button is a chrome
+     *  control, not a progress area. */
+    busy: "…",
+    failed: "export failed",
+  },
+
   /* ⚠️ **No `id` column, and a `shot` column the handoff does not draw** (owner's call).
    *
    * The mockup opens its table with a 58px `id`, which is a database key on a screen where nothing

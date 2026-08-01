@@ -1,6 +1,7 @@
 "use client";
 
 import { describeQuery, nextSort, readSort, toIndexHref } from "@components/bookmarks/helpers/indexQuery";
+import { IndexExportMenu } from "@components/bookmarks/IndexExportMenu";
 import { BlinkCursor } from "@components/ds/BlinkCursor";
 import { CommandBar } from "@components/ds/CommandBar";
 import { Overline } from "@components/ds/Overline";
@@ -104,6 +105,11 @@ function IndexCommandBar({
             {INDEX_TEXT.command.filterKey}
           </span>
         </Button>
+
+        {/* The way out (COS-333). Beside `filter` because it is the other control that acts on the
+            list as a whole, and last because it is the rarer of the two. The handoff draws neither
+            this button nor any other export control — bkmk could not export at all. */}
+        <IndexExportMenu />
       </div>
     </CommandBar>
   );

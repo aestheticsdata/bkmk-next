@@ -8,6 +8,7 @@ const {
   bookmarkIdParamsSchema,
   createBookmarkBodySchema,
   duplicatesQuerySchema,
+  exportQuerySchema,
   listBookmarksQuerySchema,
   screenshotQuerySchema,
   updateBookmarkBodySchema,
@@ -17,6 +18,7 @@ const getBookmarksController = require("../controllers/bookmarks/getBookmarksCon
 const getBookmarkController = require("../controllers/bookmarks/getBookmarkController");
 const postBookmarkController = require("../controllers/bookmarks/postBookmarkController");
 const deleteBookmarkController = require("../controllers/bookmarks/deleteBookmarkController");
+const exportBookmarksController = require("../controllers/bookmarks/exportBookmarksController");
 const getDuplicatesController = require("../controllers/bookmarks/getDuplicatesController");
 const editBookmarkController = require("../controllers/bookmarks/editBookmarkController");
 const parseImportController = require("../controllers/bookmarks/parseImportController");
@@ -59,6 +61,9 @@ router.get("/import/last", catchAsync(getLastImportController));
  *  routes are: `/duplicates` under a `/:id` route is a request for the record numbered `duplicates`,
  *  refused with a 400 by `bookmarkIdParamsSchema`. */
 router.get("/duplicates", validate({ query: duplicatesQuerySchema }), catchAsync(getDuplicatesController));
+
+/** The whole index, out (COS-333). Above `/:id` for the reason the two routes above it are. */
+router.get("/export", validate({ query: exportQuerySchema }), catchAsync(exportBookmarksController));
 
 router.get("/:id", validate({ params: bookmarkIdParamsSchema }), catchAsync(getBookmarkController));
 // `validate` after multer: multer is what fills `req.body` on multipart requests.
