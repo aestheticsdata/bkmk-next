@@ -68,6 +68,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-345 — sécurité, ouvert par l'audit de COS-322 | ⏳ ouvert |
 | hors lot | COS-346 — plateforme, ouvert par l'audit de COS-322 | ⏳ ouvert |
 | DATA 01 | COS-306 — la page se décrit elle-même, et `?userID=` quitte le fil | ✅ mergé (PR #31) |
+| DATA 02 | COS-307 — staging d'import : parse, commit, options, `last import` | 🟡 fait, QA en attente |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -354,6 +355,69 @@ moitié intéressante de la mesure. Compte effacé ensuite, base revenue à ses 
 1 331 enregistrements. Le rendu du pager n'a pas été regardé dans un navigateur : l'extension Chrome
 n'était pas connectée. `tsc`, Biome et `next build` passent, et `pageCount` est une prop typée.
 
+⚠️ **DATA 02 avait deux fourches, et c'est le propriétaire qui les a tranchées avant qu'une ligne
+soit écrite.** Le ticket lui-même le demandait pour la première : compter des doublons suppose une
+définition de « même url », et `url.original` n'a aucune forme normale — `https://x.com/a`,
+`http://x.com/a/` et la même adresse avec un `?utm_source=` sont trois lignes. **Dédupe sur chaîne
+exacte, assumée**, plutôt que prendre COS-332 puis COS-338 avant ; le helper `markImportDuplicates`
+est le seul endroit qui répond à la question, donc DATA 09 changera un fichier. Seconde fourche :
+`last import` n'a aucun stockage et `N skipped` ne se déduit d'aucune colonne — **une table
+`import_run` et sa migration**, plutôt que laisser la ligne mockée dans un ticket de-mock à part.
+
+⚠️ **Le staging tient sans état côté serveur : le fichier repart avec le commit.** Le ticket décrit
+un commit « prenant les entrées retenues » ; il prend le fichier et les deux options qui décident ce
+qui est retenu, ce qui est le même ensemble — l'écran n'a pas de sélection par ligne, donc les
+options *sont* la sélection. Renvoyer les entrées voulait dire un corps JSON de quelques centaines de
+ko contre les 100 ko par défaut d'`express.json()`, relevés pour toute l'application afin de
+transporter une donnée que le serveur vient de produire et qu'il devrait revérifier de toute façon —
+un `state` envoyé par le client est un `state` que le client a pu écrire. Le parse est déterministe :
+la seconde lecture du même fichier redonne ce que l'aperçu montrait.
+
+⚠️ **Le parser existait deux fois et c'est ce ticket qui l'a promis puis fait.** `parseImport.ts`
+mirait `uploadBookmarksController` ligne à ligne depuis UI 07, avec un en-tête disant que DATA 02 le
+supprimerait. Les deux sont partis : il reste
+`controllers/bookmarks/helpers/parseImportFile.js`, appelé par le parse **et** par le commit.
+`POST /bookmarks/upload` disparaît avec eux, et `anyascii.js` — 1 238 lignes de table de
+translittération — tombe avec son unique appelant.
+
+⚠️ **Le titre est stocké tel qu'il se lit dans le fichier, et c'est un changement de comportement
+assumé.** L'ancien contrôleur écrivait `encodeURIComponent(anyASCII(title))` : c'est le premier des
+trois constats du §10.1, celui qui fait que toute recherche contenant une espace rate les lignes
+importées, lesquelles sont l'essentiel de l'index. L'écran de création GRAPHITE stocke le titre brut
+depuis COS-302, donc les deux chemins d'écriture sont alignés sur celui qui marche. Les 1 280 lignes
+déjà en base ne sont pas touchées — c'est DATA 07 (COS-334) — mais son backfill n'a plus de source
+neuve à rattraper.
+
+⚠️ **Une transaction, là où il n'y en avait aucune.** L'ancien import répondait 500 à la première
+ligne en échec, après avoir inséré toutes celles d'avant et sans dire lesquelles ; un import à moitié
+fait ne peut pas être rejoué sans dupliquer la moitié atterrie. La ligne d'`import_run` est écrite
+dans la même transaction, donc `last import` ne peut pas décrire un import annulé.
+
+⚠️ **`capture shots` reste dessinée et désactivée, et son de-mock est COS-329, pas un ticket neuf.**
+Rien nulle part ne capture une image depuis une url — le seul chemin vers la colonne `screenshot`
+est un fichier déposé à la main — et l'API n'accepte pas le drapeau, exprès, pour qu'aucun appelant
+ne croie l'inverse. Les deux autres options sont vivantes : `skip duplicates` filtre sur le `DUP`
+recalculé au commit, `tag as imported` range les nouvelles lignes sous une catégorie `imported`
+créée à la première utilisation. Règle du §0 appliquée : chercher le ticket existant avant d'en
+ouvrir un.
+
+⚠️ **Un fichier qui se répète est compté comme se répétant.** L'ensemble des urls connues grandit
+pendant qu'on parcourt les entrées, donc la seconde occurrence d'une url *dans le même fichier* est
+un doublon de la première. Un export pris deux fois et concaténé est le cas courant, et appeler les
+deux copies « new » serait une promesse que `skip duplicates` ne peut pas tenir.
+
+⚠️ **Vérifié en exécutant, deux fois plutôt qu'une.** Côté API, un compte jetable et 27 contrôles :
+la branche csv prise sur un nom à points (le défaut de COS-303), les lignes illisibles comptées, les
+états `NEW`/`DUP`, le fait que le parse **n'écrit rien**, l'import complet, le second parse où tout
+est doublon, `skip duplicates` qui n'importe rien, la forme `.txt`, la catégorie `imported`, la ligne
+`last import`, le fichier vide, l'absence de fichier, et `POST /bookmarks/upload` qui répond 404.
+Puis l'écran lui-même, dans un Chrome sans tête en 1440×900 : fichier déposé par `DOM.setFileInputFiles`,
+table lue dans le DOM (`4 entries parsed · 3 new · 1 duplicate · 1 malformed`, le `DUP` en oxyde),
+option basculée, `send` cliqué, retour sur l'index à trois lignes toutes étiquetées `imported`, et la
+ligne `last import 2026-08-01 · 3 entries · 1 skipped` au retour sur l'écran. Comptes effacés
+ensuite : la base est revenue à ses 11 utilisateurs et 1 331 enregistrements, et `import_run` à zéro
+ligne. `tsc`, Biome et `next build` passent.
+
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
 qu'à la fin du lot.
@@ -370,9 +434,12 @@ qu'à la fin du lot.
 AUTH : tant qu'elle n'est pas redéployée, la production garde le JWT en `localStorage` et le SQL
 concaténé. Rien de ce lot n'est acquis en prod avant ce déploiement.
 
-⚠️ **Et ce déploiement a maintenant une étape de base de données.** UI 02 ajoute une colonne
-(`src/db/migrations/2026-07-30-add-user-recovery-passphrase.sql`), passée en dev seulement. Sans elle,
-l'inscription répond 500 en production.
+⚠️ **Et ce déploiement a maintenant deux étapes de base de données.** UI 02 ajoute une colonne
+(`src/db/migrations/2026-07-30-add-user-recovery-passphrase.sql`) et DATA 02 une table
+(`2026-08-01-add-import-run.sql`), toutes deux passées en dev seulement. Sans la première,
+l'inscription répond 500 en production ; sans la seconde, un import répond 500 et **s'annule
+entièrement** — la ligne d'historique est écrite dans la transaction qui insère les enregistrements.
+Le tableau `Applied` de `migrations/README.md` tient l'état.
 
 **Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
 validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
@@ -2124,6 +2191,9 @@ La passe de nettoyage précède la contrainte, dans le même ticket.
   lui avait légué. Voir le §0.
 - **COS-307 et COS-308** dépendent de COS-338 : la détection de doublons n'a aujourd'hui aucune
   définition de « même url ».
+  ⚠️ **Tranché depuis, pour COS-307** : la dépendance a été assumée plutôt que prise. Le staging
+  dédupe sur la chaîne exacte, l'écart est écrit dans `markImportDuplicates` et au §0, et DATA 09
+  n'aura qu'un fichier à changer. COS-308 garde la question entière.
 - **COS-329** absorbe la favicon si l'occasion se présente — c'est le même fetch que le titre
   automatique. À stocker localement : pointer un service de favicons tiers poserait une balise sur
   chaque ligne d'un index dont l'écran de signup annonce « self-hosted · no tracking ».
