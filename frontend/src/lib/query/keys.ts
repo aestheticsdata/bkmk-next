@@ -35,6 +35,12 @@ export const queryKeys = {
      *  on purpose: an import writes records, so the same invalidation that refreshes the index has to
      *  refresh the line that says an import just happened. */
     lastImport: () => [ROOTS.bookmarks, "last-import"] as const,
+    /** Records the index already holds for a draft's url (COS-308) — the create screen's duplicate
+     *  warning. Keyed by the url as typed rather than by its normal form: the front does not know the
+     *  normalisation (it is the server's helper), and two urls that normalise the same are two cache
+     *  entries answering the same thing, which is cheaper than shipping the rule to the browser.
+     *  Under the bookmarks root, so committing a record refreshes it. */
+    duplicates: (url: string) => [ROOTS.bookmarks, "duplicates", url] as const,
   },
   bookmark: {
     all: [ROOTS.bookmark] as const,

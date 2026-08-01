@@ -66,6 +66,33 @@ export const BookmarkListSchema = z.object({
 
 export type BookmarkList = z.infer<typeof BookmarkListSchema>;
 
+/* `GET /bookmarks/duplicates?url=…` — records the index already holds for a draft's url (COS-308).
+ *
+ * ⚠️ **`count` is the answer, `candidates` is a sample of it.** The endpoint caps the rows it sends
+ * at five, because the pane they are drawn in is 340px and the screen they are on is a form. A
+ * `count` above `candidates.length` is normal and is what the warning prints.
+ *
+ * The shape is composed by the controller rather than being a `SELECT b.*`, which is why it is
+ * `camelCase` here and `snake_case` above: `addedAt` is an alias this endpoint chose, the way
+ * `pageCount` is. */
+export const DuplicateCandidateSchema = z.object({
+  id: numberLikeSchema,
+  /** Stored percent-encoded for every imported and legacy row, like every title in this
+   *  application — the caller decodes it with `decodeNote`, as the index does. DATA 07 (COS-334) is
+   *  what ends that. */
+  title: z.string(),
+  /** `u.original`: the link as it was saved, not the key it was matched on. */
+  url: z.string().nullish(),
+  addedAt: dateLikeSchema.nullish(),
+});
+
+export type DuplicateCandidate = z.infer<typeof DuplicateCandidateSchema>;
+
+export const DuplicateCandidatesSchema = z.object({
+  count: numberLikeSchema,
+  candidates: z.array(DuplicateCandidateSchema),
+});
+
 /* Payloads.
  *
  * Both create and edit go out as `multipart/form-data` — the screenshot is a file. So

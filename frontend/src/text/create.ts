@@ -6,11 +6,12 @@
  * survive the repaint: `group`, which the backend reads into an empty `if (group) {}` and writes
  * nowhere, and the file input's raw `<input type="file">` chrome, which the handoff draws as a slot.
  *
- * ⚠️ **Three things the handoff draws have nothing behind them, and they are mocked rather than
+ * ⚠️ **Three things the handoff draws had nothing behind them, and they were mocked rather than
  * dropped** (the owner's call, and the difference from UI 09): `auto capture`, the duplicate count,
- * and the title fetched from the page's `<title>`. Each is marked at its use site and each is listed
- * on **COS-329**, the ticket that replaces it with real data. The values below carrying a hard-coded
- * reading are grouped under `mock` so that nothing can quietly read as measured.
+ * and the title fetched from the page's `<title>`. **The duplicate count is real since COS-308** and
+ * has moved out of `mock` into `duplicates` below. The other two are still marked at their use site
+ * and still listed on **COS-329**; whatever carries a hard-coded reading stays grouped under `mock`,
+ * so that nothing can quietly read as measured.
  *
  * ⚠️ **The segments hold the real values, not the mockup's.** The handoff writes three priorities
  * (`high · med · low`) where the column has four, and four alarm offsets (`T-1d · T-3d · T-7d ·
@@ -133,6 +134,24 @@ export const CREATE_TEXT = {
     submit: "could not save this record",
   },
 
+  /* The duplicate warning under the readout (COS-308), which was `mock.duplicates` and the
+   * mockup's own `2` until the index learned to answer the question. */
+  duplicates: {
+    /** The handoff's sentence, with the number it was drawn around now measured. Singular below two,
+     *  because `1 duplicate candidates` is how a count reads when nobody looked at it. */
+    found: (count: number) => `${count} duplicate candidate${count === 1 ? "" : "s"} in index`,
+    review: "review before commit",
+    /** Nothing matched, and saying so is the point: without it the block would be indistinguishable
+     *  from one where the check has not run. */
+    none: "no duplicate in index",
+    /** More candidates than the pane is sent. There is no screen listing them all until the index
+     *  can be searched by url (COS-335), so this is a count and not a link. */
+    more: (count: number) => `+ ${count} more`,
+    /** A record whose title is empty — possible, since the column has no default and the legacy
+     *  form did not require one. The link needs something to be. */
+    untitled: "untitled",
+  },
+
   /* ─── Mocked readings — COS-329 ──────────────────────────────────────────────────────────
    * Hard-coded values that look measured and are not. They are here, together and named for
    * what they are, so that the de-mock ticket has one place to start from and so that nobody
@@ -142,9 +161,6 @@ export const CREATE_TEXT = {
      *  nothing measures: `bookmark.screenshot` holds a filename, and the only way an image gets
      *  there is the upload right beside this line. */
     shotQueued: "queued · 1280×800",
-    /** The duplicate warning. No query looks for duplicates before a commit — DATA 03 (COS-308) is
-     *  where the index learns to find them at all. The count is the handoff's own `2`. */
-    duplicates: "2 duplicate candidates in index · review before commit",
   },
 
   aria: {

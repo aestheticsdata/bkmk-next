@@ -1,6 +1,7 @@
 "use client";
 
 import { ShotField } from "@components/bookmarks/fields/ShotField";
+import { InsertDuplicates } from "@components/bookmarks/insert/InsertDuplicates";
 import { Overline } from "@components/ds/Overline";
 import { CREATE_TEXT } from "@text/create";
 
@@ -42,8 +43,8 @@ function hostOf(url: string): string | null | undefined {
  * returns, so before the commit there is genuinely nothing to show. The handoff's `id 2088` is the
  * number of a record that already exists. That is a real value, not a placeholder for one.
  *
- * ⚠️ **The duplicate line is mocked — COS-329.** Nothing looks for duplicates before a commit; DATA
- * 03 (COS-308) is where the index learns to find them at all. The count is the mockup's own. */
+ * **The duplicate line is real since COS-308**, and is `InsertDuplicates` below the readout — the
+ * count was the mockup's own `2` until the index learned to answer the question at all. */
 function InsertPreview({
   draft,
   onScreenshotChange,
@@ -98,8 +99,7 @@ function InsertPreview({
         </dl>
       </div>
 
-      {/* ⚠️ Mock — COS-329. */}
-      <p className="border-t border-gr-border pt-3 text-3xs text-gr-fg-4">{CREATE_TEXT.mock.duplicates}</p>
+      <InsertDuplicates url={draft.url} />
     </>
   );
 }

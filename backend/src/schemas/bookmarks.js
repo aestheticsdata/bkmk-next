@@ -145,9 +145,22 @@ const updateBookmarkBodySchema = z.object({
  * middleware that only looks like a check. So `validate()` came off those two routes rather than
  * being kept around an empty schema; see `routes/api/categories.js`. */
 
+/** `GET /bookmarks/duplicates` — the url a draft is being written against (COS-308).
+ *
+ *  **Optional, and not `z.url()`.** The create screen asks on every settled keystroke, so this
+ *  endpoint is asked about strings that are on their way to being a url and about the empty field
+ *  left by a `⌘A ⌫`. Refusing those with a 400 would put an error under a form nobody has finished;
+ *  the controller answers `0 candidates` for anything with no key, which is the true answer. What is
+ *  still enforced is the length: the column is 2 048 characters and a query string is not a place to
+ *  accept more. */
+const duplicatesQuerySchema = z.object({
+  url: z.string().max(FIELD_LIMITS.url).optional(),
+});
+
 module.exports = {
   listBookmarksQuerySchema,
   bookmarkIdParamsSchema,
+  duplicatesQuerySchema,
   screenshotQuerySchema,
   createBookmarkBodySchema,
   updateBookmarkBodySchema,
