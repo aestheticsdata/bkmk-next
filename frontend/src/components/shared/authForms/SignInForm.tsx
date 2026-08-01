@@ -23,11 +23,14 @@ import type { SignInPayload } from "@src/schemas/auth";
 function SignInForm({
   copy,
   switchHref,
+  recoverHref,
   onSubmit,
   error,
 }: {
   copy: SignInCopy;
   switchHref: string;
+  /** `/recover` — the live link that replaces the `/forgotPassword` UI 01 removed (COS-324). */
+  recoverHref: string;
   onSubmit: (values: SignInPayload) => Promise<void>;
   error?: string | null;
 }) {
@@ -53,6 +56,7 @@ function SignInForm({
     <AuthCard
       action={copy}
       switchHref={switchHref}
+      secondary={{ href: recoverHref, label: copy.forgotKey }}
       error={error}
       busy={isSubmitting}
       onSubmit={handleSubmit(onSubmit)}

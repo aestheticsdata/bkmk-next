@@ -21,6 +21,8 @@ export interface AuthActionCopy {
 export interface SignInCopy extends AuthActionCopy {
   identity: string;
   key: string;
+  /** The second way out of this card, and the only screen that has one (COS-324). */
+  forgotKey: string;
 }
 
 export interface SignUpCopy extends AuthActionCopy {
@@ -37,4 +39,21 @@ export interface SignUpCopy extends AuthActionCopy {
   passphraseNote: string;
   reveal: string;
   conceal: string;
+}
+
+/** The recovery screen (COS-324). It borrows sign-in's `identity` and sign-up's passphrase and key
+ *  pair, because it is the same two acts in one card: proving the secret you kept, choosing the one
+ *  you lost. `note` says the thing neither of the others has to — that an account with no passphrase
+ *  ends here, which the server will never say out loud. */
+export interface RecoverCopy extends AuthActionCopy {
+  identity: string;
+  identityPlaceholder: string;
+  passphrase: string;
+  passphraseHint: string;
+  key: string;
+  keyPlaceholder: string;
+  confirmKey: string;
+  reveal: string;
+  conceal: string;
+  note: string;
 }
