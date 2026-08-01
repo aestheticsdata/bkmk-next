@@ -67,6 +67,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-322 — le périmètre d'un contrôleur vient de la session, plus de la requête | ✅ mergé (PR #30) |
 | hors lot | COS-345 — sécurité, ouvert par l'audit de COS-322 | ⏳ ouvert |
 | hors lot | COS-346 — plateforme, ouvert par l'audit de COS-322 | ⏳ ouvert |
+| DATA 01 | COS-306 — la page se décrit elle-même, et `?userID=` quitte le fil | 🔍 en revue |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -297,7 +298,7 @@ le `basename` de COS-295 ne pouvait pas couvrir.
 seul côté.** Le front continue d'envoyer ce qu'il a toujours envoyé, donc aucune clé react-query ne
 change de forme et le diff côté client est **entièrement en commentaires**. Le retirer est un
 changement de contrat, et il revient à DATA 01 (COS-306), qui réécrit déjà ces chaînes de requête en
-objet de filtres. Même arbitrage sur la fiche : elle répond `200` avec `[]` là où l'édition et la
+objet de filtres — **fait, voir plus bas**. Même arbitrage sur la fiche : elle répond `200` avec `[]` là où l'édition et la
 suppression répondent `404`. Les deux sont également muettes — un enregistrement d'un autre compte et
 un identifiant que personne n'a utilisé partagent la réponse dans les deux cas — mais `[]` est ce que
 cette route a toujours dit, et `useBookmarkRecord` l'affiche déjà comme `missing`. Aligner les trois
@@ -315,6 +316,43 @@ chose.
 est public (règle en tête du §6) : **COS-345** et **COS-346**. Le premier est un axe de la même
 famille que ce ticket, trouvé par l'audit qui l'accompagnait, et il a de la donnée déjà en base ;
 le second est une bombe à retardement de déploiement, sans rapport avec la sécurité.
+
+⚠️ **DATA 01 était déjà livré à 90 %, et le reliquat ne ressemblait pas à son titre.** La pagination
+serveur, l'objet de filtres à six champs et la sérialisation vers l'expression de la barre de commande
+sont arrivés avec UI 03 et UI 04 ; ce que le ticket gardait vraiment, c'était le compte de pages fait
+côté client (`Math.ceil(total / ROWS_BY_PAGE)`) et le retrait de `?userID=` que COS-322 lui avait
+laissé. Deux petits chantiers, un seul ticket, et le titre de Linear ne le disait plus.
+
+⚠️ **La taille de page existait deux fois : dans la requête et dans la division.** Seule la requête
+décide combien de lignes reviennent, donc le pager affichait le bon nombre par accord et non par
+construction — un client demandant 50 lignes aurait été paginé comme s'il en avait demandé 22, avec un
+nombre faux plutôt qu'absent. La réponse est maintenant `{ rows, total, page, pageCount }` : `total`
+remplace `total_count`, `pageCount` est compté sur le `rows` que la requête a effectivement demandé,
+et `page` est l'écho de la valeur **validée**, pas de la chaîne reçue. `Math.max(1, …)` tient l'index
+vide à une page — zéro enregistrement, c'est une page qui ne montre rien, pas zéro page, et
+`page 00/00` se lit comme un pager cassé. `ROWS_BY_PAGE` reste côté client pour le compteur
+`rows 001–022 of 312`, qui est de l'arithmétique sur la page demandée et non un second avis.
+
+⚠️ **Retirer `?userID=` n'est pas le rejeter, et c'est ce qui permet aux deux côtés de partir
+ensemble sans se tenir la main.** `z.object` ignore les clés inconnues : un onglet resté ouvert qui
+envoie encore le paramètre est servi exactement comme avant. Vérifié dans les deux sens. Deux routes y
+ont perdu leur `validate()` — `/categories` et `/reminders` ne prennent plus **aucune entrée**, et un
+`z.object({})` est un middleware qui n'a plus que l'apparence d'un contrôle. Le schéma du screenshot,
+lui, garde ce qui compte : sans nom de fichier ou avec un `../`, c'est toujours 400.
+
+⚠️ **Un seul changement de comportement, et il était déjà connu :** `getBookmarksController` lit
+maintenant *tous* ses champs dans `req.validated.query`, ce que le commentaire de COS-318 annonçait
+comme le travail du lot DATA. Les valeurs sont les mêmes sauf `stars`, qui arrive en nombre au lieu de
+la chaîne `"0"` — et `if ("0")` est vrai, donc `?stars=0` ajoutait un `b.stars >= 0` inoffensif. Même
+famille que le bug que `queryFlagSchema` avait été écrit pour fermer.
+
+⚠️ **Vérifié en exécutant les deux versions, là encore.** Un compte jetable, sept enregistrements,
+33 contrôles : la forme de la réponse, `pageCount` sur cinq tailles de page, la dernière page courte,
+un index filtré, les trois routes sans `?userID=`, le client périmé, et ce que le schéma refuse
+toujours. Sur `HEAD` le premier appel répond **400** — le paramètre y était *requis*, ce qui est la
+moitié intéressante de la mesure. Compte effacé ensuite, base revenue à ses 11 utilisateurs et
+1 331 enregistrements. Le rendu du pager n'a pas été regardé dans un navigateur : l'extension Chrome
+n'était pas connectée. `tsc`, Biome et `next build` passent, et `pageCount` est une prop typée.
 
 **AUTH 02-03-04 ont partagé une seule branche**, trois commits, une PR : AUTH 02 coupe le JWT et
 laisse l'application inutilisable jusqu'à ce qu'AUTH 04 bascule le client, donc la QA n'avait de sens
@@ -2082,6 +2120,8 @@ La passe de nettoyage précède la contrainte, dans le même ticket.
 - **COS-306** est livré à ~90 % par UI 03 / UI 04 : pagination serveur, objet de filtres à six
   champs, requête de comptage et `describeQuery` sont en place. Reliquat réel : l'arithmétique de
   pagination est cliente parce que l'API ne renvoie ni `page` ni `pages`. À redécouper ou à fermer.
+  ⚠️ **Fait depuis** : le reliquat a été pris tel quel, augmenté du retrait de `?userID=` que COS-322
+  lui avait légué. Voir le §0.
 - **COS-307 et COS-308** dépendent de COS-338 : la détection de doublons n'a aujourd'hui aucune
   définition de « même url ».
 - **COS-329** absorbe la favicon si l'occasion se présente — c'est le même fetch que le titre
