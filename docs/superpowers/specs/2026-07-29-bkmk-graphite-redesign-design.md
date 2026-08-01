@@ -68,7 +68,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-345 — sécurité, ouvert par l'audit de COS-322 | ⏳ ouvert |
 | hors lot | COS-346 — plateforme, ouvert par l'audit de COS-322 | ⏳ ouvert |
 | DATA 01 | COS-306 — la page se décrit elle-même, et `?userID=` quitte le fil | ✅ mergé (PR #31) |
-| DATA 02 | COS-307 — staging d'import : parse, commit, options, `last import` | 🟡 fait, QA en attente |
+| DATA 02 | COS-307 — staging d'import : parse, commit, options, `last import` | ✅ mergé (PR #32) |
 
 ⚠️ **UI 09 est parti bien plus étroit que son ticket.** About ne porte que les mentions légales —
 c'est tout ce que la page contenait — repeintes dans le bloc 480px de l'écran de connexion, avec le
@@ -439,7 +439,8 @@ concaténé. Rien de ce lot n'est acquis en prod avant ce déploiement.
 (`2026-08-01-add-import-run.sql`), toutes deux passées en dev seulement. Sans la première,
 l'inscription répond 500 en production ; sans la seconde, un import répond 500 et **s'annule
 entièrement** — la ligne d'historique est écrite dans la transaction qui insère les enregistrements.
-Le tableau `Applied` de `migrations/README.md` tient l'état.
+⚠️ **Depuis COS-332, l'état ne se lit plus dans un tableau markdown mais dans la base** : au déploiement,
+`pnpm migrate:status` puis `pnpm migrate` côté `backend/`, avant de redémarrer le process.
 
 **Règle de travail, sans exception :** rien n'est commité ni poussé tant que la QA n'a pas été
 validée **explicitement**. Une branche par ticket, `cosmokaat/cos-<n>-<slug-anglais>`, commits
@@ -2173,6 +2174,8 @@ Trois choses à retenir de ce découpage :
   trace de ce qui est appliqué où, et `bkmk.sql` est un `CREATE DATABASE`, pas un schéma de
   référence. Quatre de ces tickets veulent une migration. `schemas/bookmarks.ts:12` le dit déjà :
   *« with no versioned DDL, `.nullish()` is the only honest assumption »*.
+  ✅ **Fait (COS-332)** — `backend/src/db/migrate.js`, table `schema_migrations`, quatre commandes.
+  Détail en 10.2 bis ci-dessous.
 - **L'export passe avant la normalisation du texte** : c'est le diagnostic en lecture seule qui
   montre l'ampleur des dégâts avant que quoi que ce soit ne réécrive 1 280 lignes.
 - **DATA 07 ne peut pas être un `.sql`** — MySQL n'a pas de fonction de décodage d'URL. C'est un
@@ -2181,6 +2184,48 @@ Trois choses à retenir de ce découpage :
 Deux pièges de migration, identiques dans leur forme : l'`UNIQUE (user_id, name)` de COS-336 et
 l'éventuel index unique sur l'url normalisée de COS-338 **échouent tant que les doublons existent**.
 La passe de nettoyage précède la contrainte, dans le même ticket.
+
+### 10.2 bis PLAT 06 (COS-332) — le runner, fait le 2026-08-01
+
+Pris hors ordre du lot GRAPHITE, parce que DATA 03 le demandait par la bande : la détection de
+doublons de COS-308 n'a de sens qu'avec la normalisation d'url de COS-338, et COS-338 est bloquée
+par le runner. C'est le propriétaire qui a tranché entre « COS-308 au caractère près maintenant » et
+« la chaîne 332 → 338 → 308 » ; il a pris la chaîne.
+
+**`backend/src/db/migrate.js`, table `schema_migrations`, quatre commandes.** `status` dit ce qui a
+tourné, `up` applique les fichiers en attente dans l'ordre du nom, et les deux autres existent parce
+qu'une base peut être dans trois situations différentes :
+
+| Situation | Commande | Pourquoi |
+|---|---|---|
+| Une migration passée à la main (le dev, pour les deux d'avant le runner) | `mark <fichier>` | La rejouer échouerait sur une colonne en double ; ne rien enregistrer ferait réessayer `up` |
+| Une base neuve créée depuis `bkmk.sql` | `baseline` | Le script de création porte déjà tout ce que les fichiers décrivent |
+| La production, qui n'a ni l'un ni l'autre | `up` | Les deux migrations s'appliquent |
+
+⚠️ **Le tableau `Applied` du README est supprimé** — c'était le seul état, et il n'était juste que
+tant que quelqu'un pensait à l'éditer. `pnpm migrate:status` le remplace. Le §0 continue de citer les
+migrations en attente côté production, mais c'est la base qui répond maintenant.
+
+⚠️ **Pas de transaction autour d'une migration, parce que MySQL n'en donne pas** : le DDL commite
+implicitement et un `ALTER TABLE` termine la transaction qui l'entoure. Le runner s'arrête au premier
+échec et n'enregistre rien pour lui — `status` montre alors exactement où il en est. **Et pas de
+runner au démarrage** : `server.js` tourne sous pm2 avec `watch: true` en dev, donc une migration
+partirait sur une sauvegarde de fichier.
+
+⚠️ **Le runner ouvre sa propre connexion**, avec `multipleStatements` — que `dbinitmysql` n'a pas et
+ne doit pas avoir : c'est ce qui élargit une injection qui passerait. Les réglages viennent de
+`process.env`, et à défaut d'`ecosystem.config.js`, en choisissant `env_dev` sauf si `NODE_ENV` dit
+production. Une commande qui vise la prod parce qu'une variable manquait n'est pas une erreur à
+faire une fois.
+
+⚠️ **Vérifié sur quatre chemins, dont celui de la production.** Le dev a été enregistré (`mark` ×2,
+puis `up` répond « nothing to apply », et un second `mark` ne double pas la ligne). Une migration
+`.js` jetable a été appliquée pour de vrai et une `.sql` volontairement fautive juste après : la
+première est enregistrée, la seconde sort en code 1 sans laisser de ligne, et `status` le montre.
+Une base jetable créée depuis `bkmk.sql` a validé le script de création à neuf tables et la commande
+`baseline`. Enfin cette même base a été ramenée à la forme qu'a la production — colonne et table
+retirées, journal vidé — et `up` a rejoué les deux migrations : colonne et table sont revenues. Base
+jetable supprimée ensuite.
 
 ### 10.3 Ajustements sur des tickets existants (pas de nouveau ticket)
 

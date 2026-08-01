@@ -77,6 +77,17 @@ CREATE TABLE bookmark_category (
    CONSTRAINT uc_bookmark_category UNIQUE (bookmark_id, category_id)
 );
 
+-- What the migration runner has applied (COS-332). Here so that a database created from this file
+-- is complete, though `migrate.js` also creates it if it is missing — it is the one table that
+-- cannot be installed by a migration, being what records that migrations ran.
+--
+-- ⚠️ A database created from this script already carries every change `migrations/` describes, so
+-- the next step is `node src/db/migrate.js baseline`, not `up`.
+CREATE TABLE schema_migrations (
+    filename   VARCHAR(255) NOT NULL PRIMARY KEY,
+    applied_at DATETIME NOT NULL
+);
+
 -- One row per committed import (COS-307), written inside the transaction that inserts the
 -- bookmarks. It is what the import screen's `last import` line reads; see migrations/.
 CREATE TABLE import_run (
