@@ -27,7 +27,7 @@ const HIGH_PRIORITY: PriorityFilter[] = ["high", "highest"];
  * (`shots 84/312` + gauge, `db 1.4 mb`) needs a screenshot count and a database size; neither is
  * computed anywhere, and both are DATA 05 (COS-310). It is left out rather than mocked — a permanent
  * `0/0` is worse than a block that arrives when it means something. The category counters are the
- * same story and the same ticket — with one honest exception: the current query's `total_count` is a
+ * same story and the same ticket — with one honest exception: the current query's `total` is a
  * real number, so it is shown against the row that *is* the query (`all` when nothing is filtered, a
  * category when it is the only filter) and nowhere else. See `countedRow`. */
 function IndexRail({

@@ -19,21 +19,23 @@ import { useQuery } from "@tanstack/react-query";
  * shape — the parsed array — which is why the counter takes its `.length` at the call site rather
  * than in its query function.
  *
- * `userID` in the query string is the client telling the server who it is. COS-322 stopped the
- * controllers reading it — the scope is the session's now — and left it on the wire, so this call
- * and its key are unchanged. See `indexQuery.ts`. */
+ * ⚠️ **`?userID=` is gone** (COS-306). It was the client telling the server who it is; COS-322 stopped
+ * the controllers reading it, and this ticket stopped the front writing it. The key does not move —
+ * it never carried the parameter — so the shell's counter and this table still share one entry. See
+ * `indexQuery.ts`. */
 function useAlarms() {
   const { privateRequest } = useRequestHelper();
-  const userID = useAuth().user?.id;
+  // The gate, not a parameter — see `useBookmarkIndex` (COS-306).
+  const isSignedIn = Boolean(useAuth().user?.id);
 
   const alarms = useQuery({
     queryKey: queryKeys.reminders.all,
     queryFn: async () => {
-      const response = await privateRequest(`/reminders?userID=${userID}`);
+      const response = await privateRequest("/reminders");
       // The boundary: validated reminders leave this function, not an axios response.
       return ReminderListSchema.parse(response.data);
     },
-    enabled: Boolean(userID),
+    enabled: isSignedIn,
   });
 
   return {

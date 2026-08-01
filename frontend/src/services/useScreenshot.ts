@@ -28,8 +28,10 @@ function useScreenshot(record?: { id: number; user_id: number; screenshot?: stri
   const shot = useQuery({
     queryKey: queryKeys.bookmark.screenshot(record?.id ?? "", filename),
     queryFn: async () => {
+      /* No `&userID=` (COS-306): the folder the file is read from is the session's, and `user_id`
+       * was the client naming a directory on the API's disk — see `getScreenshotcontroller`. */
       const response = await privateRequest(
-        `/bookmarks/upload/${record?.id}?screenshotFilename=${encodeURIComponent(filename)}&userID=${record?.user_id}`,
+        `/bookmarks/upload/${record?.id}?screenshotFilename=${encodeURIComponent(filename)}`,
       );
       return dataUrlSchema.parse(response.data);
     },

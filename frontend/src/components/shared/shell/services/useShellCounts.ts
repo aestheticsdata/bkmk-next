@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
  * **Why a query of its own for the total.** The list's own query is page-scoped
  * (`[bookmarks, <page>]`) and only exists on the index; the counter has to be right on
  * `new`, `import` and `alarms` too. `rows=1` is the cheapest page that still comes back
- * with `total_count`, which the controller computes in a separate `COUNT(DISTINCT b.id)`
+ * with the total, which the controller computes in a separate `COUNT(DISTINCT b.id)`
  * — so it is the real total, not the size of the page. `page=0` is sent explicitly; the
  * schema defaults it anyway since COS-295 made the controller read the pagination from
  * `req.validated.query`, but saying it costs nothing and the URL then reads as what it is.
@@ -27,29 +27,33 @@ import { useQuery } from "@tanstack/react-query";
  * bkmk has no such file yet and adding a second source of truth for cache keys would
  * defeat the point of having one.
  *
- * COS-306 rebuilds pagination server-side. It changes what the list asks for, not the
- * existence of a total, so this hook survives it. */
+ * COS-306 did rebuild the response — `total_count` is `total`, and `page` / `pageCount` come
+ * with it — and it changed what the list asks for rather than whether a total exists, so this
+ * hook survived it as predicted. `?userID=` left both requests in the same change: the scope
+ * of either is its session. */
 const useShellCounts = (): { bookmarks?: number; reminders?: number } => {
   const { privateRequest } = useRequestHelper();
-  const userID = useAuth().user?.id;
+  /* Only the gate — see `useBookmarkIndex` (COS-306). Both counters would 401 before the
+   * session is up, and would then sit at their error state on a screen with no way to retry. */
+  const isSignedIn = Boolean(useAuth().user?.id);
 
   const bookmarks = useQuery({
     queryKey: [QUERY_KEYS.BOOKMARKS, "count"],
     queryFn: async () => {
-      const response = await privateRequest(`/bookmarks?rows=1&page=0&userID=${userID}`);
-      return BookmarkListSchema.parse(response.data).total_count;
+      const response = await privateRequest("/bookmarks?rows=1&page=0");
+      return BookmarkListSchema.parse(response.data).total;
     },
-    enabled: Boolean(userID),
+    enabled: isSignedIn,
     ...QUERY_OPTIONS,
   });
 
   const reminders = useQuery({
     queryKey: [QUERY_KEYS.REMINDERS],
     queryFn: async () => {
-      const response = await privateRequest(`/reminders?userID=${userID}`);
+      const response = await privateRequest("/reminders");
       return ReminderListSchema.parse(response.data);
     },
-    enabled: Boolean(userID),
+    enabled: isSignedIn,
     ...QUERY_OPTIONS,
   });
 

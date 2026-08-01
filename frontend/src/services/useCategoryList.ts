@@ -28,15 +28,16 @@ import type { Category } from "@src/schemas/categories";
  * ordering a list is what a database does. */
 function useCategoryList(): { categories: Category[]; isLoading: boolean } {
   const { privateRequest } = useRequestHelper();
-  const userID = useAuth().user?.id;
+  // The gate, not a parameter — see `useBookmarkIndex` (COS-306).
+  const isSignedIn = Boolean(useAuth().user?.id);
 
   const list = useQuery({
     queryKey: queryKeys.categories.list(),
     queryFn: async () => {
-      const response = await privateRequest(`/categories?userID=${userID}`);
+      const response = await privateRequest("/categories");
       return CategoryListSchema.parse(response.data);
     },
-    enabled: Boolean(userID),
+    enabled: isSignedIn,
     retry: false,
   });
 

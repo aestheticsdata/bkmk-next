@@ -14,7 +14,7 @@ import type { PriorityFilter } from "@src/schemas/primitives";
  * So this file is the only place that knows how to move between the three forms that state takes:
  *
  * 1. the **URL** — `?page=2&categories_id=3&stars=1`, all strings, written by the screen;
- * 2. the **API query** — the same thing plus `rows` and `userID`, sent to `GET /bookmarks`;
+ * 2. the **API query** — the same thing plus `rows`, sent to `GET /bookmarks`;
  * 3. the **expression** — `cat:3 stars:1+` shown in the command bar, for a human to read.
  *
  * `queryString` is already a dependency (the legacy hook uses it), but it is not used here:
@@ -45,17 +45,17 @@ function readIndexQuery(searchParams: URLSearchParams | { toString: () => string
  *  `?stars=1&page=0` and `?page=0&stars=1` describe one page and would occupy two cache
  *  entries — the second arriving as a loading state for something already held.
  *
- *  `userID` is still sent and **no longer read**: COS-322 moved every list controller onto the
- *  session's identity, since a parameter the client writes is the client's word for who it is. It
- *  keeps its place in this string because the string is a cache key — dropping it would rewrite
- *  every `queryKeys.bookmarks.list` entry for a value the server ignores either way. It goes when
- *  DATA 01 (COS-306) turns these query strings into a filter object. */
-function toApiQuery(query: FiltersQuery, { rows, userID }: { rows: number; userID?: number }): string {
+ *  ⚠️ **`userID` is gone** (COS-306). COS-322 moved every list controller onto the session's
+ *  identity — a parameter the client writes is the client's word for who it is — and left the
+ *  parameter on the wire so that the security fix needed no client change. It is dropped here now
+ *  that the whole round trip moves at once; the server strips unknown keys, so the two sides do not
+ *  have to ship together. Every `queryKeys.bookmarks.list` entry is rekeyed by its absence, which
+ *  costs one refetch on first load and nothing after. */
+function toApiQuery(query: FiltersQuery, { rows }: { rows: number }): string {
   const params = new URLSearchParams();
 
   params.set("rows", String(rows));
   params.set("page", String(query.page));
-  if (userID != null) params.set("userID", String(userID));
 
   if (query.title) params.set("title", query.title);
   params.set("sort", query.sort ?? DEFAULT_SORT);
@@ -81,7 +81,7 @@ function sortLevels(levels: readonly PriorityFilter[]): PriorityFilter[] {
 
 /** True when something other than the category selection is narrowing the list.
  *
- *  The rail needs it to know whether the one number it has — the current query's `total_count` — can be
+ *  The rail needs it to know whether the one number it has — the current query's `total` — can be
  *  attributed to a row: with a scope on, the total describes the scope, not the category. */
 function hasScopeFilters(query: FiltersQuery): boolean {
   return Boolean(
@@ -102,7 +102,7 @@ function isFiltered(query: FiltersQuery): boolean {
 
 /** The rail row the current total belongs to, if any (COS-299).
  *
- *  ⚠️ There is exactly **one** count available — `total_count` for the query on screen — and it is not
+ *  ⚠️ There is exactly **one** count available — `total` for the query on screen — and it is not
  *  `all`'s. Pinning it to `all` regardless is the bug this exists to prevent: selecting `hebergeur`
  *  showed `all 002`, which reads as an index of two records.
  *

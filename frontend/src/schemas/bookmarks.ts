@@ -51,10 +51,17 @@ export type BookmarkDetail = z.infer<typeof BookmarkDetailSchema>;
 
 export const BookmarkDetailResponseSchema = z.array(BookmarkDetailSchema);
 
-/** `GET /bookmarks` — the page, plus the total for pagination. */
+/** `GET /bookmarks` — the page, and everything needed to say where it sits (COS-306).
+ *
+ *  ⚠️ **`total_count` is now `total`, and `page` / `pageCount` are new.** The response used to carry
+ *  the total alone and the pager divided it by its own `ROWS_BY_PAGE`; the server counts the pages
+ *  now, over the `rows` the request asked for. `pageCount` is at least 1 — an empty index is one
+ *  page showing nothing. */
 export const BookmarkListSchema = z.object({
   rows: z.array(BookmarkSchema),
-  total_count: numberLikeSchema,
+  total: numberLikeSchema,
+  page: numberLikeSchema,
+  pageCount: numberLikeSchema,
 });
 
 export type BookmarkList = z.infer<typeof BookmarkListSchema>;

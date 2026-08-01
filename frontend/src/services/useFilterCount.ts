@@ -20,9 +20,10 @@ const DEBOUNCE_MS = 300;
  * the draft is not in the URL yet, so nothing else on the screen knows about it, and the count has to
  * be asked for on its own.
  *
- * **`rows=1` is the request, not `rows=22`.** The controller computes `total_count` in a separate
+ * **`rows=1` is the request, not `rows=22`.** The controller computes the total in a separate
  * `COUNT(DISTINCT b.id)` over the same conditions, so one row is the cheapest page that still carries
- * the real total — the same trick `useShellCounts` uses for the chrome's `idx NNN`.
+ * the real total — the same trick `useShellCounts` uses for the chrome's `idx NNN`. The `pageCount`
+ * that comes back with it is the count of one-row pages and is meaningless here; only `total` is read.
  *
  * **`elapsedMs` is measured here, and it is the footer's `live · N ms`.** The handoff prints a static
  * `4 ms`; a hard-coded latency is a performance claim nobody made. It is the round trip of the request
@@ -35,9 +36,10 @@ const DEBOUNCE_MS = 300;
  * of it, and leaving it in would give page 2 of a filter its own cache entry for the same number. */
 function useFilterCount(draft: FiltersQuery, { enabled }: { enabled: boolean }) {
   const { privateRequest } = useRequestHelper();
-  const userID = useAuth().user?.id;
+  // The gate, not a parameter — see `useBookmarkIndex` (COS-306).
+  const isSignedIn = Boolean(useAuth().user?.id);
 
-  const apiQuery = toApiQuery({ ...draft, page: 0 }, { rows: 1, userID });
+  const apiQuery = toApiQuery({ ...draft, page: 0 }, { rows: 1 });
   // Debounced on the *query string*, not on the title: one timer covers every control, and two
   // drafts that differ only in a cleared-then-retyped word do not even re-fire.
   const settledQuery = useDebouncedValue(apiQuery, DEBOUNCE_MS);
@@ -48,9 +50,9 @@ function useFilterCount(draft: FiltersQuery, { enabled }: { enabled: boolean }) 
       const startedAt = performance.now();
       const response = await privateRequest(`/bookmarks?${settledQuery}`);
       const elapsedMs = Math.round(performance.now() - startedAt);
-      return { total: BookmarkListSchema.parse(response.data).total_count, elapsedMs };
+      return { total: BookmarkListSchema.parse(response.data).total, elapsedMs };
     },
-    enabled: enabled && Boolean(userID),
+    enabled: enabled && isSignedIn,
     retry: false,
     /* Keeps the previous count under the button while the next one loads. Without it the button
      * loses its number on every keystroke and flickers between two widths, which on a control

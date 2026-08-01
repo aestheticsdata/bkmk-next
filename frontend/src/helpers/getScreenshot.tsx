@@ -9,9 +9,8 @@ const useGetScreenshot = (bookmark: any) => {
   const getScreenshot = async (bookmark: any) => {
     setIsLoading(true);
     if (bookmark.screenshot) {
-      const res = await privateRequest(
-        `/bookmarks/upload/${bookmark.id}?screenshotFilename=${bookmark.screenshot}&userID=${bookmark.user_id}`,
-      );
+      // No `&userID=` (COS-306) — see `services/useScreenshot.ts`, which replaces this helper.
+      const res = await privateRequest(`/bookmarks/upload/${bookmark.id}?screenshotFilename=${bookmark.screenshot}`);
       setImageUrl(res.data);
     }
     setIsLoading(false);
