@@ -93,6 +93,16 @@ export const DuplicateCandidatesSchema = z.object({
   candidates: z.array(DuplicateCandidateSchema),
 });
 
+/** `GET /bookmarks/export?format=…` (COS-333). Mirror of the backend's `exportQuerySchema`; the
+ *  response is a file, so there is nothing else to describe on this boundary.
+ *
+ *  `json` is the faithful one — it carries the text as the database holds it, percent-encoding and
+ *  all, which is what makes it a backup and the diagnostic DATA 07 (COS-334) needs. `csv` is the
+ *  shape this application's own import reads, `html` the one browsers read; both are decoded. */
+export const EXPORT_FORMATS = ["json", "csv", "html"] as const;
+
+export type ExportFormat = (typeof EXPORT_FORMATS)[number];
+
 /* Payloads.
  *
  * Both create and edit go out as `multipart/form-data` — the screenshot is a file. So

@@ -157,10 +157,20 @@ const duplicatesQuerySchema = z.object({
   url: z.string().max(FIELD_LIMITS.url).optional(),
 });
 
+/** `GET /bookmarks/export` — which of the three files to write (COS-333).
+ *
+ *  The keys are `EXPORT_FORMATS`'s, so a format cannot exist in the writer and be refused here. No
+ *  default: a download is a file with a name and an extension, and guessing which one someone meant
+ *  is not a thing to be lenient about. */
+const exportQuerySchema = z.object({
+  format: z.enum(["json", "csv", "html"]),
+});
+
 module.exports = {
   listBookmarksQuerySchema,
   bookmarkIdParamsSchema,
   duplicatesQuerySchema,
+  exportQuerySchema,
   screenshotQuerySchema,
   createBookmarkBodySchema,
   updateBookmarkBodySchema,
