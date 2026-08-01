@@ -17,7 +17,7 @@ const ACCEPTED_TYPES = ["image/png", "image/jpeg"];
 
 /* `shot` — the screenshot, and the right pane's first block (COS-302).
  *
- * ⚠️ **`auto capture` and `queued · 1280×800` are mocked — COS-329.** The handoff describes a capture
+ * ⚠️ **`auto capture` and `queued · 1280×800` are mocked — COS-393.** The handoff describes a capture
  * taken from the url by the server; nothing in bkmk takes one. What the application has, and what
  * this ships, is the manual upload the legacy form had: `bookmark.screenshot` holds a filename, and
  * the only thing that ever writes one is the file on this line. The caption and the slot's reading
@@ -99,7 +99,7 @@ function ShotField({
     <div className={cn("grid gap-2", className)}>
       <div className="flex h-4 items-center gap-1.5 leading-4">
         <Overline>{CREATE_TEXT.sections.shot}</Overline>
-        {/* ⚠️ Mock — COS-329. Dimmed rather than in the label's own ink: it names a pipeline that
+        {/* ⚠️ Mock — COS-393. Dimmed rather than in the label's own ink: it names a pipeline that
             does not run, and it should not read as a setting that is on. */}
         <Overline className="text-gr-fg-4">· {CREATE_TEXT.shot.autoCapture}</Overline>
         {/* The state, in the header row where `Field` puts its own messages. Teal when the record
@@ -126,7 +126,7 @@ function ShotField({
            layout should not move when a file lands in it. */
         <ShotSlot className="h-36.5 w-full px-4 text-center">
           {/* A record that has one says so; a record that has none carries the mockup's reading.
-              ⚠️ Mock — COS-329. Neither the queue nor the dimensions exist. */}
+              ⚠️ Mock — COS-393. Neither the queue nor the dimensions exist. */}
           {captured ? CREATE_TEXT.shot.captured : CREATE_TEXT.mock.shotQueued}
         </ShotSlot>
       )}

@@ -14,7 +14,7 @@ import type { ImportOptions as Options } from "@src/schemas/import";
  * state the client sends back is a state the client could have edited. `tag as imported` puts every
  * new record under one category named `imported`, so that a file can be found again after the fact.
  *
- * ⚠️ **`capture shots` stays drawn and disabled, and its ticket is COS-329, not this one.** Nothing
+ * ⚠️ **`capture shots` stays drawn and disabled, and its ticket is COS-393, not this one.** Nothing
  * anywhere in this application captures a screenshot from a url: the only path to that column is a
  * file the account uploads by hand. The API does not accept the flag, precisely so that no caller
  * can believe it does. Same call the account menu made for its unbuilt entries (COS-321) — shown, so

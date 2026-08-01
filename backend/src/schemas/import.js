@@ -13,7 +13,7 @@ const { z } = require("zod");
  *
  * `captureShots` is deliberately absent. The screen draws it because the handoff does, and it is
  * disabled there because nothing in this application captures a screenshot from a url — accepting
- * the flag here would be a promise the API cannot keep. COS-329 is where that capture is built.
+ * the flag here would be a promise the API cannot keep. COS-393 is where that capture is built.
  */
 const importFlagSchema = z
   .string()

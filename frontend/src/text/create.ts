@@ -8,10 +8,12 @@
  *
  * ⚠️ **Three things the handoff draws had nothing behind them, and they were mocked rather than
  * dropped** (the owner's call, and the difference from UI 09): `auto capture`, the duplicate count,
- * and the title fetched from the page's `<title>`. **The duplicate count is real since COS-308** and
- * has moved out of `mock` into `duplicates` below. The other two are still marked at their use site
- * and still listed on **COS-329**; whatever carries a hard-coded reading stays grouped under `mock`,
- * so that nothing can quietly read as measured.
+ * and the title fetched from the page's `<title>`. Two of the three are real now — **the duplicate
+ * count since COS-308**, which moved out of `mock` into `duplicates` below, and **the fetched title
+ * since COS-329**, which was never a mocked *reading* but an absent function, and whose placeholder
+ * goes back to the handoff's own words with it. What is left is `auto capture`, marked at its use
+ * site and carried by **COS-393**; whatever holds a hard-coded reading stays grouped under `mock`, so
+ * that nothing can quietly read as measured.
  *
  * ⚠️ **The segments hold the real values, not the mockup's.** The handoff writes three priorities
  * (`high · med · low`) where the column has four, and four alarm offsets (`T-1d · T-3d · T-7d ·
@@ -52,10 +54,11 @@ export const CREATE_TEXT = {
 
   fields: {
     urlPlaceholder: "https://…",
-    /** ⚠️ **Not the handoff's `auto-fetched from <title>`.** Nothing fetches it (COS-329); a
-     *  placeholder that names a feature the screen does not have is a promise, and this one would be
-     *  made on every single insert. It says what the field is instead. */
-    titlePlaceholder: "the record's name",
+    /** ⚠️ **The handoff's own words, and they were refused until COS-329.** UI 06 wrote `the record's
+     *  name` here instead, because a placeholder naming a feature the screen does not have is a
+     *  promise made on every single insert. The fetch exists now — `usePageTitle`, on the url field's
+     *  blur — so the sentence is true and it comes back. */
+    titlePlaceholder: "auto-fetched from <title>",
     notePlaceholder: "free text · urls become links",
     /** `priority` and `alarm` both offer "not set", and it is the default on a new record — the
      *  legacy form set neither, and picking one for the user is not a repaint. */
@@ -89,7 +92,7 @@ export const CREATE_TEXT = {
   },
 
   shot: {
-    /** ⚠️ **Mock — COS-329.** The handoff's caption for a capture pipeline that does not exist. */
+    /** ⚠️ **Mock — COS-393.** The handoff's caption for a capture pipeline that does not exist. */
     autoCapture: "auto capture",
     choose: "choose a file",
     replace: "replace",
@@ -126,6 +129,22 @@ export const CREATE_TEXT = {
     shotAttached: "attached",
   },
 
+  /* The two readings beside the `title` caption while the page is being read (COS-329).
+   *
+   * They sit in `Field`'s `message` slot, which is the row that already exists beside the label — the
+   * same slot the validation messages use, for the reason its header gives: a line under the control
+   * would either reserve 22px on every field or move the card as the answer arrives.
+   *
+   * ⚠️ **`nothing` is drawn, where a silent failure would be cheaper.** Most of the hosts that give
+   * no title are the ones that refuse robots — `stackoverflow.com` and `etsy.com` both answer 403 —
+   * and someone who has just watched a field not fill itself in is owed the difference between "this
+   * site would not say" and "the feature is broken". It is a statement about the host, so it is in the
+   * quiet ink and not the danger one: nothing has gone wrong and there is nothing to fix. */
+  autoTitle: {
+    reading: "reading…",
+    nothing: "no title found",
+  },
+
   errors: {
     title: "required",
     url: "not a url",
@@ -152,7 +171,7 @@ export const CREATE_TEXT = {
     untitled: "untitled",
   },
 
-  /* ─── Mocked readings — COS-329 ──────────────────────────────────────────────────────────
+  /* ─── Mocked readings — COS-393 ──────────────────────────────────────────────────────────
    * Hard-coded values that look measured and are not. They are here, together and named for
    * what they are, so that the de-mock ticket has one place to start from and so that nobody
    * reads one of them in a component and takes it for data. */

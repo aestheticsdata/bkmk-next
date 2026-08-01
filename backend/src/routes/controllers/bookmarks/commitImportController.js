@@ -70,7 +70,7 @@ const importedTagId = async (conn, userID) => {
  *
  * **`capture shots` is not an option here.** Nothing captures a screenshot from a url anywhere in
  * this application — the only path to the `screenshot` column is a file the account uploads. The
- * switch stays drawn and disabled on the screen, and the ticket that builds the capture is COS-329.
+ * switch stays drawn and disabled on the screen, and the ticket that builds the capture is COS-393.
  */
 module.exports = async (req, res) => {
   if (!req.file) {
