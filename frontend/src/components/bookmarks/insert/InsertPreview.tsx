@@ -11,11 +11,19 @@ import type { BookmarkDraft } from "@components/bookmarks/draft";
  *  `URL` throws on anything incomplete, and everything is incomplete while you are typing one — so a
  *  failure here means "not yet", not "wrong". The field says `not a url` on commit; this says `…`.
  *
- *  `null` is "no url at all", `undefined` is "not one yet": two empty states with two readings. */
+ *  `null` is "no url at all", `undefined` is "not one yet": two empty states with two readings.
+ *
+ *  ⚠️ **`www.` comes off, because the record is filed without it** (COS-338). This line reads `host`
+ *  and the server stores one under that name; showing `www.youtube.com` for a row the index will hold
+ *  as `youtube.com` would be the preview describing a record other than the one being created. The
+ *  guard is the server helper's: `www.com` is a domain, and stripping the label off it would leave
+ *  `com`. */
 function hostOf(url: string): string | null | undefined {
   if (url.trim() === "") return null;
   try {
-    return new URL(url).host;
+    const host = new URL(url).host;
+    const stripped = host.replace(/^www\./, "");
+    return stripped.includes(".") ? stripped : host;
   } catch {
     return undefined;
   }

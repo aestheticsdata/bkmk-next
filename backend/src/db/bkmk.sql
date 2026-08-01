@@ -21,10 +21,24 @@ CREATE TABLE category (
     FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
+-- `original` is the link as it was typed or imported, and it is what the record shows and the `↗`
+-- opens. `normalised` is the key two urls are compared on (COS-338) -- scheme dropped, `www.` and the
+-- trailing slash removed, tracking parameters and fragment cut -- so it does not parse and must never
+-- be rendered or fetched; `helpers/normaliseUrl.js` is what fills both it and `host`.
+--
+-- The index on `normalised` is deliberately not UNIQUE: this table has no `user_id`, and a unique key
+-- would put two accounts that bookmark the same page on one row, which `editBookmarkController`
+-- updates in place. See migrations/ for the whole reasoning.
+--
+-- `short` has never been written by anything.
 CREATE TABLE url (
     id          INT(11) AUTO_INCREMENT PRIMARY KEY,
     original    VARCHAR(2048) NOT NULL,
-    short       VARCHAR(255)
+    normalised  VARCHAR(2048),
+    host        VARCHAR(255),
+    short       VARCHAR(255),
+    INDEX url_normalised (normalised(255)),
+    INDEX url_host (host)
 );
 
 CREATE TABLE alarm (

@@ -1,5 +1,6 @@
 const { format } = require("date-fns");
 const dbConnection = require("../../../db/dbinitmysql");
+const { normaliseUrl } = require("../../../helpers/normaliseUrl");
 const jimpHelper = require("./helpers/jimpHelper");
 const generateHexColor = require("./helpers/generateHexColor");
 
@@ -38,11 +39,15 @@ module.exports = async (req, res) => {
   if (group) {
   }
 
+  /* The link as it was typed, plus the key it is compared on and the host it is filed under
+   * (COS-338). All three are written here rather than derived later, so that a row created by this
+   * controller and a row created by the import answer the same question the same way. */
   let urlID = null;
   if (url) {
-    const sqlUrl = "INSERT INTO url (original) VALUES (?);";
+    const sqlUrl = "INSERT INTO url (original, normalised, host) VALUES (?, ?, ?);";
+    const { normalised, host } = normaliseUrl(url);
     try {
-      const result = await conn.execute(sqlUrl, [url]);
+      const result = await conn.execute(sqlUrl, [url, normalised, host]);
       urlID = result[0].insertId;
     } catch (err) {
       await conn.end();
@@ -73,6 +78,13 @@ module.exports = async (req, res) => {
     ]);
     bookmarkID = bookmarkResult[0].insertId;
   } catch (err) {
+    /* The url row went in first and nothing points at it now — take it back out (COS-338). There is
+     * no transaction here to roll back, and this is the shape of failure that left the dev index
+     * with 2 685 url rows reachable from no bookmark, which the migration has just swept. Sweeping
+     * them while leaving the tap open would be a cleanup with a date on it. */
+    if (urlID !== null) {
+      await conn.execute("DELETE FROM url WHERE id=?", [urlID]).catch(() => {});
+    }
     await conn.end();
     return res.status(500).json({ msg: "error creating bookmark : " + err });
   }

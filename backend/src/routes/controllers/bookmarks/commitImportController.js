@@ -93,7 +93,14 @@ module.exports = async (req, res) => {
         continue;
       }
 
-      const [url] = await conn.execute("INSERT INTO url (original) VALUES (?)", [entry.link]);
+      /* The link as the file gave it, beside the key it is compared on and its host (COS-338). The
+       * parse already computed both — `markImportDuplicates` asked it the duplicate question with
+       * them — so the row is written from what the entry carries rather than parsed a second time. */
+      const [url] = await conn.execute("INSERT INTO url (original, normalised, host) VALUES (?, ?, ?)", [
+        entry.link,
+        entry.normalised,
+        entry.host,
+      ]);
       const [bookmark] = await conn.execute(
         "INSERT INTO bookmark (title, user_id, url_id, date_added) VALUES (?, ?, ?, ?)",
         [entry.title, userID, url.insertId, today()],

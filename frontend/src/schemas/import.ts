@@ -15,14 +15,19 @@ import { z } from "zod";
  * over the wire, validated here, and there is one parser left, in the backend.
  */
 
-/** `NEW` or `DUP`, as `markImportDuplicates` marks them. What "duplicate" means — an exact match on
- *  the stored url, an assumed limit until COS-338 — is documented on that helper. */
+/** `NEW` or `DUP`, as `markImportDuplicates` marks them. What "duplicate" means is documented on that
+ *  helper: it was an exact match on the stored url and it is the **normal form** since COS-338, so
+ *  the same page reached with `www.`, a trailing slash or a `?utm_source=` is one entry. */
 export const IMPORT_STATES = ["NEW", "DUP"] as const;
 
+/* ⚠️ The server also sends each entry's `normalised` — the key the state above was decided on — and
+ * this schema drops it, as `z.object` drops anything it does not name. Nothing on this screen shows
+ * a comparison key, and the two endpoints that need it are both on the other side of the wire. */
 export const StagedEntrySchema = z.object({
   title: z.string(),
   link: z.string(),
-  /** `null` when the link is not a url the `URL` constructor can read. Still imported. */
+  /** The host without `www.`, which is how the index files the row (COS-338). `null` when the link is
+   *  not a url the `URL` constructor can read — still imported, it simply has no host to show. */
   host: z.string().nullable(),
   /** Its position in the file — the only stable key an entry has, since two lines can be identical
    *  and often are in an export taken twice. */
