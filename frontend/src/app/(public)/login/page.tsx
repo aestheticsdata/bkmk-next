@@ -10,9 +10,27 @@ import { AuthShell } from "@components/shared/shell/AuthShell";
 import { readApiError } from "@helpers/apiError";
 import { AUTH_TEXT } from "@text/auth";
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
 import type { SignInPayload } from "@src/schemas/auth";
+
+/* What `/recover` leaves behind when it sends you here (COS-324).
+ *
+ * The reset opens no session on purpose, so the screen it lands on would otherwise be a redirect
+ * that lost something: you typed a new key and arrived at a form asking for one, with nothing saying
+ * the first part worked.
+ *
+ * ⚠️ **Its own component, inside `Suspense`, because `useSearchParams` needs it.** Reading the query
+ * string opts a route out of static rendering, and Next requires the boundary rather than inferring
+ * it — without one the build fails on this page. Isolating the hook keeps that cost to the one line
+ * that pays it instead of putting the whole screen behind a fallback. */
+function ResetNotice() {
+  const done = useSearchParams().get("reset") === "1";
+  if (!done) return null;
+
+  return <Overline className="mb-1.5 block text-gr-accent">{AUTH_TEXT.recover.done}</Overline>;
+}
 
 /* `Login_Graphite` — the sign-in screen (COS-297).
  *
@@ -44,6 +62,9 @@ export default function LoginPage() {
   return (
     <AuthShell hints={AUTH_TEXT.login.hints}>
       <div className="w-120 max-w-full">
+        <Suspense fallback={null}>
+          <ResetNotice />
+        </Suspense>
         <Overline className="mb-1.5 block">{AUTH_TEXT.login.overline}</Overline>
         {/* No nudge on this header either, and the sign-up screen's note says why. */}
         <h1 className="mb-5 text-2xl font-semibold tracking-snug text-gr-fg-2">
@@ -54,6 +75,7 @@ export default function LoginPage() {
         <SignInForm
           copy={AUTH_TEXT.login}
           switchHref={ROUTES.signup.path}
+          recoverHref={ROUTES.recover.path}
           onSubmit={onSubmit}
           error={error}
         />

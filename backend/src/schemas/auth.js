@@ -30,4 +30,21 @@ const signUpBodySchema = z.object({
   registerDate: z.coerce.date(),
 });
 
-module.exports = { signInBodySchema, signUpBodySchema };
+/* Recovering (COS-324) — the three fields `/recover` sends, and the only route that bounds a
+ * secret it is going to *check* rather than store.
+ *
+ * `recoveryPassphrase` carries sign-up's minimum on purpose, where `signInBodySchema.password`
+ * carries none. The asymmetry above is about not locking out secrets chosen before the rule; there
+ * are none here, because the column arrived with the rule — every passphrase that exists was
+ * accepted by `signUpBodySchema` or set from the user menu (COS-321), so a shorter one cannot be
+ * the right answer and refusing it early costs an attacker a round trip rather than a `bcrypt`.
+ *
+ * `password` is the **new** key and is bounded exactly like sign-up's, because that is what it is:
+ * a secret being chosen now. */
+const recoverBodySchema = z.object({
+  email: z.email().max(FIELD_LIMITS.email),
+  recoveryPassphrase: z.string().min(SECRET_RULES.passphraseMin).max(SECRET_RULES.max),
+  password: z.string().min(SECRET_RULES.passwordMin).max(SECRET_RULES.max),
+});
+
+module.exports = { signInBodySchema, signUpBodySchema, recoverBodySchema };

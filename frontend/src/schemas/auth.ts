@@ -143,3 +143,60 @@ export const SignUpFormSchema = z
   });
 
 export type SignUpFormValues = z.infer<typeof SignUpFormSchema>;
+
+/** What `/recover` sends (COS-324): the address, the passphrase being spent, and the key being
+ *  chosen. No confirmation — that one never leaves the browser, like sign-up's. */
+export const RecoverPayloadSchema = z.object({
+  email: z.email("not an email").max(FIELD_LIMITS.email),
+  recoveryPassphrase: z.string().min(SECRET_RULES.passphraseMin).max(SECRET_RULES.max),
+  password: z.string().min(SECRET_RULES.passwordMin).max(SECRET_RULES.max),
+});
+
+export type RecoverPayload = z.infer<typeof RecoverPayloadSchema>;
+
+/** What the recovery **form** holds (COS-324) — one `superRefine` over four plain strings, for the
+ *  reason `SignUpFormSchema` documents at length: an object that always parses is an object whose
+ *  cross-field checks always run, and the first shape of that schema had "no match" unreachable for
+ *  anyone still typing a short key.
+ *
+ *  ⚠️ **The passphrase is bounded here even though it is being *proved* rather than chosen**, which
+ *  is the opposite of `SignInPayloadSchema`'s deliberately unbounded `password`. The asymmetry there
+ *  protects secrets chosen before the rule existed; there are none, because the column arrived with
+ *  the rule. A shorter passphrase cannot be the right answer, and refusing it in the browser spends
+ *  neither a round trip nor one of the five attempts the route allows per address. */
+export const RecoverFormSchema = z
+  .object({
+    email: z.string(),
+    recoveryPassphrase: z.string(),
+    password: z.string(),
+    confirmPassword: z.string(),
+  })
+  .superRefine((values, ctx) => {
+    const problem = (path: string, message: string) => ctx.addIssue({ code: "custom", path: [path], message });
+
+    if (!z.email().safeParse(values.email).success) {
+      problem("email", "not an email");
+    } else if (values.email.length > FIELD_LIMITS.email) {
+      problem("email", "too long");
+    }
+
+    if (values.recoveryPassphrase.length < SECRET_RULES.passphraseMin) {
+      problem("recoveryPassphrase", `min ${SECRET_RULES.passphraseMin} chars`);
+    } else if (values.recoveryPassphrase.length > SECRET_RULES.max) {
+      problem("recoveryPassphrase", `max ${SECRET_RULES.max} chars`);
+    }
+
+    if (values.password.length < SECRET_RULES.passwordMin) {
+      problem("password", `min ${SECRET_RULES.passwordMin} chars`);
+    } else if (values.password.length > SECRET_RULES.max) {
+      problem("password", `max ${SECRET_RULES.max} chars`);
+    }
+
+    if (!values.confirmPassword) {
+      problem("confirmPassword", "required");
+    } else if (values.confirmPassword !== values.password) {
+      problem("confirmPassword", MISMATCH_MESSAGE);
+    }
+  });
+
+export type RecoverFormValues = z.infer<typeof RecoverFormSchema>;

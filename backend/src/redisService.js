@@ -20,6 +20,17 @@ const { createClient } = require("redis");
  */
 const SESSION_PREFIX = "bkmk:";
 
+/**
+ * The rate-limit namespace (COS-324), and it is a **sibling** of the sessions' rather than a child.
+ *
+ * `clearSessionsForUser` below sweeps `bkmk:*` and `JSON.parse`s every value it finds. A counter
+ * living under that prefix would be read on every sign-in and would survive it by accident —
+ * `JSON.parse("3")` is `3`, whose `.userId` is `undefined`, so the key is skipped. That is the kind
+ * of harmless that stops being harmless the day the sweep is rewritten. A separate root costs
+ * nothing and keeps the two sets of keys from ever meeting.
+ */
+const RATE_LIMIT_PREFIX = "bkmk-rl:";
+
 const client = createClient({ url: process.env.REDIS_URL ?? "redis://localhost:6379" });
 
 // Mandatory, not defensive: node-redis emits `error` on a dropped connection, and an
@@ -65,4 +76,31 @@ const clearSessionsForUser = async (userId) => {
   }
 };
 
-module.exports = { SESSION_PREFIX, clearSessionsForUser, connect, getClient };
+/**
+ * One attempt counted against a fixed window (COS-324). Returns the tally so the caller decides
+ * what to do with it — this file counts, `middlewares/rateLimit` refuses.
+ *
+ * **A fixed window, not a sliding one.** `INCR` creates a missing key at 1 and the `EXPIRE` is set
+ * on that first increment only, so the window opens with the first attempt and the ones that follow
+ * do not push it back. A sliding window needs a sorted set per key and a `ZREMRANGEBYSCORE` per
+ * call; its worst case — twice the limit across a boundary — is understood and is nothing on a
+ * self-hosted index with eleven accounts.
+ *
+ * ⚠️ **The two commands are not atomic, and the failure they can leave is a permanent lockout.** A
+ * process that dies between `INCR` and `EXPIRE` leaves a key with no TTL, which never resets and
+ * therefore never lets that address or that address's owner through again. So a key found without
+ * one — `TTL` answers `-1` — has the window applied to it late rather than never. It is the branch
+ * that will not run in practice and the only one whose absence would be silent.
+ */
+const consumeRateLimit = async (bucket, identifier, { limit, windowSeconds }) => {
+  const key = `${RATE_LIMIT_PREFIX}${bucket}:${identifier}`;
+  const hits = await client.incr(key);
+
+  if (hits === 1 || (await client.ttl(key)) < 0) {
+    await client.expire(key, windowSeconds);
+  }
+
+  return { hits, limit, exceeded: hits > limit };
+};
+
+module.exports = { SESSION_PREFIX, RATE_LIMIT_PREFIX, clearSessionsForUser, consumeRateLimit, connect, getClient };

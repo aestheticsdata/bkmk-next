@@ -63,6 +63,10 @@ export const AUTH_TEXT = {
     hints: ["↵ connect"],
     /** Shown when the server refuses and says nothing useful about why. */
     failed: "could not sign in",
+    /** The way to `/recover` (COS-324). UI 01 removed a `/forgotPassword` that had neither a page
+     *  nor a route behind it; this is the live link that replaces it, and it is the only entrance —
+     *  a screen you reach by typing its address is a screen nobody reaches. */
+    forgotKey: "forgot key?",
   },
 
   /* The two placeholders are the handoff's own words (COS-298). UI 01 had put "account" and "open an
@@ -106,6 +110,42 @@ export const AUTH_TEXT = {
     switchTo: "sign in",
     hints: ["↵ register"],
     failed: "could not create the account",
+  },
+
+  /* The recovery screen (COS-324, AUTH 05) — what spends the passphrase sign-up has been collecting
+   * since COS-298.
+   *
+   * ⚠️ **The handoff does not draw this screen**, and could not: it predates the decision to drop
+   * recovery by email (2026-07-30). So the copy is built from the two screens that do exist —
+   * sign-in's `identity`, sign-up's `recovery passphrase` and its key pair — rather than invented,
+   * and the layout follows sign-up's, which already stacks a passphrase and pairs two keys.
+   *
+   * `note` is the one sentence this screen has to say that the others do not: the passphrase is not
+   * recoverable either, so an account without one ends here. Saying it *before* the attempt is the
+   * difference between an explanation and a dead end — and the server will not say it afterwards,
+   * because `recoverController` answers the same refusal to every failure on purpose. */
+  recover: {
+    overline: "recovery",
+    title: "reset your key",
+    identity: "identity · email",
+    identityPlaceholder: "you@domain.tld",
+    passphrase: "recovery passphrase",
+    passphraseHint: "20+ chars",
+    key: "new key",
+    keyPlaceholder: "12+ chars",
+    confirmKey: "confirm new key",
+    reveal: "show",
+    conceal: "hide",
+    note: "the passphrase you chose when you registered. an account without one can only be reset by the owner, in the database.",
+
+    submit: "reset ↵",
+    or: "or",
+    switchTo: "sign in",
+    hints: ["↵ reset"],
+    failed: "could not reset the key",
+    /** Carried to `/login` and shown above its card, because the reset opens no session and the
+     *  screen it lands on would otherwise look like a redirect that lost something. */
+    done: "key reset — sign in with it",
   },
 
   aria: {

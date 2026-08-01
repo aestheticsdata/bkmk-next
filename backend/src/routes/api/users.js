@@ -16,8 +16,10 @@ const router = require("express").Router();
 const csrfMiddleware = require("../../auth/csrfMiddleware");
 const sessionAuthMiddleware = require("../../auth/sessionAuthMiddleware");
 const validate = require("../../middlewares/validate");
-const { signInBodySchema, signUpBodySchema } = require("../../schemas/auth");
+const { rateLimit } = require("../../middlewares/rateLimit");
+const { signInBodySchema, signUpBodySchema, recoverBodySchema } = require("../../schemas/auth");
 const signInController = require("../controllers/users/signInController");
+const recoverController = require("../controllers/users/recoverController");
 const addUserController = require("../controllers/users/addUserController");
 const getMeController = require("../controllers/users/getMeController");
 const getCsrfController = require("../controllers/users/getCsrfController");
@@ -30,10 +32,37 @@ router.get("/me", sessionAuthMiddleware, catchAsync(getMeController));
 router.get("/csrf", sessionAuthMiddleware, getCsrfController);
 router.post("/logout", csrfMiddleware, logoutController);
 
-/* There is no `/resetpassword`, and the commented-out one that sat here is gone with its
- * controller (COS-298). It sent a mail through Sendinblue, with another project's sender: bkmk
- * is self-hosted and has no mail server, so recovery by email was never going to be the answer.
- * What replaces it is the recovery passphrase collected at sign-up; the route that consumes it
- * is AUTH 05 (COS-324), and it belongs here when it lands, public and rate-limited. */
+/* `/recover` is what that promise became (COS-324). There is still no `/resetpassword`: the
+ * commented-out one that sat here went with its controller under COS-298, mail through Sendinblue
+ * and another project's sender included.
+ *
+ * Public, like the two routes above and for the same reason — someone who has lost their key has no
+ * session to present. What it does not share with them is that it hands out **nothing** on success:
+ * no cookie, no CSRF token, no body worth reading. `csrfMiddleware`'s exemption therefore applies
+ * with room to spare.
+ *
+ * ⚠️ **The order of these three is the whole security posture of the route.** `validate` first, so
+ * the limiter keys on an address zod has bounded rather than on whatever arrived; `rateLimit`
+ * second, so an attempt is counted before a single `bcrypt` is paid for; the controller last.
+ *
+ * **Five per address, twenty per source, over a quarter of an hour.** The passphrase is 20
+ * characters minimum, so five guesses buy nothing against one that was chosen rather than reused —
+ * the quota is there for the other case. The per-IP figure is four times the per-email one because
+ * a household, a VPN exit or the proxy itself is one address for several people, and it is the
+ * ceiling on how many *accounts* a single caller can walk through rather than on how hard one
+ * account can be pushed. */
+router.post(
+  "/recover",
+  validate({ body: recoverBodySchema }),
+  rateLimit({
+    bucket: "recover",
+    windowSeconds: 15 * 60,
+    quotas: [
+      { name: "email", of: (req) => req.validated.body.email.toLowerCase(), limit: 5 },
+      { name: "ip", of: (req) => req.ip, limit: 20 },
+    ],
+  }),
+  catchAsync(recoverController),
+);
 
 module.exports = router;

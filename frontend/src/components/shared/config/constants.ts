@@ -11,6 +11,9 @@ export const ROUTES = {
   bookmarksReminders: { path: "/bookmarks/reminders", label: "Reminders" },
   login: { path: "/login", label: "Login" },
   signup: { path: "/signup", label: "Signup" },
+  /** Where `forgot key?` goes (COS-324). UI 01 removed a `/forgotPassword` that had no page and no
+   *  route behind it; this one has both. */
+  recover: { path: "/recover", label: "Recover" },
   about: { path: "/about", label: "A propos" },
 };
 

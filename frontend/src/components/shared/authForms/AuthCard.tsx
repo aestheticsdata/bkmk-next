@@ -30,6 +30,7 @@ import type * as React from "react";
 function AuthCard({
   action,
   switchHref,
+  secondary,
   error,
   busy = false,
   onSubmit,
@@ -38,6 +39,14 @@ function AuthCard({
   action: AuthActionCopy;
   /** Where `action.switchTo` goes — the other auth screen. */
   switchHref: string;
+  /** ⚠️ **A second way out, and only the sign-in screen has one** (COS-324): `forgot key?`, pointing
+   *  at `/recover`.
+   *
+   *  It goes **in this row** rather than under the card, and that is the whole reason it is a prop
+   *  instead of something the screen renders below `AuthCard`. The row already exists, already has
+   *  slack between `register` and the refusal's `ml-auto`, and the note above is about how hard this
+   *  card works not to change height. A link under it adds a line to a screen that is measured. */
+  secondary?: { href: string; label: string };
   /** What the server said, if it refused. */
   error?: string | null;
   busy?: boolean;
@@ -70,6 +79,14 @@ function AuthCard({
         >
           <Link href={switchHref}>{action.switchTo}</Link>
         </Overline>
+        {secondary && (
+          <Overline
+            asChild
+            className="text-gr-accent hover:text-gr-fg-2"
+          >
+            <Link href={secondary.href}>{secondary.label}</Link>
+          </Overline>
+        )}
         <Overline
           role="alert"
           className="ml-auto truncate text-gr-accent-2 @max-3xl:ml-0"
