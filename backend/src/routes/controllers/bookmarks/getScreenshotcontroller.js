@@ -8,9 +8,12 @@ const getImage = require("./helpers/getImage.js");
  *
  * The record id in `/bookmarks/upload/:id` is still not consulted — the filename alone identifies the
  * file, and a user reaching their own screenshots by name inside their own folder is the feature.
- * Pairing filename to record would be a stricter check with nothing left to catch. */
+ * Pairing filename to record would be a stricter check with nothing left to catch.
+ *
+ * The parameter itself left the wire with COS-306, which is why `screenshotQuerySchema` is down to the
+ * filename. Nothing here changed with it: this line already read the session. */
 module.exports = async (req, res, _next) => {
-  const [screenshotImageString, contentType] = await getImage(req.query.screenshotFilename, req.user.id);
+  const [screenshotImageString, contentType] = await getImage(req.validated.query.screenshotFilename, req.user.id);
   res.setHeader("content-type", contentType);
   res.send(screenshotImageString);
   res.status(200);

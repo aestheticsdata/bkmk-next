@@ -28,9 +28,11 @@ import type { FiltersQuery } from "@src/schemas/filters";
 function useBookmarkIndex(query: FiltersQuery) {
   const queryClient = useQueryClient();
   const { privateRequest } = useRequestHelper();
-  const userID = useAuth().user?.id;
+  /* Not sent any more — the request's scope is its session (COS-306). It stays as the gate: the
+   * session cookie is set by the time `AuthContext` has a user, and firing before that is a 401. */
+  const isSignedIn = Boolean(useAuth().user?.id);
 
-  const apiQuery = toApiQuery(query, { rows: ROWS_BY_PAGE, userID });
+  const apiQuery = toApiQuery(query, { rows: ROWS_BY_PAGE });
 
   const list = useQuery({
     queryKey: queryKeys.bookmarks.list(apiQuery),
@@ -39,7 +41,7 @@ function useBookmarkIndex(query: FiltersQuery) {
       // The boundary: a validated page leaves this function, not an axios response.
       return BookmarkListSchema.parse(response.data);
     },
-    enabled: Boolean(userID),
+    enabled: isSignedIn,
     retry: false,
     /* Keeps the previous page on screen while the next one loads, so paging through the index does
      * not blink an empty table between two full ones. The rows are stale for as long as the request
@@ -66,7 +68,9 @@ function useBookmarkIndex(query: FiltersQuery) {
 
   return {
     rows: list.data?.rows ?? [],
-    total: list.data?.total_count,
+    total: list.data?.total,
+    /** The server's, over the `rows` this hook asked for (COS-306) — the pager no longer divides. */
+    pageCount: list.data?.pageCount,
     isLoading: list.isLoading,
     isFetching: list.isFetching,
     isError: list.isError,

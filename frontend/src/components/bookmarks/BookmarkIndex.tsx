@@ -35,7 +35,7 @@ function BookmarkIndex() {
   const query = readIndexQuery(searchParams);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const { rows, total, isLoading, isFetching, isError, remove } = useBookmarkIndex(query);
+  const { rows, total, pageCount, isLoading, isFetching, isError, remove } = useBookmarkIndex(query);
   const { categories } = useCategoryList();
 
   /* `⌥F` — the shortcut printed on the filter button (COS-300).
@@ -106,6 +106,7 @@ function BookmarkIndex() {
           query={query}
           pathname={pathname}
           total={total}
+          pageCount={pageCount}
           shown={rows.length}
         />
       </Card>

@@ -21,9 +21,14 @@ const {
  * Since COS-295 the controller passes every filter as a parameter, so none of this is the
  * last line of defence any more. It still earns its keep: `sort` cannot be parameterised —
  * a column name is not a value — so the enum below is what keeps the only interpolation left
- * in that query honest. */
+ * in that query honest.
+ *
+ * ⚠️ **`userID` is gone** (COS-306). COS-322 stopped the controllers reading it and deliberately left
+ * it on the wire, so that a security fix would not need the front to move; this is the ticket that
+ * was named to finish the job, and the front stops sending it in the same change. Removing it from
+ * the schema is not a rejection — `z.object` strips unknown keys — so a client that still sends the
+ * parameter is served exactly as before. See the note in `getBookmarksController`. */
 const listBookmarksQuerySchema = z.object({
-  userID: idSchema,
   rows: z.coerce.number().int().positive().max(500),
   page: z.coerce.number().int().min(0).default(0),
   title: z.string().max(FIELD_LIMITS.title).optional(),
@@ -99,7 +104,6 @@ const bookmarkIdParamsSchema = z.object({ id: idSchema });
  * no `..`**, because the controller concatenates this into a path — COS-295 also hardened the
  * read itself with `basename`, and this is the boundary half of the same fix. */
 const screenshotQuerySchema = z.object({
-  userID: idSchema,
   screenshotFilename: z
     .string()
     .min(1)
@@ -133,18 +137,13 @@ const updateBookmarkBodySchema = z.object({
   deleteScreenshot: z.string().optional(),
 });
 
-/** `GET /categories` and `GET /reminders` take nothing but the user identifier.
+/* ⚠️ **`userScopedQuerySchema` was here, and it is gone** (COS-306).
  *
- * ⚠️ **Which no controller reads any more** (COS-322). The scope comes from the session; `userID` is
- * validated and ignored, on this schema as on `listBookmarksQuerySchema` and `screenshotQuerySchema`.
- *
- * It stays required rather than being dropped, and that is the point of the fix rather than an
- * oversight: the front keeps sending what it has always sent, so no request builder moves, no
- * react-query key changes shape, and the whole change is on one side of the wire. Retiring the
- * parameter is a client contract change and belongs to DATA 01 (COS-306), which is already going to
- * rewrite these query strings into a filter object. Until then a schema that still describes the
- * wire truthfully is worth more than one that describes what we wish were on it. */
-const userScopedQuerySchema = z.object({ userID: idSchema });
+ * It described the one parameter `GET /categories` and `GET /reminders` took — `userID` — and COS-322
+ * had already made both controllers ignore it in favour of the session. With the front no longer
+ * sending it, the two routes take **no input at all**, and a `z.object({})` validating nothing is a
+ * middleware that only looks like a check. So `validate()` came off those two routes rather than
+ * being kept around an empty schema; see `routes/api/categories.js`. */
 
 module.exports = {
   listBookmarksQuerySchema,
@@ -152,5 +151,4 @@ module.exports = {
   screenshotQuerySchema,
   createBookmarkBodySchema,
   updateBookmarkBodySchema,
-  userScopedQuerySchema,
 };

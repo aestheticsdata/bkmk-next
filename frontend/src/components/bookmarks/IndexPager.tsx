@@ -24,23 +24,27 @@ import type { FiltersQuery } from "@src/schemas/filters";
  * ⚠️ **The last page number is a link**, as it was in the legacy pager: `/57` jumps to the end. It is
  * the only way to reach the oldest records in fewer than 57 clicks until a filter narrows them.
  *
- * The page count is computed here, from `total_count`. DATA 01 (COS-306) is to return
- * `{ rows, total, page, pageCount }`; until then this division is the honest way to the same number,
- * and it lives in one place so that ticket has one line to replace. */
+ * ⚠️ **The page count is the server's** (COS-306). It was `Math.ceil(total / ROWS_BY_PAGE)` here,
+ * which was the same number by agreement rather than by construction: the page size was written once
+ * in the request and once in this division, and only the request decides how many rows come back.
+ * `ROWS_BY_PAGE` still appears below, for the `rows 001–022 of 312` counter — that is arithmetic on
+ * the page this component asked for, not a second opinion about how many pages exist. */
 function IndexPager({
   query,
   pathname,
   total,
+  pageCount,
   shown,
 }: {
   query: FiltersQuery;
   pathname: string;
   total?: number;
+  /** `GET /bookmarks`'s own count, absent until the first page has loaded. */
+  pageCount?: number;
   /** Rows actually on this page — the last page is rarely full. */
   shown: number;
 }) {
   const page = query.page;
-  const pageCount = total == null ? undefined : Math.max(1, Math.ceil(total / ROWS_BY_PAGE));
   /** Zero-based, like `?page=`: the index of the last page, which is what the pager shows. */
   const lastPage = pageCount == null ? undefined : pageCount - 1;
   const first = page * ROWS_BY_PAGE + 1;

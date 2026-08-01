@@ -29,19 +29,20 @@ const REMINDER_DUE_DAYS = 3;
  * (`rows` ≤ 500 and positive, `page` ≥ 0), which is what makes writing them into the string
  * safe. It is the first use of `req.validated` in a controller — the migration
  * `middlewares/validate.js` describes — and here it is load-bearing rather than tidiness.
- * Everything else in the file still reads `req.query`; converting the rest belongs to the
- * DATA lot. */
+ *
+ * ⚠️ **Every field now comes from there** (COS-306), which is what that migration note called the
+ * DATA lot's job. Nothing in the query changes: zod hands the text filters back as the same strings.
+ * What changes is `stars`, which arrives as a number instead of the string `"0"` — and `if ("0")` is
+ * true, so `?stars=0` used to add a `b.stars >= 0` that matched everything it was asked to exclude
+ * nothing from. It was harmless and it was the same class of bug `queryFlagSchema` was written for. */
 module.exports = async (req, res) => {
-  const { title, categories_id, stars, sort, priority } = req.query;
   /* Integers, guaranteed by `listBookmarksQuerySchema` — see the note on `LIMIT` above.
    *
-   * **The three flags come from `req.validated.query` too** (COS-299), and that is a fix rather than
-   * tidiness: read off `req.query` they are raw strings, and `if ("0")` is true, so `?screenshot=0`
-   * switched the filter on. `queryFlagSchema` now turns `0` and `false` into `false`, which only
-   * helps if the validated value is the one read. `alarm` joins them because it is an enum and this
-   * is where a value the schema has vouched for lives. The remaining fields stay on `req.query` —
-   * that conversion belongs to the DATA lot. */
-  const { page, rows, screenshot, url, notes, alarm } = req.validated.query;
+   * **The three flags in particular** (COS-299): read off `req.query` they are raw strings, so
+   * `?screenshot=0` switched the filter on. `queryFlagSchema` turns `0` and `false` into `false`,
+   * which only helps if the validated value is the one read. */
+  const { page, rows, title, categories_id, stars, sort, priority, screenshot, url, notes, alarm } =
+    req.validated.query;
 
   let sortPart = "";
   if (sort) {
@@ -123,9 +124,9 @@ module.exports = async (req, res) => {
    * identity and `sessionAuthMiddleware` puts it on `req.user`, so the value that decides what comes
    * back is now the one the server issued rather than the one the caller typed.
    *
-   * The parameter still arrives and is still validated (`listBookmarksQuerySchema`), it is simply
-   * inert — which is what keeps this fix invisible to the front: the query strings and the
-   * react-query keys built from them do not move. See the note in `schemas/bookmarks.js`. */
+   * The parameter stayed on the wire through that fix — validated and inert — so that the front had
+   * nothing to change; **COS-306 has since removed it from both sides**, and this line is unaffected
+   * either way. That is the point of having done it in two steps. See `schemas/bookmarks.js`. */
   const conditions = ["b.user_id = ?", "b.active = 1"];
   const conditionParams = [req.user.id];
 
@@ -263,12 +264,26 @@ module.exports = async (req, res) => {
 
   await conn.end();
 
-  const marshalledRows = marshallCategories(bookmarks);
+  /* ⚠️ **The page describes itself** (COS-306, the ticket's `{ rows, total, page, pageCount }`).
+   *
+   * `total_count` alone was the whole answer before, and the pager divided it by a `ROWS_BY_PAGE`
+   * written on the front — which meant the page size existed twice: once in the request this
+   * controller just honoured, once in a constant that had to agree with it. It did agree, and it was
+   * one edit away from not: a client asking for 50 rows would have been paged as if it had asked for
+   * 22, and the number it drew would have been wrong rather than absent.
+   *
+   * So the count is done here, over the `rows` the request actually asked for. `Math.max(1, …)` is
+   * for the empty index: zero records is one page showing nothing, not zero pages — `page 00/00`
+   * reads as a broken pager, and the URL `?page=0` is a real page either way.
+   *
+   * `page` is an echo, and it earns its place by being the *validated* one: the number this query
+   * used, not the string the caller sent. */
+  const pageCount = Math.max(1, Math.ceil(total_count / rows));
 
-  const rowsWithCount = {
-    rows: marshalledRows,
-    total_count,
-  };
-
-  res.json(rowsWithCount);
+  res.json({
+    rows: marshallCategories(bookmarks),
+    total: total_count,
+    page,
+    pageCount,
+  });
 };

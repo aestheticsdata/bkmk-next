@@ -25,7 +25,7 @@ export const queryKeys = {
     /** One page of the index. `query` is the API query string, so two different filters are two
      *  different entries and going back to a previous page is instant. */
     list: (query: string) => [ROOTS.bookmarks, "list", query] as const,
-    /** The chrome's `index NNN` — a one-row request for `total_count` only. */
+    /** The chrome's `index NNN` — a one-row request for `total` only. */
     count: () => [ROOTS.bookmarks, "count"] as const,
     /** How many records a *draft* filter would match (COS-300) — the number on the filter modal's
      *  primary button. Its own branch rather than a `list` key: same endpoint, but one row instead of
