@@ -360,7 +360,8 @@ soit écrite.** Le ticket lui-même le demandait pour la première : compter des
 définition de « même url », et `url.original` n'a aucune forme normale — `https://x.com/a`,
 `http://x.com/a/` et la même adresse avec un `?utm_source=` sont trois lignes. **Dédupe sur chaîne
 exacte, assumée**, plutôt que prendre COS-332 puis COS-338 avant ; le helper `markImportDuplicates`
-est le seul endroit qui répond à la question, donc DATA 09 changera un fichier. Seconde fourche :
+est le seul endroit qui répond à la question, donc DATA 09 changera un fichier. ✅ **Vérifié depuis** :
+COS-338 a bien changé ce seul fichier — deux lignes, la colonne lue et la clé comparée. Seconde fourche :
 `last import` n'a aucun stockage et `N skipped` ne se déduit d'aucune colonne — **une table
 `import_run` et sa migration**, plutôt que laisser la ligne mockée dans un ticket de-mock à part.
 
@@ -2165,7 +2166,7 @@ plus de la refonte GRAPHITE ».
 | COS-335 | UI 14 — La barre de commande devient un champ de recherche (titre, notes, url) | COS-334 |
 | COS-336 | DATA 08 — Catégories : dédupe des noms et contrainte d'unicité | COS-332 |
 | COS-337 | UI 15 — Gestion des tags : renommer, fusionner, recolorer, purger | COS-336 |
-| COS-338 | DATA 09 — `url` : forme normale, colonne `host`, backfill | COS-332 |
+| COS-338 | DATA 09 — `url` : forme normale, colonne `host`, backfill ✅ | COS-332 |
 | COS-339 | UI 16 — Axe `host` dans le rail | COS-338 |
 
 Trois choses à retenir de ce découpage :
@@ -2184,6 +2185,10 @@ Trois choses à retenir de ce découpage :
 Deux pièges de migration, identiques dans leur forme : l'`UNIQUE (user_id, name)` de COS-336 et
 l'éventuel index unique sur l'url normalisée de COS-338 **échouent tant que les doublons existent**.
 La passe de nettoyage précède la contrainte, dans le même ticket.
+
+⚠️ **Le second des deux n'existe plus : COS-338 a refusé l'index unique**, et pas parce que les
+doublons gênaient — parce que la table `url` n'a pas de `user_id`. Détail en 10.2 ter. Le piège reste
+entier pour COS-336, dont la table en a un.
 
 ### 10.2 bis PLAT 06 (COS-332) — le runner, fait le 2026-08-01
 
@@ -2227,6 +2232,87 @@ Une base jetable créée depuis `bkmk.sql` a validé le script de création à n
 retirées, journal vidé — et `up` a rejoué les deux migrations : colonne et table sont revenues. Base
 jetable supprimée ensuite.
 
+### 10.2 ter DATA 09 (COS-338) — la forme normale, fait le 2026-08-01
+
+Pris juste après le runner, qui était son seul blocage. Ce que ça pose : **`backend/src/helpers/normaliseUrl.js`**,
+deux colonnes `url.normalised` et `url.host`, la migration `.js` qui les remplit, et le balayage des
+lignes que personne ne pointait.
+
+**La forme normale est une colonne, pas un calcul à la volée** — la question ouverte du ticket. Une
+colonne, parce que la comparaison doit pouvoir être un index plutôt que 1 280 parsings d'`URL` par
+question posée. C'est une **clé**, pas une url : le schéma tombe, donc elle ne se parse pas et ne
+doit jamais être affichée ni ouverte. Le faire tomber est ce qui fait marcher l'exemple du ticket —
+`http://x.com/a/` et `https://x.com/a` sont la même page, et tout hôte sérieux répond aux deux depuis
+dix ans.
+
+⚠️ **Pas d'`UNIQUE` sur `normalised`, et c'est une décision, pas un oubli.** Le ticket pose la
+question, la table répond : `url` n'a **pas de `user_id`**. Une clé unique forcerait deux comptes qui
+marquent la même page sur une seule ligne, et `editBookmarkController` met cette ligne à jour *en
+place* — enregistrer votre fiche réécrirait le lien d'un inconnu. « Même url » est une question qui
+ne se pose jamais qu'à l'intérieur d'un compte (`markImportDuplicates` la cadre déjà, COS-308 fera
+pareil), donc l'index est un index ordinaire : il rend la recherche rapide, la propriété reste où
+elle est. C'est aussi ce qui retire à ce ticket le piège annoncé en 10.2 — il n'y a plus de contrainte
+à faire échouer.
+
+⚠️ **Ce que la normalisation fusionne sur l'index réel, mesuré : une paire.** `react-select.com/home`
+et la même adresse avec `#fixed-options`, sur 1 237 lignes actives. Ce n'est pas l'argument. L'argument
+est ailleurs : **1 075 lignes sur 1 237 portent `www.`**, 57 une barre finale, 5 un paramètre de
+tracking — aujourd'hui chacune est un doublon que le prochain import va créer, et COS-307 comme
+COS-308 n'avaient aucune définition à interroger. L'index contient par ailleurs **38 lignes
+strictement égales entre elles**, ce qui est l'autre moitié de la même histoire. Le chiffre est écrit
+dans `markImportDuplicates` pour que personne ne relise ce helper en croyant qu'il a nettoyé la base.
+
+⚠️ **2 685 lignes d'`url` sur 3 928 — 68 % — n'étaient atteignables depuis aucun bookmark.** C'est ce
+que produit « insérée sans condition, sans transaction autour » sur trois ans. Le balayage passe en
+premier dans la migration, et il ne touche **que** ce que personne ne pointe : une ligne dont le seul
+bookmark est inactif reste, parce que la suppression est douce et que jeter l'url d'une fiche retirée
+rendrait cette suppression-là définitive. La clé étrangère refuserait de toute façon, ce qui est le
+schéma qui dit la même chose.
+
+⚠️ **Et le robinet est fermé, sinon le balayage est un nettoyage daté.** `postBookmarkController`
+insère l'url *avant* le bookmark et n'a pas de transaction : un échec sur la seconde requête laissait
+la première derrière. Trois lignes le reprennent. Le même chemin fabrique aussi une `alarm` orpheline
+— pas dans ce ticket, à ouvrir.
+
+⚠️ **`host` perd son `www.`, y compris là où il est affiché.** `parseImportFile` calculait le sien
+avec `new URL(link).host` : la table de staging annonçait `www.youtube.com` là où la colonne stocke
+`youtube.com`, deux réponses à « quel hôte » pour un lien, et l'axe `host` du rail (COS-339) se serait
+construit sur l'autre. Les deux appellent le helper maintenant. Conséquence visible : la colonne du
+milieu du staging et la ligne `host` de l'aperçu d'insertion affichent l'hôte sans `www.` — c'est
+aussi sous ce nom que l'index range la ligne. Le garde-fou est celui du helper : `www.com` est un
+domaine, et lui retirer son label laisserait `com`.
+
+**Détails qui se voient à la lecture du helper :** la requête est recoupée dans **l'encodage
+d'origine** plutôt que reconstruite par `URLSearchParams.toString()`, qui ré-encode — un `~` revient
+en `%7E`, trois caractères pour un, et une transformation autorisée à *grandir* est un 500 sur une
+url assez longue. Couper des paires ne fait que raccourcir, ce qui rend la colonne sûre sans clamp
+(vérifié sur les 1 243 lignes : la plus longue clé fait 533 pour un original de 545). L'ordre des
+paramètres est laissé tel quel : trier a été mesuré sur l'index et ne fusionne rien, l'ordre venant
+des liens du site lui-même. Une chaîne qu'`URL` ne sait pas lire est sa propre clé, sans hôte —
+l'index en contient deux, dont `I won't do it again`.
+
+**QA faite en local, 39 assertions sur l'API réelle** (compte jetable créé puis supprimé, index
+retrouvé à ses 1 243 lignes) : création avec une url volontairement sale
+(`https://WWW.Example-QA.test/Page/?utm_source=rss&keep=1&fbclid=zz#frag` → clé
+`example-qa.test/Page?keep=1`, original intact), édition qui met la ligne à jour sans la remplacer,
+édition qui retire l'url et emporte la ligne sans laisser d'orpheline, puis un fichier d'import dont
+trois lignes visent la même page par trois chemins différents — **trois `DUP` là où c'étaient quatre
+`NEW` avant ce ticket**. Le commit en importe une, la seconde lecture du même fichier n'y trouve plus
+rien de neuf, et une fiche retirée redevient nouvelle (`b.active = 1`, inchangé).
+
+**La migration a été vérifiée sur trois bases**, dont celle qui compte : le dev réel (3 928 → 1 243
+lignes, 1 331 bookmarks et 1 280 actifs identiques avant/après, aucun `url_id` déplacé, aucun
+`original` réécrit, chaque ligne supprimée prouvée sans référent, et la clé relue depuis la base
+égale à ce que le helper répond pour les 1 243) ; une base neuve depuis `bkmk.sql`, dont la table
+`url` est colonne pour colonne et index pour index celle que la migration produit ; et une base
+ramenée à la forme qu'a la **production** — aucune des trois migrations appliquée — où `up` les
+rejoue dans l'ordre, balaie les orphelines, garde celle de la fiche retirée, et où rejouer le fichier
+par-dessus une base qui l'a déjà ne change rien. Les deux bases jetables sont supprimées.
+
+**Reliquat, sans ticket :** `url.short` n'est plus renseigné nulle part — les trois seules lignes qui
+en avaient une étaient orphelines et sont parties avec le balayage. La colonne reste, personne ne la
+lit.
+
 ### 10.3 Ajustements sur des tickets existants (pas de nouveau ticket)
 
 - **COS-306** est livré à ~90 % par UI 03 / UI 04 : pagination serveur, objet de filtres à six
@@ -2239,6 +2325,10 @@ jetable supprimée ensuite.
   ⚠️ **Tranché depuis, pour COS-307** : la dépendance a été assumée plutôt que prise. Le staging
   dédupe sur la chaîne exacte, l'écart est écrit dans `markImportDuplicates` et au §0, et DATA 09
   n'aura qu'un fichier à changer. COS-308 garde la question entière.
+  ✅ **Soldé depuis (COS-338)** : la définition existe, c'est `url.normalised`, et le staging la lit —
+  le fichier annoncé est bien le seul qui a changé. **COS-308 a maintenant sa réponse** : la même
+  colonne, cadrée au compte, et l'index qui va avec. Reste entier de son côté : ce que l'écran de
+  création fait de la réponse.
 - **COS-329** absorbe la favicon si l'occasion se présente — c'est le même fetch que le titre
   automatique. À stocker localement : pointer un service de favicons tiers poserait une balise sur
   chaque ligne d'un index dont l'écran de signup annonce « self-hosted · no tracking ».
