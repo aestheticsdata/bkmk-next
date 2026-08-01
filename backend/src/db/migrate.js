@@ -10,12 +10,13 @@ const mysql = require("mysql2/promise");
  * want a migration each; the answer to "what is actually true over there" cannot keep being an SSH
  * session and a `SHOW CREATE TABLE`.
  *
- * Four commands, and they exist because a database can be in three different situations:
+ * Five commands. Four of them exist because a database can be in three different situations:
  *
- *   node src/db/migrate.js status      what has run, what has not
- *   node src/db/migrate.js up          apply everything pending, in filename order
- *   node src/db/migrate.js mark <file> record one as applied without running it
- *   node src/db/migrate.js baseline    record every file present, running none
+ *   node src/db/migrate.js status         what has run, what has not
+ *   node src/db/migrate.js up             apply everything pending, in filename order
+ *   node src/db/migrate.js mark <file>    record one as applied without running it
+ *   node src/db/migrate.js baseline       record every file present, running none
+ *   node src/db/migrate.js dry-run <file> what a `.js` migration would write, without writing it
  *
  * `mark` is for a database where a migration was applied by hand — dev, for the two that predate
  * this runner. `baseline` is for a database just created from `bkmk.sql`, which already carries
@@ -36,6 +37,14 @@ const mysql = require("mysql2/promise");
  * ⚠️ **It is not called at boot.** `server.js` starts under pm2 with `watch: true` in dev; a runner
  * on that path would apply a schema change on a file save. Migrating is a deploy step, and the
  * README says where it goes.
+ *
+ * ⚠️ **`dry-run` is the fifth, and it is opt-in per file** (COS-334). DATA 07 rewrites the text of
+ * every row it touches, and a rewrite of 1 177 values wants to be read before it is run. So a `.js`
+ * migration is handed `{ dryRun }` and can print what it would write instead of writing it — but only
+ * if it has said it knows how, by setting `dryRun` on the function it exports. A migration that
+ * ignores the option would apply itself in full, and a dry run that is a full apply with a
+ * reassuring word in front of it is worse than not having one. Nothing is recorded either way: a
+ * previewed migration is still pending.
  */
 
 const MIGRATIONS_DIR = path.join(__dirname, "migrations");
@@ -102,22 +111,30 @@ const appliedFiles = async (conn) => {
 
 const record = (conn, file) => conn.execute(`INSERT INTO ${TABLE} (filename, applied_at) VALUES (?, NOW())`, [file]);
 
+/** The function a `.js` migration exports, loaded and checked. Separate from `applyMigration` because
+ *  `dry-run` needs the same function and none of the `.sql` half. */
+const loadJsMigration = (file) => {
+  const migration = require(path.join(MIGRATIONS_DIR, file));
+  if (typeof migration !== "function") {
+    throw new Error(`${file} must export a function taking a connection`);
+  }
+  return migration;
+};
+
 /** Applying one file. A `.sql` is handed to MySQL whole; a `.js` exports a function and is given the
  *  connection, which is the case DATA 07 needs — decoding a url is not something MySQL can do, so
- *  that migration has to be a script and not a statement. */
-const applyMigration = async (conn, file) => {
-  const full = path.join(MIGRATIONS_DIR, file);
-
+ *  that migration has to be a script and not a statement.
+ *
+ *  The options object is the second argument every `.js` migration is handed. `up` passes
+ *  `dryRun: false` explicitly rather than nothing, so that a migration reading the flag sees the same
+ *  shape whichever command called it. */
+const applyMigration = async (conn, file, options = { dryRun: false }) => {
   if (path.extname(file) === ".js") {
-    const migration = require(full);
-    if (typeof migration !== "function") {
-      throw new Error(`${file} must export a function taking a connection`);
-    }
-    await migration(conn);
+    await loadJsMigration(file)(conn, options);
     return;
   }
 
-  await conn.query(fs.readFileSync(full, "utf8"));
+  await conn.query(fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf8"));
 };
 
 const commands = {
@@ -150,6 +167,36 @@ const commands = {
       await record(conn, file);
       console.log("ok");
     }
+  },
+
+  /* What a migration would write, without writing it and without recording anything.
+   *
+   * Three refusals, and each one is a way of not lying about what just happened: a file that is not
+   * there, a `.sql` — MySQL has no preview and handing the statements over *is* running them — and a
+   * `.js` that has not declared it can do this. The last is the one that matters: without it, "dry
+   * run" over a migration that ignores its second argument applies the migration.
+   *
+   * A file already applied is previewed all the same, and says so. It is the natural way to ask
+   * "would this find anything to do today", and the answer on a migration that has run is the empty
+   * one it should be. */
+  /* Hyphenated on purpose: the key *is* the command line word — the dispatch below looks the
+   * argument up in this object, and the error it prints when it misses lists these keys. */
+  async "dry-run"(conn, file) {
+    if (!file) throw new Error("dry-run needs a filename");
+    if (!migrationFiles().includes(file)) throw new Error(`${file} is not in migrations/`);
+    if (path.extname(file) !== ".js") throw new Error(`${file} is a .sql — there is no preview of handing it to MySQL`);
+
+    const migration = loadJsMigration(file);
+    if (migration.dryRun !== true) {
+      throw new Error(`${file} does not support a dry run — it would apply itself in full`);
+    }
+
+    if ((await appliedFiles(conn)).has(file)) {
+      console.log(`${file} is already recorded as applied — previewing it anyway`);
+    }
+
+    await migration(conn, { dryRun: true });
+    console.log("\nnothing was written, and nothing was recorded");
   },
 
   async mark(conn, file) {

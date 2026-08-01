@@ -3,6 +3,7 @@ const dbConnection = require("../../../db/dbinitmysql");
 const { normaliseUrl } = require("../../../helpers/normaliseUrl");
 const jimpHelper = require("./helpers/jimpHelper");
 const generateHexColor = require("./helpers/generateHexColor");
+const { storedText } = require("./helpers/storedText");
 
 /** The string the form sends to mean "remove the screenshot", kept from the shape the legacy form
  *  used and the one `updateBookmarkBodySchema` describes. **It has to be a word, not a boolean**: a
@@ -206,8 +207,9 @@ module.exports = async (req, res) => {
           SET title=?, notes=?, stars=?, priority=?, date_last_modified=?
         WHERE id=?`,
       [
-        req.body.title,
-        req.body.notes || null,
+        // `storedText` is the multipart `CRLF` undone — see the helper, and COS-334.
+        storedText(req.body.title),
+        storedText(req.body.notes) || null,
         req.body.stars,
         // `""` is the form's "no level", and the column holds `NULL` for it.
         req.body.priority === "" ? null : req.body.priority,

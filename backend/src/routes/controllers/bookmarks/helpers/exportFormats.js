@@ -5,16 +5,17 @@
  * A self-hosted index you cannot leave is a lock-in with extra steps, on a product whose sign-up
  * screen says `self-hosted · no tracking`.
  *
- * ⚠️ **`json` is faithful and the other two are readable, and that is a decision, not an
- * inconsistency.** Titles and notes are stored percent-encoded — 1 154 of the dev index's 1 280
- * active titles, and all 19 of its notes — which is the defect DATA 07 (COS-334) exists to fix. So:
+ * ⚠️ **`json` was faithful and the other two were readable, and there is no difference left**
+ * (COS-334). Titles and notes were stored percent-encoded — 1 154 of the dev index's 1 280 active
+ * titles, and all 19 of its notes — so `json` wrote the column undecoded and the two interchange
+ * formats undid the encoding on the way out. That split was this file's half of the defect, and it
+ * had a job: writing the encoding down was the diagnostic the owner ordered this ticket *before* the
+ * migration for, since which rows carried it is knowledge that disappears the moment anything decodes
+ * them. It has been read, it decided the migration's rule, and `2026-08-01-decode-text.js` has run.
  *
- * - **`json` writes what the database holds**, undecoded. It is the backup *and* the diagnostic the
- *   ticket ordered this one before DATA 07 for: it shows exactly which rows carry the encoding,
- *   which is knowledge that disappears the moment anything decodes them.
- * - **`csv` and `html` are read by something other than bkmk** — its own import, and a browser — so
- *   they carry the text as a person would read it. `decode` is the same forgiving one the screens
- *   use: a `%` that is not an escape is text, not an error.
+ * So all three formats now write the same text, and the `decode` that stood between them is gone
+ * with the `textEncoding` field that apologised for it. What still differs between them is what each
+ * one's *reader* cannot swallow: `csv` has no quoting, `html` is markup.
  *
  * ⚠️ **A record with no url is in the `json` and in neither of the other two.** 43 of the dev index's
  * active records have none. `title;` re-imported is a line the parser counts as malformed, and
@@ -25,18 +26,6 @@
  * `GET /bookmarks/upload/:id`; putting base64 in a backup would multiply its size by the one thing
  * in it nobody can read.
  */
-
-/** The forgiving decode, `frontend/helpers/decodeNote` on the server side. `decodeURIComponent`
- *  throws on a `%` that is not an escape — a note that simply says `100%` — and the raw text is the
- *  right answer then. */
-const decode = (value) => {
-  if (!value) return "";
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-};
 
 const DATE = (value) => (value instanceof Date ? value.toISOString().slice(0, 10) : (value ?? null));
 
@@ -58,10 +47,13 @@ const asRecord = (row) => ({
   modifiedAt: DATE(row.date_last_modified),
 });
 
-/* ⚠️ **`textEncoding` is in the file on purpose.** An export whose titles read `Framework%20reimagined`
- * looks corrupted to whoever opens it a year from now, and the honest place to say "this is how the
- * database holds them, and there is a ticket" is the file itself. It comes out `raw` until COS-334
- * runs, and the line goes when the encoding does. */
+/* ⚠️ **`textEncoding` was a field here, and it is gone** (COS-334). It said, in the file, that titles
+ * reading `Framework%20reimagined` were the database's doing and that there was a ticket — an export
+ * that looks corrupted a year from now should explain itself rather than be explained. The ticket has
+ * run, so the sentence would now be false, and a `textEncoding: "raw"` left behind out of caution
+ * would be one more thing to keep true. `version` is what a reader checks; it does not move, because
+ * the shape of a record has not changed — a title that used to arrive escaped simply arrives as it
+ * reads. */
 const toJson = (rows, { exportedAt }) =>
   `${JSON.stringify(
     {
@@ -69,7 +61,6 @@ const toJson = (rows, { exportedAt }) =>
       version: 1,
       exportedAt,
       count: rows.length,
-      textEncoding: "raw — titles and notes are stored percent-encoded on records written before COS-334",
       bookmarks: rows.map(asRecord),
     },
     null,
@@ -85,7 +76,7 @@ const toJson = (rows, { exportedAt }) =>
  *  The runs are collapsed afterwards rather than in one pass: `one; two` replaced in place leaves
  *  `one  two`, two spaces where the separator was beside one. */
 const csvSafe = (value) =>
-  decode(value)
+  String(value ?? "")
     .replace(/[;\r\n]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -117,10 +108,10 @@ const toHtml = (rows, { exportedAt }) => {
     .filter((row) => row.original_url)
     .map((row) => {
       const tags = (row.categories ?? []).map((category) => category.name).join(",");
-      const note = decode(row.notes);
+      const note = row.notes ?? "";
       const link =
         `    <DT><A HREF="${escapeHtml(row.original_url)}" ADD_DATE="${addDate(row.date_added)}"` +
-        `${tags ? ` TAGS="${escapeHtml(tags)}"` : ""}>${escapeHtml(decode(row.title))}</A>`;
+        `${tags ? ` TAGS="${escapeHtml(tags)}"` : ""}>${escapeHtml(row.title)}</A>`;
       return note ? `${link}\n    <DD>${escapeHtml(note)}` : link;
     })
     .join("\n");
@@ -145,4 +136,4 @@ const EXPORT_FORMATS = {
   html: { extension: "html", contentType: "text/html; charset=utf-8", write: toHtml },
 };
 
-module.exports = { EXPORT_FORMATS, decode };
+module.exports = { EXPORT_FORMATS };

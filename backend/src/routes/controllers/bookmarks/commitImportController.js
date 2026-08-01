@@ -55,12 +55,18 @@ const importedTagId = async (conn, userID) => {
  * half that landed. Either the whole file is in the index or none of it is.
  *
  * ⚠️ **The title is stored as it reads in the file.** The legacy controller wrote
- * `encodeURIComponent(anyASCII(title))`, which is why an imported title displays as
- * `Framework%20reimagined` until something decodes it, and why searching the index misses imported
- * rows the moment the query contains a space — `getBookmarksController` compares the decoded input
+ * `encodeURIComponent(anyASCII(title))`, which is why an imported title displayed as
+ * `Framework%20reimagined` until something decoded it, and why searching the index missed imported
+ * rows the moment the query contained a space — `getBookmarksController` compared the decoded input
  * against that encoded column. The GRAPHITE create screen has stored the raw title since COS-302, so
- * this aligns the two write paths on the one that works. It does not fix the rows already in the
- * database: that is DATA 07 (COS-334), and its backfill now has one less source of new work.
+ * this aligned the two write paths on the one that works. ✅ **The rows already in the database were
+ * the other half, and DATA 07 (COS-334) has done them**: `2026-08-01-decode-text.js` decoded 1 177
+ * values, and this controller's output is now indistinguishable from what is in the column.
+ *
+ * ⚠️ **What it does not undo is `anyASCII`.** The legacy import stripped accents before encoding, so
+ * `Café` was already `Cafe` in the file that reached the column — a loss with nothing left to read it
+ * back from. The decode gives the spaces and the punctuation back and cannot give those back, which
+ * is why COS-334 is careful not to be described as repairing the text.
  *
  * **`capture shots` is not an option here.** Nothing captures a screenshot from a url anywhere in
  * this application — the only path to the `screenshot` column is a file the account uploads. The

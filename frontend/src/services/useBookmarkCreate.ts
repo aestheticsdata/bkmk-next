@@ -28,10 +28,12 @@ type CreateBookmarkInput = CreateBookmarkPayload & { screenshot?: File | null };
  * not an absence — plus `categories`, which is `"[]"` when there are none. `url`, `notes`, `reminder`
  * and the file are sent only when they have something in them.
  *
- * **`notes` is encoded**, as the legacy form encoded it, because that is how every note already in
- * the database was stored and how the record screen reads them back (`decodeURIComponent`, with a
- * fallback for the ones written before). The API's bound is three times the front's for the same
- * reason — one accented character costs three bytes once encoded.
+ * ⚠️ **`notes` is sent as it was typed, and it used to be percent-encoded** (COS-334). The legacy form
+ * encoded every field, this kept doing it for notes so that a new row would read like the rows
+ * already there, and seven screens undid it on the way out. The column holds the text itself now —
+ * `2026-08-01-decode-text.js` decoded what was in it — so the encode is gone from here and the
+ * decodes are gone from them. The API's bound came down with it: it was three times the front's to
+ * carry the swelling, and an accented character costs one character again.
  *
  * **No `Content-Type` header.** The legacy service set `multipart/form-data` by hand, which is a
  * media type with no boundary in it; axios happens to correct that for a `FormData` body, and
@@ -49,7 +51,7 @@ const toBookmarkFormData = (input: CreateBookmarkInput): FormData => {
   body.append("categories", JSON.stringify(input.categories));
 
   if (input.url) body.append("url", input.url);
-  if (input.notes) body.append("notes", encodeURIComponent(input.notes));
+  if (input.notes) body.append("notes", input.notes);
   if (input.reminder != null) body.append("reminder", String(input.reminder));
   if (input.screenshot) body.append("screenshot", input.screenshot);
 

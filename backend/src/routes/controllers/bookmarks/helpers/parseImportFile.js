@@ -35,7 +35,9 @@ const isOverLong = (link) => link.length > FIELD_LIMITS.url;
 /** Titles are cut to the column rather than dropped — a long title is still the right bookmark.
  *  The legacy controller cut at 119 characters, a bound that made sense when it stored
  *  `encodeURIComponent(anyASCII(title))` and three bytes could come out of one character; see
- *  `commitImportController` on why it no longer stores it that way. */
+ *  `commitImportController` on why it no longer stores it that way, and COS-334 for the pass that
+ *  took the encoding out of the column too. `FIELD_LIMITS.title` is the column, 512, and a title is
+ *  now that many characters rather than that many characters' worth of escapes. */
 const clampTitle = (title) => (title.length > FIELD_LIMITS.title ? title.slice(0, FIELD_LIMITS.title) : title);
 
 /* An entry, with the two readings of its link that the rest of the import needs (COS-338).

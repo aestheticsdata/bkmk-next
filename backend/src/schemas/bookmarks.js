@@ -114,14 +114,11 @@ const bookmarkBodyShape = {
   title: z.string().min(1).max(FIELD_LIMITS.title),
   /** The form only sends the field when it is filled in, hence the `optional`. */
   url: z.string().max(FIELD_LIMITS.url).optional(),
-  /** The form runs notes through `encodeURIComponent` and the database stores them that
-   *  way. Hence the tripled bound: an encoded character takes up to three bytes
-   *  (`%C3%A9`), and it is the encoded string that travels. The real limit is the
-   *  front's. */
-  notes: z
-    .string()
-    .max(FIELD_LIMITS.notes * 3)
-    .optional(),
+  /** ⚠️ **`* 3` was here, and the encoding it covered is gone** (COS-334). The form ran notes through
+   *  `encodeURIComponent`, an accented character travelled as `%C3%A9`, and the bound had to be three
+   *  times the front's to let a full note through. Nothing encodes on the way in any more, so this is
+   *  the front's limit — the same number, on both sides, meaning the same thing. */
+  notes: z.string().max(FIELD_LIMITS.notes).optional(),
   stars: starsSchema,
   priority: prioritySchema,
   reminder: z.coerce.number().int().positive().optional(),

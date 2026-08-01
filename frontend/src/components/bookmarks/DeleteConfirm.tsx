@@ -12,7 +12,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@components/ui/alert-dialog";
-import { decodeNote } from "@helpers/decodeNote";
 import { DELETE_TEXT } from "@text/delete";
 
 /* `ConfirmDelete_Graphite` — the second of UI 11's two paths (COS-320).
@@ -39,9 +38,11 @@ import { DELETE_TEXT } from "@text/delete";
  * For the same reason `busy` swallows every other way out: `esc`, the backdrop and `cancel` cannot
  * take back a `DELETE` that has already been sent, so they should not appear to.
  *
- * ⚠️ **`title` is decoded, `url` is not.** Titles are stored percent-encoded (see `decodeNote`), and
- * this panel exists to be recognised — an escaped title here would defeat the point of showing it.
- * A url is already in its own escaping and `decodeURIComponent` on one would be a second bug. */
+ * ⚠️ **`title` used to be decoded here and `url` never was** (COS-334). Titles were stored
+ * percent-encoded, and this panel exists to be recognised — an escaped title would have defeated the
+ * point of showing it. The decode is gone with the encoding; the url's absence of one was never the
+ * same question, since a url is already in its own escaping and unescaping one would be a second
+ * bug. */
 function DeleteConfirm({
   id,
   title,
@@ -80,7 +81,7 @@ function DeleteConfirm({
           {/* 13px in the handoff → `text-xs`, off the §3 mapping table. `text-pretty` because this
               is the one line here that can wrap to three, and a one-word last line on a record title
               reads as a rendering fault. */}
-          <div className="text-pretty text-xs leading-normal text-gr-fg-2">{decodeNote(title)}</div>
+          <div className="text-pretty text-xs leading-normal text-gr-fg-2">{title}</div>
 
           {/* Absent rather than blank on a record with no url — a rule this screen shares with the
               index row and the record's command bar, which keep their *controls* in place for that
