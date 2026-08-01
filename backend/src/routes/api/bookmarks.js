@@ -20,6 +20,7 @@ const postBookmarkController = require("../controllers/bookmarks/postBookmarkCon
 const deleteBookmarkController = require("../controllers/bookmarks/deleteBookmarkController");
 const exportBookmarksController = require("../controllers/bookmarks/exportBookmarksController");
 const getDuplicatesController = require("../controllers/bookmarks/getDuplicatesController");
+const getStatsController = require("../controllers/bookmarks/getStatsController");
 const editBookmarkController = require("../controllers/bookmarks/editBookmarkController");
 const parseImportController = require("../controllers/bookmarks/parseImportController");
 const commitImportController = require("../controllers/bookmarks/commitImportController");
@@ -64,6 +65,11 @@ router.get("/duplicates", validate({ query: duplicatesQuerySchema }), catchAsync
 
 /** The whole index, out (COS-333). Above `/:id` for the reason the two routes above it are. */
 router.get("/export", validate({ query: exportQuerySchema }), catchAsync(exportBookmarksController));
+
+/** The rail's `storage` block (COS-310) — records held and how many carry a screenshot. Above
+ *  `/:id` like the three routes before it, and with no `validate()` because it takes nothing but the
+ *  session: the numbers are the whole index's, never the current query's. */
+router.get("/stats", catchAsync(getStatsController));
 
 router.get("/:id", validate({ params: bookmarkIdParamsSchema }), catchAsync(getBookmarkController));
 // `validate` after multer: multer is what fills `req.body` on multipart requests.

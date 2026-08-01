@@ -2,13 +2,12 @@
 
 import { Card } from "@components/ds/Card";
 import { Overline } from "@components/ds/Overline";
-import { alarmLoad, alarmsToday } from "@components/reminders/helpers/alarmLoad";
 import { cn } from "@lib/utils";
+import { useAlarmLoad } from "@src/services/useAlarmLoad";
 import { ALARMS_TEXT } from "@text/alarms";
 import { format } from "date-fns";
 
-import type { LoadDay } from "@components/reminders/helpers/alarmLoad";
-import type { Reminder } from "@src/schemas/reminders";
+import type { AlarmLoadDay } from "@src/schemas/stats";
 
 /** The handoff's empty bar: 14% of the height, so a quiet day is still a mark on the axis rather
  *  than a gap in it. The busiest day takes the remaining 86%. */
@@ -20,22 +19,37 @@ const legend = (date: Date) => format(date, "MMM dd").toLowerCase();
 /* `next 14 days · load` (COS-304) — how the fortnight ahead is distributed.
  *
  * ⚠️ **The bars are counted, not drawn from a list of lucky days.** The handoff hard-codes
- * `[1, 3, 5, 7]`; `alarmLoad` counts the same alarms the table above is listing, and it can, because
- * the screen holds all of them. DATA 05 (COS-310) moves the aggregate to the server — which is where
- * it has to be the moment this list is paginated — and nothing on screen changes when it does.
+ * `[1, 3, 5, 7]`; these are real alarms, and they have been since UI 08.
+ *
+ * ⚠️ **What changed with DATA 05 (COS-310) is where they are counted, and nothing else.** UI 08 did
+ * it here, in `helpers/alarmLoad.ts`, and it was correct: `GET /reminders` returns every armed alarm
+ * unpaginated, so the browser held the complete set. The ticket predicted that nothing on screen
+ * would move when the aggregate went to the server, and nothing does — the value of the move is that
+ * the chart stops depending on a client holding everything. The day that list is paginated, the old
+ * arrangement would have gone on drawing fourteen bars while counting one page.
+ *
+ * The helper left with the hook, and `alarmsToday` with it: it existed to recover the server's
+ * `CURDATE()` by subtracting a countdown from a date, and `GET /reminders/load` sends the day.
  *
  * **The height is relative to the busiest day**, so a full bar means "the most alarms any day in the
  * window has" and not "some alarms". With one alarm a day the chart is flat and full, which is the
  * truth about that fortnight.
  *
- * The card is only rendered when something is armed: with no alarm there is no day to date the axis
- * from, and fourteen empty bars under a caption promising a load would be an invented reading. */
-function AlarmsLoad({ alarms }: { alarms: Reminder[] }) {
-  const today = alarmsToday(alarms);
-  if (!today) return null;
+ * ⚠️ **`armed` is the one thing the server's fourteen rows cannot say, and it is why this component
+ * still takes a prop.** All-zero bars mean two different situations: nothing is armed at all, or
+ * something is and every firing lands past the fortnight — the second is what `load.empty` exists to
+ * print, under a chart that is legitimately flat. The old shape told them apart because it received
+ * the alarms; `alarmsToday` returning `undefined` *was* "nothing armed". So the count comes from the
+ * screen that is already holding the list, and the counting comes from the server.
+ *
+ * The card is not rendered before the load arrives: fourteen empty bars under a caption promising a
+ * load are an invented reading, and a skeleton of them during a request is the same picture for a
+ * shorter time. */
+function AlarmsLoad({ armed }: { armed: number }) {
+  const { load } = useAlarmLoad();
+  if (!armed || !load?.length) return null;
 
-  const days = alarmLoad(alarms, today);
-  const busiest = Math.max(...days.map((day) => day.count));
+  const busiest = Math.max(...load.map((day) => day.count));
 
   return (
     <Card className="flex shrink-0 flex-col px-5 py-4 @max-3xl:px-3.5 @max-3xl:py-3">
@@ -50,9 +64,9 @@ function AlarmsLoad({ alarms }: { alarms: Reminder[] }) {
         aria-label={ALARMS_TEXT.aria.load}
         className="flex h-28 items-end gap-1 @max-3xl:h-16"
       >
-        {days.map((day) => (
+        {load.map((day) => (
           <Bar
-            key={day.date.toISOString()}
+            key={day.day.toISOString()}
             day={day}
             busiest={busiest}
           />
@@ -60,9 +74,9 @@ function AlarmsLoad({ alarms }: { alarms: Reminder[] }) {
       </div>
 
       <div className="mt-2 flex items-center justify-between">
-        <Overline>{legend(days[0].date)}</Overline>
+        <Overline>{legend(load[0].day)}</Overline>
         {busiest === 0 && <Overline className="text-gr-fg-4">{ALARMS_TEXT.load.empty}</Overline>}
-        <Overline>{legend(days[days.length - 1].date)}</Overline>
+        <Overline>{legend(load[load.length - 1].day)}</Overline>
       </div>
     </Card>
   );
@@ -73,12 +87,12 @@ function AlarmsLoad({ alarms }: { alarms: Reminder[] }) {
  *
  *  The height is the one inline style on the screen, and it has to be: it is a computed percentage,
  *  which is what Tailwind cannot express as a class. */
-function Bar({ day, busiest }: { day: LoadDay; busiest: number }) {
+function Bar({ day, busiest }: { day: AlarmLoadDay; busiest: number }) {
   const height = day.count === 0 ? FLOOR : FLOOR + (day.count / busiest) * (100 - FLOOR);
 
   return (
     <div
-      title={ALARMS_TEXT.load.day(format(day.date, "yyyy-MM-dd"), day.count)}
+      title={ALARMS_TEXT.load.day(format(day.day, "yyyy-MM-dd"), day.count)}
       style={{ height: `${height}%` }}
       className={cn(
         // Radius 5 → `rounded-md` (6), the step the chip and the tab were snapped to by DS 01.

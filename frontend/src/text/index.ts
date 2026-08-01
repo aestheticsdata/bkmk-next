@@ -22,6 +22,18 @@ export const INDEX_TEXT = {
     alarm: "has alarm",
     shot: "has shot",
     priority: "prio high",
+
+    /* The handoff's third rail block, arriving with DATA 05 (COS-310).
+     *
+     * ⚠️ **No `db` line.** The handoff draws `db 1.4 mb` under the meter; it is decoration — the
+     * owner's call on 2026-08-01 — and it leaves the same way `uptime`, `IDX/2.4.1` and the two auth
+     * asides did under §8.1. `getStatsController` records the three things the number could have
+     * meant and why none of them was worth a line. */
+    storage: "storage",
+    shots: "shots",
+    /** The meter states the ratio the line above spells out, so it is labelled rather than left to
+     *  announce a bare percentage. */
+    shotsMeter: "records with a screenshot",
   },
 
   command: {
