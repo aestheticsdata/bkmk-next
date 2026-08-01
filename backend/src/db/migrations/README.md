@@ -24,3 +24,4 @@ step.
 | File | Ticket | Dev | Production |
 | --- | --- | --- | --- |
 | `2026-07-30-add-user-recovery-passphrase.sql` | COS-298 | ✅ 2026-07-30 | ⬜ pending the first deploy |
+| `2026-08-01-add-import-run.sql` | COS-307 | ✅ 2026-08-01 | ⬜ pending the first deploy |

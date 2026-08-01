@@ -7,8 +7,8 @@ import { cn } from "@lib/utils";
 import { IMPORT_TEXT } from "@text/import";
 import { useId, useState } from "react";
 
-/** `multer({ limits: { fileSize: 10_000_000 } })` on `POST /bookmarks/upload`. Checked here so an
- *  oversized file is refused before it is read rather than after multer aborts the request. */
+/** `multer({ limits: { fileSize: 10_000_000 } })`, on both import routes. Checked here so an
+ *  oversized file is refused before it is sent rather than after multer aborts the request. */
 const MAX_IMPORT_BYTES = 10_000_000;
 
 /** What the two parsers can read. Matched on the extension rather than on `file.type`, which is what

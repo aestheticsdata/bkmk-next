@@ -31,6 +31,10 @@ export const queryKeys = {
      *  primary button. Its own branch rather than a `list` key: same endpoint, but one row instead of
      *  a page, so it must not be served to the table or serve the table's entry back. */
     filterCount: (query: string) => [ROOTS.bookmarks, "filter-count", query] as const,
+    /** The `last import` line of the import screen's right pane (COS-307). Under the bookmarks root
+     *  on purpose: an import writes records, so the same invalidation that refreshes the index has to
+     *  refresh the line that says an import just happened. */
+    lastImport: () => [ROOTS.bookmarks, "last-import"] as const,
   },
   bookmark: {
     all: [ROOTS.bookmark] as const,

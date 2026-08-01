@@ -4,43 +4,66 @@ import { FieldGroup } from "@components/ds/FieldGroup";
 import { Segment } from "@components/ds/Segment";
 import { IMPORT_TEXT } from "@text/import";
 
-/** The handoff's three, with the two it draws lit. Kept as data so the de-mock ticket has one line
- *  to change when the options start travelling with the request. */
-const OPTIONS = [
-  { key: "skipDuplicates", label: IMPORT_TEXT.options.skipDuplicates, on: true },
-  { key: "captureShots", label: IMPORT_TEXT.options.captureShots, on: true },
-  { key: "tagAsImported", label: IMPORT_TEXT.options.tagAsImported, on: false },
-] as const;
+import type { ImportOptions as Options } from "@src/schemas/import";
 
-/* `on import` (COS-303) — the three switches the handoff puts under the staged table.
+/* `on import` (COS-303, de-mocked by COS-307) — the three switches the handoff puts under the staged
+ * table.
  *
- * ⚠️ **All three are mocked, and all three are disabled — COS-307.** None of them exists on either
- * side: `POST /bookmarks/upload` takes a file and imports every line of it, there is no duplicate
- * check to skip, no capture pipeline to trigger, and no tag to apply.
+ * ⚠️ **Two of the three are live and travel with the commit.** `skip duplicates` decides what the
+ * import passes over — the same `DUP` the table draws, decided server-side at commit time, because a
+ * state the client sends back is a state the client could have edited. `tag as imported` puts every
+ * new record under one category named `imported`, so that a file can be found again after the fact.
  *
- * **Drawn rather than hidden, greyed rather than live**, which is the call the account menu made for
- * its three unbuilt entries (COS-321): the row is also how you learn what the import will one day
- * do, and the one thing worse than a missing control is one that does nothing when pressed. Their
- * lit states are the handoff's, so the row looks like the design rather than like three switches
- * somebody left off.
+ * ⚠️ **`capture shots` stays drawn and disabled, and its ticket is COS-329, not this one.** Nothing
+ * anywhere in this application captures a screenshot from a url: the only path to that column is a
+ * file the account uploads by hand. The API does not accept the flag, precisely so that no caller
+ * can believe it does. Same call the account menu made for its unbuilt entries (COS-321) — shown, so
+ * the row teaches what the import will one day do, and greyed rather than doing nothing when
+ * pressed.
  *
- * The `not wired yet` beside the caption says it once. Three disabled pills each carrying their own
- * explanation would be three times the words for one fact. */
-function ImportOptions() {
+ * **The lit states of the two live switches are the screen's defaults, not the handoff's picture.**
+ * `skip duplicates` starts on because importing a file twice is the reason the state column exists;
+ * `tag as imported` starts off, as the handoff draws it, since it writes a category the account did
+ * not ask for. */
+function ImportOptions({
+  options,
+  onChange,
+  disabled,
+}: {
+  options: Options;
+  onChange: (options: Options) => void;
+  /** While the commit is in flight: the request has already left with these values. */
+  disabled: boolean;
+}) {
+  const toggle = (key: keyof Options) => () => onChange({ ...options, [key]: !options[key] });
+
   return (
     <FieldGroup
       label={IMPORT_TEXT.sections.options}
       hint={IMPORT_TEXT.options.pending}
     >
-      {OPTIONS.map((option) => (
-        <Segment
-          key={option.key}
-          on={option.on}
-          disabled
-        >
-          {option.label}
-        </Segment>
-      ))}
+      <Segment
+        on={options.skipDuplicates}
+        disabled={disabled}
+        onClick={toggle("skipDuplicates")}
+      >
+        {IMPORT_TEXT.options.skipDuplicates}
+      </Segment>
+
+      <Segment
+        on={false}
+        disabled
+      >
+        {IMPORT_TEXT.options.captureShots}
+      </Segment>
+
+      <Segment
+        on={options.tagAsImported}
+        disabled={disabled}
+        onClick={toggle("tagAsImported")}
+      >
+        {IMPORT_TEXT.options.tagAsImported}
+      </Segment>
     </FieldGroup>
   );
 }
