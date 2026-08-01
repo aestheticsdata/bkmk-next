@@ -71,6 +71,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | DATA 02 | COS-307 — staging d'import : parse, commit, options, `last import` | ✅ mergé (PR #32) |
 | hors lot | COS-338 — DATA 09 : forme normale d'url, colonne `host`, backfill | ✅ mergé (PR #34) |
 | DATA 03 | COS-308 — détection de doublons à la création | ✅ mergé (PR #35) |
+| AUTH 05 | COS-324 — récupération par passphrase : écran `/recover` et route | ✅ mergé (PR #40) |
 
 ⚠️ **DATA 03 n'a qu'un étage sur les deux que son ticket décrit, et c'est une mesure qui l'a
 tranché.** Le premier — même url normalisée — trouve 17 groupes et 56 fiches sur l'index réel. Le
@@ -395,6 +396,46 @@ catégorie mais restent pendants : ce que l'on en fait est la décision de donn�
 à **COS-336**, qui touche déjà cette table. Et le filtre par catégorie accepte encore l'identifiant
 d'une catégorie étrangère — il ne rend que les fiches de l'appelant, donc il ne divulgue rien, et le
 resserrer sans motif aurait été élargir le ticket.
+
+✅ **AUTH 05 est fait, et la passphrase a enfin où être dépensée.** UI 02 la collecte depuis COS-298
+et rien ne la consommait ; `/recover` et `POST /users/recover` sont ce qui rend le champ utile. Sur
+la route, **l'ordre des trois middlewares est la posture** et non un détail : `validate` d'abord,
+pour que le compteur soit indexé sur une adresse déjà bornée par zod ; `rateLimit` ensuite, pour
+qu'une tentative soit comptée avant qu'un seul `bcrypt` ne soit payé ; le contrôleur en dernier.
+
+⚠️ **Une seule réponse pour trois échecs, et c'est la moitié chronométrée qui se rate.** Adresse
+inconnue, passphrase fausse, colonne encore à `NULL` : même 401, même phrase — et **même durée**.
+Sortir tôt sur une adresse qui n'existe pas répondrait en une milliseconde là où une vraie coûte les
+~100 ms d'un `bcrypt` au coût 10, ce qui est un oracle de comptes qui se lit au chronomètre. La
+comparaison tourne donc toujours, contre un hash leurre fabriqué au chargement — et il doit être
+**valide**, parce que `bcrypt.compare` refuse un hash malformé immédiatement et rend l'écart tel
+quel. Mesuré : 118 ms pour une adresse connue, 123 ms pour une inconnue.
+
+**Aucune session n'est ouverte, et les sessions du compte tombent après l'`UPDATE`.** Connecter
+quelqu'un sur la foi du secret qu'il vient de déclarer perdu est le raccourci que cette
+fonctionnalité existe pour ne pas prendre : la réponse est un 200 nu et l'écran ressort par
+`/login`. L'ordre compte dans l'autre sens aussi — tombées d'abord, un `UPDATE` qui échouait ensuite
+aurait déconnecté le propriétaire d'un compte dont le mot de passe n'a pas changé.
+
+**Le limiteur de débit est neuf, parce qu'il n'y en avait aucun** — et pfa n'en a pas non plus à
+reporter. Écrit sur le Redis qui porte déjà les sessions plutôt que sur deux dépendances : `INCR` +
+`EXPIRE`, fenêtre fixe, **cinq tentatives par adresse et vingt par source sur un quart d'heure**.
+Deux quotas parce que l'un seul se contourne en faisant tourner l'autre. Ses clés sont sous
+`bkmk-rl:` et non `bkmk:` : `clearSessionsForUser` balaye le second et `JSON.parse` tout ce qu'il y
+trouve.
+
+**Côté écran, le handoff ne dessine ni cette page ni le lien qui y mène** — il est antérieur à la
+décision d'abandonner l'email — donc il n'y a rien ici dont s'écarter : `/recover` reprend les
+proportions de la connexion. `forgot key?` va **dans la barre d'action** de la carte de connexion,
+là où UI 01 avait retiré un `/forgotPassword` sans page derrière, et c'est une mesure qui le place :
+la carte fait **216 px avec le lien et 216 px sans**, sur une barre de 30 px qui reste sur une
+ligne. `/recover` fait 480 × 329, sans débordement horizontal, et sa paire de clés replie sur une
+colonne à 480.
+
+**Vérifié en lançant le serveur** : 15 contrôles en HTTP sur des comptes jetables créés et supprimés
+dans la même passe — les trois refus identiques, une passphrase de moins de 20 caractères refusée
+par `validate` *sans* être comptée, la colonne réellement réécrite, aucun `csrfToken` dans le corps,
+la session effacée de Redis, et `401 401 401 401 401 429` avec 900 s de TTL derrière.
 
 ⚠️ **DATA 01 était déjà livré à 90 %, et le reliquat ne ressemblait pas à son titre.** La pagination
 serveur, l'objet de filtres à six champs et la sérialisation vers l'expression de la barre de commande
