@@ -1,5 +1,6 @@
 const { format } = require("date-fns");
 const dbConnection = require("../../../db/dbinitmysql");
+const { httpError } = require("../../../helpers/httpError");
 const { normaliseUrl } = require("../../../helpers/normaliseUrl");
 const jimpHelper = require("./helpers/jimpHelper");
 const generateHexColor = require("./helpers/generateHexColor");
@@ -12,19 +13,6 @@ const { storedText } = require("./helpers/storedText");
 const DELETE_SCREENSHOT = "delete";
 
 const today = () => format(new Date(), "yyyy-MM-dd");
-
-/** A refusal that has to travel out through a transaction (COS-345).
- *
- * The helpers below run inside `beginTransaction`, so the only way for one of them to refuse *and*
- * take back what the statements above it wrote is to throw. A plain `throw` would land in the
- * handler's `catch` and be flattened into the 500 it writes for anything unexpected — which is the
- * right rollback with the wrong status. Carrying `status` is what lets that `catch` tell a decision
- * from an accident.
- *
- * The key is not invented here: `utils/errorHandlerMiddleware` already answers `err.status ?? 500`.
- * This route never reaches it — it catches its own errors, because it has a transaction to close
- * first — so the same convention is read locally rather than a second one introduced. */
-const httpError = (status, msg) => Object.assign(new Error(msg), { status });
 
 /* The url the record should end up pointing at, given the one it points at now.
  *
