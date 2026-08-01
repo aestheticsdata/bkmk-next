@@ -1,21 +1,16 @@
-/* The import screen's copy (COS-303). Same convention as `@text/create.ts`: the words live here, in
- * English, with no locale segment.
+/* The import screen's copy (COS-303, de-mocked by COS-307). Same convention as `@text/create.ts`:
+ * the words live here, in English, with no locale segment.
  *
  * **What this screen is.** The upload the application already had — one file field and a `send`
  * button — plus the documentation that sat above it. That documentation was a paragraph of French
  * and a `<pre>` holding a raw `sed -n 'l'` dump of a Session Buddy export; it is the same content
  * here, in the right pane, as two shape blocks and a sentence.
  *
- * **The staging table is real.** The file is parsed in the browser, mirroring the backend's own
- * parser, so `title`, `host`, the number of entries and the number of malformed lines are measured
- * from the file that was dropped. DATA 02 (COS-307) moves that parse to the server and the front's
- * copy leaves with it.
- *
- * ⚠️ **Three things the handoff draws have nothing behind them, and they are mocked** (the owner's
- * rule): the `NEW` / `DUP` state with the `new` / `duplicate` halves of the summary, the three
- * `on import` options, and the `last import` line. Each is marked at its use site and all three are
- * listed on **COS-307**, which is also the ticket that gives them real data. The values carrying a
- * hard-coded reading are grouped under `mock` so nothing can read as measured. */
+ * ⚠️ **The `mock` block is gone, and with it three of the four things this screen was inventing.**
+ * The state of each entry and the `new` / `duplicate` halves of the summary are the API's answer, the
+ * two live options travel with the commit, and `last import` is read from `import_run`. What is left
+ * disabled is `capture shots`, because nothing in the application captures a screenshot from a url —
+ * that one is COS-329, and it is said in one line beside the caption rather than promised here. */
 
 export const IMPORT_TEXT = {
   command: {
@@ -58,8 +53,8 @@ export const IMPORT_TEXT = {
     state: "state",
   },
 
-  /** The summary under the table. `parsed` and `malformed` are counted from the file; the middle two
-   *  are not — see `mock.duplicates`. */
+  /** The summary under the table. All four numbers come from the parse endpoint and cover the whole
+   *  file, not the sample of it the table draws. */
   summary: (parsed: number, fresh: number, duplicates: number, malformed: number) =>
     `${parsed} entries parsed · ${fresh} new · ${duplicates} duplicate · ${malformed} malformed`,
 
@@ -73,16 +68,22 @@ export const IMPORT_TEXT = {
     /** The table draws a sample of a long file. Said out loud, so that a table stopping at two
      *  hundred rows cannot read as a file that had two hundred entries. */
     more: (rest: number) => `${rest} more not listed`,
-    /** Reading the file, between the drop and the parse. Long enough to see on a large export. */
+    /** Between the drop and the parse — a round trip now, and the file still has to be uploaded, so
+     *  it lasts longer than it did when the browser read it. */
     reading: "reading the file…",
+    /** The `state` column, lowercase because the cell wears `uppercase`. The API answers `NEW` /
+     *  `DUP`; what it compares to decide is documented on `markImportDuplicates`. */
+    new: "new",
+    duplicate: "dup",
   },
 
   options: {
     skipDuplicates: "skip duplicates",
     captureShots: "capture shots",
     tagAsImported: "tag as imported",
-    /** Said once beside the caption rather than three times on three disabled pills. */
-    pending: "not wired yet",
+    /** The one switch still drawn and disabled — no route accepts it, because nothing captures a
+     *  screenshot from a url. Said once beside the caption, as it was when all three were inert. */
+    pending: "capture not wired yet",
   },
 
   formats: {
@@ -100,23 +101,23 @@ export const IMPORT_TEXT = {
     csv: "Oral History of Bob Belleville;https://…\nWhat Makes A Good Cli Tool;https://…",
   },
 
+  /** The right pane's footer, read from `import_run` (COS-307). `entries` is what the run wrote and
+   *  `skipped` what it passed over, so the two together say what became of that file. */
+  lastImport: {
+    line: (date: string, entries: number, skipped: number) =>
+      `last import ${date} · ${entries} entries · ${skipped} skipped`,
+    /** An account that has never imported. Not `0 entries · 0 skipped` under today's date, which
+     *  would be a reading of something that never happened. */
+    none: "no import yet",
+  },
+
   errors: {
     /** The upload failed. The API answers 500 with the offending url or title; neither is worth
      *  repeating to someone who dropped a file of a thousand lines. */
     submit: "could not import this file",
-  },
-
-  /* ─── Mocked readings — COS-307 ──────────────────────────────────────────────────────────
-   * Hard-coded values that look measured and are not, together and named for what they are. */
-  mock: {
-    /** Every staged row's state. Nothing looks for duplicates — DATA 02 is the endpoint that does —
-     *  so every entry reads as new, which is what an unrun check yields. `DUP` is drawn nowhere. */
-    state: "new",
-    /** The `duplicate` half of the summary, for the same reason. `parsed`, `new` and `malformed`
-     *  around it are counted from the file; only this one is a constant. */
-    duplicates: 0,
-    /** The right pane's footer. Nothing records the history of past imports. */
-    lastImport: "last import 2026-07-11 · 341 entries · 12 skipped",
+    /** The parse failed — the round trip, not the file's shape: a file the parser cannot read comes
+     *  back as zero entries and a count of malformed lines, which is an answer and not an error. */
+    parse: "could not read this file",
   },
 
   aria: {

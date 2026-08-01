@@ -1,44 +1,87 @@
-import { FIELD_LIMITS } from "@src/schemas/fieldLimits";
 import { z } from "zod";
 
-/* Bookmark import (COS-318) — `POST /bookmarks/upload`.
+/* Bookmark import (COS-318, rewritten by COS-307) — the staging endpoints.
  *
- * The file goes out as `multipart/form-data` under the `bookmark_file` field, and the
- * backend is what parses it: either a `title;link` CSV, or the browsers' Netscape export,
- * whose first two lines it skips before reading in pairs.
+ * The screen used to talk to one route, `POST /bookmarks/upload`, which took a file and imported
+ * every line of it. There are three now, and they are the staging the handoff draws:
  *
- * So the front sees **no parsed entry** today: the response is a `{ msg }`, and on failure
- * the backend adds the offending line. The entry and summary schemas below describe what
- * UI 08 (COS-304) has to show — a preview before upload, a report after — and what the
- * backend will have to return for it. They are wired nowhere until that ticket moves the
- * parsing. */
+ * - `POST /bookmarks/import/parse` — what is in the file, writing nothing;
+ * - `POST /bookmarks/import` — the same file again, plus the options, written;
+ * - `GET /bookmarks/import/last` — the account's most recent run.
+ *
+ * ⚠️ **The entry shapes describe what the server sends, and the front no longer produces them.**
+ * The schemas that used to sit here were a description of an endpoint that did not exist yet, beside
+ * a browser-side parser (`parseImport.ts`) that filled in for it. Both are gone: the parse arrives
+ * over the wire, validated here, and there is one parser left, in the backend.
+ */
 
-/** One line of the file, as the parser produces it. */
-export const ImportEntrySchema = z.object({
-  title: z.string().min(1).max(FIELD_LIMITS.title),
-  link: z.string().min(1).max(FIELD_LIMITS.url),
+/** `NEW` or `DUP`, as `markImportDuplicates` marks them. What "duplicate" means — an exact match on
+ *  the stored url, an assumed limit until COS-338 — is documented on that helper. */
+export const IMPORT_STATES = ["NEW", "DUP"] as const;
+
+export const StagedEntrySchema = z.object({
+  title: z.string(),
+  link: z.string(),
+  /** `null` when the link is not a url the `URL` constructor can read. Still imported. */
+  host: z.string().nullable(),
+  /** Its position in the file — the only stable key an entry has, since two lines can be identical
+   *  and often are in an export taken twice. */
+  at: z.number().int().min(0),
+  state: z.enum(IMPORT_STATES),
 });
 
-export type ImportEntry = z.infer<typeof ImportEntrySchema>;
+export type StagedEntry = z.infer<typeof StagedEntrySchema>;
 
-export const ImportEntryListSchema = z.array(ImportEntrySchema);
-
-/** The report of an import run. */
+/** The four numbers under the staged table. They cover the **whole** file, while `entries` beside
+ *  them is a sample of it — the endpoint caps what it returns, and `parsed` is what says so. */
 export const ImportSummarySchema = z.object({
   parsed: z.number().int().min(0),
-  imported: z.number().int().min(0),
-  skipped: z.number().int().min(0),
-  errors: z.array(z.object({ line: z.number().int().optional(), reason: z.string() })).default([]),
+  new: z.number().int().min(0),
+  duplicates: z.number().int().min(0),
+  malformed: z.number().int().min(0),
 });
 
 export type ImportSummary = z.infer<typeof ImportSummarySchema>;
 
-/** What the backend **actually** returns today: a message, plus on failure the url or
- *  title whose insert blew up. */
-export const ImportResponseSchema = z.object({
-  msg: z.string(),
-  url: z.string().optional(),
-  title: z.string().optional(),
+export const ImportParseResponseSchema = z.object({
+  entries: z.array(StagedEntrySchema),
+  summary: ImportSummarySchema,
 });
 
-export type ImportResponse = z.infer<typeof ImportResponseSchema>;
+export type ImportParseResponse = z.infer<typeof ImportParseResponseSchema>;
+
+/** What the commit reports. `imported` and `skipped` are what the run wrote and what it passed over;
+ *  `parsed` and `malformed` describe the file, unchanged from the preview. */
+export const ImportCommitResponseSchema = z.object({
+  msg: z.string(),
+  parsed: z.number().int().min(0),
+  imported: z.number().int().min(0),
+  skipped: z.number().int().min(0),
+  malformed: z.number().int().min(0),
+});
+
+export type ImportCommitResponse = z.infer<typeof ImportCommitResponseSchema>;
+
+/** The right pane's footer. `null` for an account that has never imported — a zeroed line under a
+ *  date that never happened would be a reading, and this screen has just stopped carrying one. */
+export const LastImportResponseSchema = z.object({
+  lastImport: z
+    .object({
+      filename: z.string(),
+      entries: z.number().int().min(0),
+      skipped: z.number().int().min(0),
+      /** `yyyy-MM-dd`, formatted by the API from a `DATETIME`. */
+      ranAt: z.string(),
+    })
+    .nullable(),
+});
+
+export type LastImport = z.infer<typeof LastImportResponseSchema>["lastImport"];
+
+/** The two switches the commit accepts. `captureShots` is not among them: nothing in this
+ *  application captures a screenshot from a url, so the API does not pretend to take the flag and
+ *  the screen leaves it disabled — COS-329 is where that capture gets built. */
+export type ImportOptions = {
+  skipDuplicates: boolean;
+  tagAsImported: boolean;
+};

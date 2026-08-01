@@ -76,3 +76,15 @@ CREATE TABLE bookmark_category (
    FOREIGN KEY (category_id) REFERENCES category(id),
    CONSTRAINT uc_bookmark_category UNIQUE (bookmark_id, category_id)
 );
+
+-- One row per committed import (COS-307), written inside the transaction that inserts the
+-- bookmarks. It is what the import screen's `last import` line reads; see migrations/.
+CREATE TABLE import_run (
+    id       INT(11) AUTO_INCREMENT PRIMARY KEY,
+    user_id  INT(11) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    entries  INT(11) NOT NULL,
+    skipped  INT(11) NOT NULL,
+    ran_at   DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);

@@ -1,4 +1,7 @@
+"use client";
+
 import { Overline } from "@components/ds/Overline";
+import { useLastImport } from "@src/services/useBookmarkImport";
 import { IMPORT_TEXT } from "@text/import";
 
 /* The right pane (COS-303): what the screen accepts, and what those two files look like.
@@ -13,10 +16,17 @@ import { IMPORT_TEXT } from "@text/import";
  * The link survives because it earns its keep: the `.txt` shape only exists if you have the
  * extension, and this is where you find out which one it is.
  *
- * ⚠️ **`last import` is mocked — COS-307.** Nothing records the history of past imports; the date
- * and the two counts are the handoff's own. It is the pane's footer rather than a block, and it is
- * in the quietest ink on the screen. */
+ * ⚠️ **`last import` is real since COS-307**, read from `import_run` — a row written by the commit,
+ * inside the transaction that inserts the records, so the line cannot describe an import that rolled
+ * back. It was the handoff's own sample date until then. An account that has never imported gets a
+ * sentence saying so rather than a zeroed reading. It is the pane's footer rather than a block, and
+ * it is in the quietest ink on the screen.
+ *
+ * The hook lives here rather than in `BookmarkImport` because this is the only thing that reads it,
+ * and the commit invalidates the whole `bookmarks` root — so the line refreshes itself. */
 function ImportFormats() {
+  const { lastImport } = useLastImport();
+
   return (
     <>
       <div className="grid gap-1.5">
@@ -47,9 +57,10 @@ function ImportFormats() {
         <Shape>{IMPORT_TEXT.formats.csv}</Shape>
       </div>
 
-      {/* ⚠️ Mock — COS-307. */}
       <p className="border-t border-gr-border pt-3 text-3xs leading-relaxed text-gr-fg-4">
-        {IMPORT_TEXT.mock.lastImport}
+        {lastImport
+          ? IMPORT_TEXT.lastImport.line(lastImport.ranAt, lastImport.entries, lastImport.skipped)
+          : IMPORT_TEXT.lastImport.none}
       </p>
     </>
   );

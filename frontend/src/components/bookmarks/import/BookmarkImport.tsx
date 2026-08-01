@@ -5,82 +5,65 @@ import { ImportDropZone } from "@components/bookmarks/import/ImportDropZone";
 import { ImportFormats } from "@components/bookmarks/import/ImportFormats";
 import { ImportOptions } from "@components/bookmarks/import/ImportOptions";
 import { ImportStaged } from "@components/bookmarks/import/ImportStaged";
-import { parseImportFile } from "@components/bookmarks/import/parseImport";
 import { Card } from "@components/ds/Card";
 import { Overline } from "@components/ds/Overline";
 import { ROUTES } from "@components/shared/config/constants";
-import { useBookmarkImport } from "@src/services/useBookmarkImport";
+import { useImportCommit, useImportParse } from "@src/services/useBookmarkImport";
 import { IMPORT_TEXT } from "@text/import";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import type { ParseResult } from "@components/bookmarks/import/parseImport";
+import type { ImportOptions as Options } from "@src/schemas/import";
 
-/* `Upload_Graphite` — the import screen (COS-303).
+/** `skip duplicates` on, because importing the same export twice is the case the state column was
+ *  drawn for; `tag as imported` off, as the handoff draws it, since it writes a category nobody
+ *  asked for. */
+const DEFAULT_OPTIONS: Options = { skipDuplicates: true, tagAsImported: false };
+
+/* `Upload_Graphite` — the import screen (COS-303, staged for real by COS-307).
  *
  * **What the screen was**: a file input, a `send` button, a paragraph of French, and a `<pre>`
  * holding a raw `sed -n 'l'` dump of a Session Buddy export. All of the information survives; the
  * documentation moved into the right pane, where the handoff puts it.
  *
- * **What is new is the staging, and it is real.** The file is read and parsed in the browser before
- * anything is sent, so you can see what is in it — `title`, `host`, how many entries, how many lines
- * the parser could not read. `parseImport.ts` mirrors the backend's parser deliberately, and its
- * header says why it exists twice and what removes it.
+ * ⚠️ **The staging is the API's now, and it is the whole point of DATA 02.** UI 07 parsed the file in
+ * the browser because no endpoint parsed without writing, which meant two parsers that had to be
+ * kept in step by hand and a `state` column that could only say `NEW`. Dropping a file now posts it
+ * to `POST /bookmarks/import/parse`, which answers with the entries, what each one is against the
+ * index, and the four counts; `send` posts the same file to `POST /bookmarks/import` with the two
+ * options. The browser-side parser is gone.
  *
- * ⚠️ **Three things the handoff draws are mocked — COS-307**, marked where they are drawn: the
- * `NEW` / `DUP` state with the `new` / `duplicate` halves of the summary, the three `on import`
- * options, and `last import`. That ticket is DATA 02, which is also the parse endpoint, so all four
- * arrive together.
- *
- * ⚠️ **`send` still posts the whole file.** The staging is a preview of the import, not a
- * transaction that precedes it: there is one endpoint and it imports every line. Anything else would
- * mean a commit endpoint, which is COS-307's.
+ * ⚠️ **`send` lights up when there is a parse, not when there is a file.** What is sent is what the
+ * table showed, so the button follows the table: while the parse is in flight there is nothing
+ * staged to commit, and if the parse failed, committing would be sending a file the server just
+ * failed to read.
  *
  * The card fills the desk, like the insert screen's — the right pane has the same content at every
  * moment, so there is no empty height to avoid, and the left column is meant to scroll under it. */
 function BookmarkImport() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
-  const [parsed, setParsed] = useState<ParseResult>();
   const [error, setError] = useState<string>();
-  const send = useBookmarkImport();
+  const [options, setOptions] = useState<Options>(DEFAULT_OPTIONS);
+  const parse = useImportParse();
+  const commit = useImportCommit();
 
-  /* Reading the file is asynchronous and parsing it is not free — a Session Buddy export runs to
-   * thousands of lines — so it happens once per file, in an effect, rather than during render.
-   *
-   * `cancelled` is what keeps a slow read of a large file from landing after a second, smaller file
-   * has already been staged: without it the table would end up showing the wrong file's entries. */
-  useEffect(() => {
-    if (!file) {
-      setParsed(undefined);
-      return;
-    }
-
-    let cancelled = false;
-    setParsed(undefined);
-
-    file
-      .text()
-      .then((text) => {
-        if (cancelled) return;
-        setParsed(parseImportFile(file.name, text));
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setError(IMPORT_TEXT.drop.unreadable);
-        setFile(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [file]);
+  /* Staging a file is one call, made from the gesture that picked it rather than from an effect
+   * watching `file`: an effect would have to carry the mutation in its dependencies and re-run when
+   * react-query changes its state, which is a request per render. `reset()` first, so the previous
+   * file's table is not on screen while the new one uploads. */
+  const stage = (picked: File) => {
+    setError(undefined);
+    setFile(picked);
+    parse.reset();
+    parse.mutate(picked);
+  };
 
   const leave = () => router.push(ROUTES.bookmarks.path);
 
-  const commit = () => {
-    if (!file || send.isPending) return;
-    send.mutate(file, { onSuccess: leave });
+  const send = () => {
+    if (!file || !parse.data || commit.isPending) return;
+    commit.mutate({ file, options }, { onSuccess: leave });
   };
 
   /* `⌘↵ send`, which the status bar has printed since DS 03 — `drop file` beside it is a gesture,
@@ -93,20 +76,20 @@ function BookmarkImport() {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey)) return;
       event.preventDefault();
-      commit();
+      send();
     };
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [commit]);
+  }, [send]);
 
   return (
     <Card className="flex min-h-0 flex-1 flex-col @max-3xl:flex-none @max-3xl:shrink-0">
       <ImportCommandBar
-        busy={send.isPending}
-        ready={Boolean(file)}
+        busy={commit.isPending}
+        ready={Boolean(parse.data)}
         onCancel={leave}
-        onSend={commit}
+        onSend={send}
       />
 
       <div className="grid min-h-0 flex-1 grid-cols-[1fr_--spacing(95)] @max-3xl:grid-cols-1">
@@ -114,26 +97,26 @@ function BookmarkImport() {
           <ImportDropZone
             file={file}
             error={error}
-            onFile={(picked) => {
-              setError(undefined);
-              setFile(picked);
-            }}
+            onFile={stage}
             onError={setError}
           />
 
-          {file &&
-            (parsed ? (
-              <ImportStaged
-                filename={file.name}
-                parsed={parsed}
-              />
-            ) : (
-              <Overline>{IMPORT_TEXT.states.reading}</Overline>
-            ))}
+          {file && parse.isPending && <Overline>{IMPORT_TEXT.states.reading}</Overline>}
+          {file && parse.isError && <Overline className="text-gr-accent-2">{IMPORT_TEXT.errors.parse}</Overline>}
+          {file && parse.data && (
+            <ImportStaged
+              filename={file.name}
+              staged={parse.data}
+            />
+          )}
 
-          <ImportOptions />
+          <ImportOptions
+            options={options}
+            onChange={setOptions}
+            disabled={commit.isPending}
+          />
 
-          {send.isError && <Overline className="text-gr-accent-2">{IMPORT_TEXT.errors.submit}</Overline>}
+          {commit.isError && <Overline className="text-gr-accent-2">{IMPORT_TEXT.errors.submit}</Overline>}
         </div>
 
         <div className="gr-scroll grid min-h-0 content-start gap-4 overflow-y-auto border-l border-gr-border bg-white/10 p-5 @max-3xl:overflow-visible @max-3xl:border-t @max-3xl:border-l-0 @max-3xl:p-3.5">

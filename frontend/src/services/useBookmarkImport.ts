@@ -1,41 +1,99 @@
 "use client";
 
+import { useAuth } from "@auth/context/AuthContext";
 import useRequestHelper from "@helpers/useRequestHelper";
 import { queryKeys } from "@lib/query/keys";
-import { ImportResponseSchema } from "@src/schemas/import";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ImportCommitResponseSchema, ImportParseResponseSchema, LastImportResponseSchema } from "@src/schemas/import";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-/* Sending the import file (COS-303).
+import type { ImportOptions } from "@src/schemas/import";
+
+/** The multipart field name is the backend's: `upload.single("bookmark_file")`, on both routes. */
+const FILE_FIELD = "bookmark_file";
+
+const fileBody = (file: File): FormData => {
+  const body = new FormData();
+  body.append(FILE_FIELD, file);
+  return body;
+};
+
+/* The import, in three calls (COS-307).
  *
- * ⚠️ **The upload is still direct, and the staging on screen is a preview of it.** The handoff draws
- * a staged table and three options, which implies a parse endpoint that writes nothing followed by a
- * commit that takes the retained entries — that is DATA 02 (COS-307). Until it exists there is one
- * call, `POST /bookmarks/upload`, and it takes the file and imports every line of it. So `send`
- * sends the file, exactly as the legacy screen did; what changed is that you can see what is in it
- * first.
+ * UI 07 had one: `POST /bookmarks/upload`, which took the file and imported every line of it, so the
+ * staging on screen was a preview drawn by a parser the browser carried for the occasion. The
+ * staging is now the API's — see `schemas/import.ts` for the three routes and what each answers.
  *
- * `ImportResponseSchema` is what the endpoint answers **today**: a message, plus on failure the url
- * or title whose insert blew up. `ImportSummarySchema` beside it in the same file describes the
- * report COS-307 will return, and stays unwired until then — the comment PLAT 05 left on it said as
- * much.
- *
- * The invalidation is the index's and nothing more: an import writes `bookmark` and `url` rows and
- * touches neither categories nor alarms. */
-function useBookmarkImport() {
-  const queryClient = useQueryClient();
+ * ⚠️ **The file is sent twice, once to each POST, and that is the design.** Nothing is remembered
+ * between the two calls: there is no staging table, no draft in the session, and no entry list
+ * travelling back up. The commit re-parses the same file, so what it writes is what the preview
+ * showed, and neither side has to trust the other's copy of it. `commitImportController` carries the
+ * long version of the reasoning.
+ */
+function useImportParse() {
   const { privateRequest } = useRequestHelper();
 
   return useMutation({
     mutationFn: async (file: File) => {
-      const body = new FormData();
-      // The field name is the backend's: `upload.single("bookmark_file")`.
-      body.append("bookmark_file", file);
-
-      const response = await privateRequest("/bookmarks/upload", { method: "POST", data: body });
-      return ImportResponseSchema.parse(response.data);
+      const response = await privateRequest("/bookmarks/import/parse", { method: "POST", data: fileBody(file) });
+      // The boundary: a staged file leaves this function, not an axios response.
+      return ImportParseResponseSchema.parse(response.data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all }),
   });
 }
 
-export { useBookmarkImport };
+/* The commit.
+ *
+ * The two options travel as `"1"` / `"0"` because a multipart body carries strings and the API reads
+ * them as such — `"false"` is a non-empty string, which is the bug `queryFlagSchema` exists to keep
+ * out. `captureShots` is not sent: no route accepts it, and nothing captures a screenshot from a url
+ * (COS-329).
+ *
+ * `bookmarks.all` is the whole root, so invalidating it covers the index, the chrome's counter *and*
+ * `last-import`, which hangs under it precisely so that one call refreshes the line saying an import
+ * just happened. The categories go with it because `tag as imported` can create one. */
+function useImportCommit() {
+  const queryClient = useQueryClient();
+  const { privateRequest } = useRequestHelper();
+
+  return useMutation({
+    mutationFn: async ({ file, options }: { file: File; options: ImportOptions }) => {
+      const body = fileBody(file);
+      body.append("skipDuplicates", options.skipDuplicates ? "1" : "0");
+      body.append("tagAsImported", options.tagAsImported ? "1" : "0");
+
+      const response = await privateRequest("/bookmarks/import", { method: "POST", data: body });
+      return ImportCommitResponseSchema.parse(response.data);
+    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.categories.all }),
+      ]),
+  });
+}
+
+/* `last import` — the right pane's footer, which was a hard-coded string until `import_run` existed.
+ *
+ * `null` is a real answer and not a loading state: an account that has never imported has no last
+ * import, and the pane says so rather than printing zeroes under an invented date. */
+function useLastImport() {
+  const { privateRequest } = useRequestHelper();
+  // The gate, not a parameter — see `useAlarms` (COS-306).
+  const isSignedIn = Boolean(useAuth().user?.id);
+
+  const lastImport = useQuery({
+    queryKey: queryKeys.bookmarks.lastImport(),
+    queryFn: async () => {
+      const response = await privateRequest("/bookmarks/import/last");
+      return LastImportResponseSchema.parse(response.data).lastImport;
+    },
+    enabled: isSignedIn,
+  });
+
+  return {
+    lastImport: lastImport.data ?? null,
+    isLoading: lastImport.isLoading,
+  };
+}
+
+export { useImportCommit, useImportParse, useLastImport };
