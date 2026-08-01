@@ -54,7 +54,8 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-321 — le menu de compte dans le chrome | ✅ mergé (PR #22) |
 | UI 05 | COS-301 — écran Record : la fiche en consultation | ✅ mergé (PR #23) |
 | UI 06 | COS-302 — écran Insert : le formulaire de création | ✅ mergé (PR #25) |
-| hors lot | COS-329 — de-mock de l'écran Insert | ⏳ ouvert par UI 06 |
+| hors lot | COS-329 — de-mock de l'écran Insert : le titre automatique | ✅ mergé (PR #42) |
+| hors lot | COS-393 — capture auto depuis l'url, détachée de COS-329 | ⏳ ouvert par COS-329 |
 | UI 07 | COS-303 — écran Import : dépôt, staging, formats | ✅ mergé (PR #26) |
 | UI 08 | COS-304 — écran Alarms : inventaire, compte à rebours, charge 14 jours | ✅ mergé (PR #27) |
 | hors lot | COS-330 — de-mock de l'écran Alarms (snooze / done) | ⏳ ouvert par UI 08 |
@@ -121,6 +122,12 @@ valeur en dur est marquée sur place, et un ticket `de-mock` la reprend. Pour ce
 index`, et le titre récupéré depuis le `<title>` de la page. Le `record preview`, lui, n'est pas
 mocké — chaque ligne est calculée depuis le brouillon, et son `id` affiche `—` parce que
 l'identifiant est ce que l'insertion retourne.
+
+✅ **Soldé depuis, en trois temps** : les doublons par COS-308, le titre par COS-329, et la capture
+automatique — seule valeur encore en dur sur cet écran — détachée en **COS-393**, qui est le ticket
+que les marqueurs de mock citent désormais. La règle a donc tenu jusqu'au bout sur cet écran : rien
+n'a été retiré en silence, et chaque valeur inventée a fini par être remplacée ou par changer de
+ticket au vu de tous.
 
 ⚠️ **Le périmètre de contenu, lui, reste celui de l'écran existant** — les deux règles ne se
 contredisent pas. UI 06 livre les huit champs que le formulaire portait déjà et rien de plus ; `group`
@@ -484,6 +491,70 @@ non mesuré**.
 `(user_id, name)` — deux comptes ne peuvent pas avoir une catégorie du même nom. La description du
 ticket parle de doublons à l'intérieur d'un compte ; le problème mord aussi entre eux.
 
+✅ **COS-329 est fait, et il s'est réduit à un tiers de lui-même — deux fois, et jamais par
+manque de temps.**
+
+Le ticket portait trois dé-mocks d'ampleurs très inégales. Les doublons étaient déjà soldés par
+COS-308. La capture automatique est un navigateur sans tête, une file et un worker : elle part en
+**COS-393**, et tous les marqueurs de mock du code la citent maintenant à la place de COS-329. Reste
+ce qui est livré : le titre lu dans le `<title>` de la page, sur `GET /bookmarks/page-title`. Le
+placeholder du champ redevient les mots du handoff, `auto-fetched from <title>`, que UI 06 avait
+refusés faute de pouvoir les tenir.
+
+⚠️ **C'est la seule route de bkmk qui fait ouvrir au serveur une connexion vers une adresse choisie
+par l'appelant**, donc elle est bornée des deux côtés. `http`/`https` seuls ; l'adresse est résolue et
+vérifiée **avant chaque requête** et non seulement la première, les redirections étant suivies à la
+main sur trois sauts au plus — un hôte public a tout loisir de répondre 302 vers l'autre côté du
+pare-feu, et `fetch` l'aurait suivi sans que personne regarde. Loopback, privées, lien-local, CGNAT et
+multicast sont refusées. Cinq secondes, un mégaoctet, lecture arrêtée à `</head>`, et un quota de
+soixante par cinq minutes **par session** plutôt que par adresse : un foyer, c'est une adresse et
+plusieurs personnes. La course DNS résiduelle est écrite dans l'en-tête du helper plutôt que passée
+sous silence.
+
+**Deux mesures ont changé le code avant qu'il soit figé.** Le plafond de lecture était 256 Ko : le
+`<title>` d'une page YouTube est à l'octet **685 990**, derrière 696 Ko de configuration en ligne.
+À l'ancien chiffre, l'hôte qui représente 963 des 1 331 fiches de l'index — celui pour qui ça compte
+le plus — revenait sans titre. Et une réponse qui n'est pas `ok` ne rend **jamais** son titre :
+`stackoverflow.com` et `etsy.com` répondent 403 à ce fetcher avec un corps titré `Just a moment...`,
+soit précisément la chaîne qui ne doit atterrir dans aucune fiche. Le champ vide est la meilleure
+réponse, et l'écran écrit `no title found` pour qu'un hôte qui refuse ne se confonde pas avec une
+fonctionnalité cassée.
+
+⚠️ **Un `useMutation` et pas un `useQuery`, et c'est la décision de façade la plus importante.** Une
+query se relance seule au remontage, au retour sur l'onglet et à la reconnexion — c'est la forme la
+plus proche d'un fetch automatique qui pouvait se glisser sur cet écran, et le propriétaire a demandé
+explicitement qu'il n'y en ait aucun. Trois gardes en plus : le titre est vide, l'url parse, et cette
+url n'a pas déjà été demandée. La réponse est **re-confrontée au champ quand elle arrive**, parce que
+le geste naturel est de tabuler dans le titre et de taper : un fetch qui arrive second ne doit pas
+reprendre le champ.
+
+⚠️ **La favicon a été construite sur ce fetcher, puis retirée — et c'est la partie à ne pas rouvrir
+sans relire ce paragraphe.** Le ticket la repliait ici, à bon droit sur la forme : le `<head>` qui
+donne le titre est celui qui nomme l'icône, donc un ticket séparé aurait voulu dire deux fetchers.
+Ce qui l'a tuée est une mesure. Le ticket affirme qu'« une favicon de 16 px par ligne est l'aide au
+balayage la plus forte disponible sur une table mono de 22 lignes » ; l'index dit **1 331 fiches,
+1 241 avec un hôte, 160 hôtes distincts, dont `youtube.com` 963 — 78 %**. La colonne aurait dessiné la
+même marque sur ~17 lignes sur 22. Le chiffre se lit dans les deux sens — un champ uniforme fait
+ressortir l'exception — d'où un arbitrage plutôt qu'une décision unilatérale ; la réponse a été de
+jeter. Ce qui a été écrit puis supprimé, pour qui reprendrait : un store à clé d'**hôte** (160
+téléchargements et non 1 331), sa table, un décodeur de conteneur ICO — quatre hôtes sur dix mesurés
+servent un PNG nu sous `image/x-icon`, quatre servent du DIB 32bpp à 5–17 Ko contre ~700 o une fois
+décodé — un backfill des 160 hôtes, et une carte de favicons sur chaque réponse d'index. Le compte est
+gardé en tête de `helpers/fetchPageTitle.js`.
+
+**Vérifié :** dix hôtes réels (huit titres corrects dont YouTube et un repli `og:title`, deux `null`
+sur les 403) ; quatorze cas de garde d'adresse, toutes les plages privées refusées **en 0 ms sans
+requête sortante**, `172.32.0.1` et les adresses publiques passant ; la route en session à 200 / `null`
+/ 400 ; le quota à 60 puis 429 au compte exact ; et l'écran piloté en Chrome sans tête (remplissage au
+blur, `no title found`, non-écrasement d'un titre déjà tapé).
+
+⚠️ **La QA visuelle n'est pas faite**, même empêchement que d'habitude : le jugement sur les deux
+nouvelles lectures à côté du libellé `title` revient au propriétaire.
+
+⚠️ **Aucun cron, aucun lot, aucune tâche de fond**, vérifié à la demande : le fetch sortant a une
+seule entrée et c'est un `onBlur`. Le seul ordonnanceur du dépôt reste `cron/cron-mysql.js`, le dump
+MySQL, antérieur et non touché.
+
 ⚠️ **DATA 01 était déjà livré à 90 %, et le reliquat ne ressemblait pas à son titre.** La pagination
 serveur, l'objet de filtres à six champs et la sérialisation vers l'expression de la barre de commande
 sont arrivés avec UI 03 et UI 04 ; ce que le ticket gardait vraiment, c'était le compte de pages fait
@@ -560,7 +631,8 @@ ligne en échec, après avoir inséré toutes celles d'avant et sans dire lesque
 fait ne peut pas être rejoué sans dupliquer la moitié atterrie. La ligne d'`import_run` est écrite
 dans la même transaction, donc `last import` ne peut pas décrire un import annulé.
 
-⚠️ **`capture shots` reste dessinée et désactivée, et son de-mock est COS-329, pas un ticket neuf.**
+⚠️ **`capture shots` reste dessinée et désactivée, et son de-mock est COS-393** — c'était COS-329
+jusqu'à ce que celui-ci se scinde, et ce n'est toujours pas un ticket neuf.
 Rien nulle part ne capture une image depuis une url — le seul chemin vers la colonne `screenshot`
 est un fichier déposé à la main — et l'API n'accepte pas le drapeau, exprès, pour qu'aucun appelant
 ne croie l'inverse. Les deux autres options sont vivantes : `skip duplicates` filtre sur le `DUP`
@@ -2207,6 +2279,9 @@ de COS-329** — la ligne `2 duplicate candidates in index` était le `2` de la 
 `CREATE_TEXT.mock`, parce que rien ne cherchait. COS-329 se réduit à deux points : la capture
 automatique et le titre récupéré depuis le `<title>`.
 
+✅ **Et depuis, à un seul** : COS-329 a livré le titre, et la capture automatique est partie en
+COS-393. Voir le §0.
+
 La question est posée sur `url.normalised`, c'est-à-dire sur le helper de COS-338, celui-là même
 qu'appelle le staging d'import. C'est tout l'intérêt d'avoir pris DATA 09 avant : les deux écrans ne
 peuvent pas être en désaccord sur ce qu'est un doublon.
@@ -2727,6 +2802,11 @@ trancher, pas la colonne devenue lisible.
 - **COS-329** absorbe la favicon si l'occasion se présente — c'est le même fetch que le titre
   automatique. À stocker localement : pointer un service de favicons tiers poserait une balise sur
   chaque ligne d'un index dont l'écran de signup annonce « self-hosted · no tracking ».
+  ❌ **Écartée depuis, après avoir été construite** : l'index est à 78 % un seul hôte, donc la colonne
+  de 16 px dessinerait la même marque sur ~17 lignes sur 22. Le raisonnement complet, le chiffre et le
+  coût de reconstruction sont au §0 et en tête de `helpers/fetchPageTitle.js` — c'est là qu'il faut
+  repartir si la question se rouvre, pas de la phrase du ticket. La règle du stockage local, elle,
+  reste juste et n'a jamais été le point de blocage.
 
 ### 10.4 Écartés, et pourquoi
 
