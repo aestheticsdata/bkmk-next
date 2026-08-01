@@ -65,7 +65,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-344 — index : glyphes dimensionnés à leur encre, bande alignée sur `added` | ✅ mergé (PR #29) |
 | UI 11 | COS-320 — suppression : confirmation en place + modale | ✅ mergé (PR #30) |
 | hors lot | COS-322 — le périmètre d'un contrôleur vient de la session, plus de la requête | ✅ mergé (PR #30) |
-| hors lot | COS-345 — sécurité, ouvert par l'audit de COS-322 | ⏳ ouvert |
+| hors lot | COS-345 — une catégorie appartient à un compte, et les jointures le disent | ✅ mergé (PR #39) |
 | hors lot | COS-346 — plateforme, ouvert par l'audit de COS-322 | ✅ mergé (PR #38) |
 | DATA 01 | COS-306 — la page se décrit elle-même, et `?userID=` quitte le fil | ✅ mergé (PR #31) |
 | DATA 02 | COS-307 — staging d'import : parse, commit, options, `last import` | ✅ mergé (PR #32) |
@@ -352,6 +352,49 @@ il tourne dans `pnpm lint`. Le front avait déjà ce filet **gratuitement** — 
 démarré par pm2, sans une seule étape qui relise ces chemins entre le poste de dev et le serveur.
 C'est ce qui explique qu'un écart d'un caractère ait tenu trois ans, et ce qui fait que le renommage
 seul n'aurait rien appris.
+
+✅ **COS-345 est fait, et il se décrit maintenant qu'il est fermé** — la règle du §6 vise les tickets
+de sécurité **ouverts**, comme COS-295 et COS-322 se décrivent depuis qu'ils sont livrés. Le ticket
+est l'angle mort de COS-322, énoncé en une phrase : **le cadrage arrête les lignes, la jointure
+ramène des colonnes à côté d'elles.** `bookmark_category` ne porte pas de propriétaire, donc un lien
+vers la catégorie d'un autre compte concaténait son nom *et sa couleur* dans la réponse, et gonflait
+au passage le compteur d'enregistrements de son propriétaire légitime.
+
+**Quatre jointures cadrées, là où le ticket en listait trois.** L'index, la fiche et les catégories
+sont celles qu'il nomme ; la quatrième est l'**export**, livré par COS-333 le lendemain de l'écriture
+du ticket, qui a hérité de la jointure entière, prédicat manquant compris. C'est le pire endroit pour
+elle : un export est un fichier qu'on garde, donc le nom d'un inconnu y aurait été *recopié* plutôt
+que montré une fois. Le prédicat est dans la condition de jointure et non au `WHERE`, pour la raison
+que `getCategoriesController` écrit déjà en tête : au `WHERE`, la jointure externe devient interne et
+les catégories vides — huit en base — disparaissent avec les fiches sans étiquette.
+
+**Côté écriture, l'identifiant était une parole.** La clé étrangère demande que la catégorie existe,
+jamais qu'elle soit à vous, et l'entier arrivait du formulaire par deux portes, `id` et `value`,
+vérifiées sur le seul fait d'être des nombres. Les deux sont maintenant confrontées au propriétaire
+de la fiche, qui vient de la session. Deux détails de placement portent tout le correctif : au `POST`
+la vérification passe **avant le premier `INSERT`** et non à côté du lien qu'elle garde, parce que ce
+chemin n'a pas de transaction — c'est COS-353 — et qu'un refus levé plus bas aurait répondu 404 en
+laissant derrière lui une alarme, une url et une fiche ; au `PUT` elle est levée **dans** la
+transaction, pour que le titre et les notes écrits au-dessus repartent avec, et le `catch` lit
+`err.status`, la convention qu'`errorHandlerMiddleware` utilise déjà, au lieu d'aplatir la décision
+en 500.
+
+**Mesuré sur la base de dev, et les six liens du ticket se décomposent.** Ils sont 4 sur deux fiches
+actives et 2 sur une fiche en corbeille — ce qui explique que le compteur de catégories du compte
+visé passe de 1 961 à 1 957, exactement les quatre liens actifs, `COUNT(DISTINCT)` et `b.active = 1`
+absorbant les deux autres. Les 1 957 étiquettes du plus gros compte ne bougent pas d'une, les deux
+comptes concernés perdent exactement les étrangères, et les huit catégories vides sont toujours
+listées à `0` : la jointure externe est restée externe, ce qui était le seul risque de régression.
+Les deux contrôleurs d'écriture ont ensuite été **pilotés de bout en bout** sur une fiche jetable
+créée et supprimée dans la même passe — 13 contrôles, tous verts : 404 par chacune des deux portes,
+titre et notes intacts après le rollback, aucun lien écrit, le contrôle positif qui sauve et lie
+comme avant, et le `POST` refusé qui ne crée ni fiche, ni url, ni alarme.
+
+**Deux choses laissées en place, et les deux par arbitrage.** Les six liens cessent d'afficher leur
+catégorie mais restent pendants : ce que l'on en fait est la décision de donnée que le ticket renvoie
+à **COS-336**, qui touche déjà cette table. Et le filtre par catégorie accepte encore l'identifiant
+d'une catégorie étrangère — il ne rend que les fiches de l'appelant, donc il ne divulgue rien, et le
+resserrer sans motif aurait été élargir le ticket.
 
 ⚠️ **DATA 01 était déjà livré à 90 %, et le reliquat ne ressemblait pas à son titre.** La pagination
 serveur, l'objet de filtres à six champs et la sérialisation vers l'expression de la barre de commande
