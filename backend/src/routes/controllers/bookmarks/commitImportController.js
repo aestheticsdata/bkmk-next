@@ -68,9 +68,10 @@ const importedTagId = async (conn, userID) => {
  * back from. The decode gives the spaces and the punctuation back and cannot give those back, which
  * is why COS-334 is careful not to be described as repairing the text.
  *
- * **`capture shots` is not an option here.** Nothing captures a screenshot from a url anywhere in
- * this application — the only path to the `screenshot` column is a file the account uploads. The
- * switch stays drawn and disabled on the screen, and the ticket that builds the capture is COS-393.
+ * **`capture shots` is not an option here, and it is no longer on the screen either** (COS-394).
+ * Nothing captures a screenshot from a url anywhere in this application — the only path to the
+ * `screenshot` column is a file the account uploads — and the owner has settled that it stays that
+ * way, so the switch that stood drawn and disabled has been removed rather than left waiting.
  */
 module.exports = async (req, res) => {
   if (!req.file) {

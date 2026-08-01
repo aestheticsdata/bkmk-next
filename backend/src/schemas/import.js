@@ -11,9 +11,11 @@ const { z } = require("zod");
  * `Boolean(value)`, and every non-empty string is truthy, so `skipDuplicates=0` would have switched
  * the option **on**. Absent means off, which is what a switch nobody sent means.
  *
- * `captureShots` is deliberately absent. The screen draws it because the handoff does, and it is
- * disabled there because nothing in this application captures a screenshot from a url — accepting
- * the flag here would be a promise the API cannot keep. COS-393 is where that capture is built.
+ * `captureShots` is deliberately absent, and it has been since this schema was written: nothing in
+ * this application captures a screenshot from a url, so accepting the flag would have been a promise
+ * the API cannot keep. The screen drew the switch anyway, disabled, until COS-394 took it off — the
+ * owner keeps taking screenshots by hand, so there is no capture coming for it to wait on. This side
+ * never moved, which is the point of having refused the flag rather than accepted and ignored it.
  */
 const importFlagSchema = z
   .string()

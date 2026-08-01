@@ -45,8 +45,8 @@ function useImportParse() {
  *
  * The two options travel as `"1"` / `"0"` because a multipart body carries strings and the API reads
  * them as such — `"false"` is a non-empty string, which is the bug `queryFlagSchema` exists to keep
- * out. `captureShots` is not sent: no route accepts it, and nothing captures a screenshot from a url
- * (COS-393).
+ * out. There is no third option to leave out any more: `captureShots` was never sent, and since
+ * COS-394 it is not drawn either — screenshots stay manual.
  *
  * `bookmarks.all` is the whole root, so invalidating it covers the index, the chrome's counter *and*
  * `last-import`, which hangs under it precisely so that one call refreshes the line saying an import
