@@ -66,7 +66,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | UI 11 | COS-320 — suppression : confirmation en place + modale | ✅ mergé (PR #30) |
 | hors lot | COS-322 — le périmètre d'un contrôleur vient de la session, plus de la requête | ✅ mergé (PR #30) |
 | hors lot | COS-345 — sécurité, ouvert par l'audit de COS-322 | ⏳ ouvert |
-| hors lot | COS-346 — plateforme, ouvert par l'audit de COS-322 | ⏳ ouvert |
+| hors lot | COS-346 — plateforme, ouvert par l'audit de COS-322 | ✅ mergé (PR #38) |
 | DATA 01 | COS-306 — la page se décrit elle-même, et `?userID=` quitte le fil | ✅ mergé (PR #31) |
 | DATA 02 | COS-307 — staging d'import : parse, commit, options, `last import` | ✅ mergé (PR #32) |
 | hors lot | COS-338 — DATA 09 : forme normale d'url, colonne `host`, backfill | ✅ mergé (PR #34) |
@@ -330,6 +330,28 @@ chose.
 est public (règle en tête du §6) : **COS-345** et **COS-346**. Le premier est un axe de la même
 famille que ce ticket, trouvé par l'audit qui l'accompagnait, et il a de la donnée déjà en base ;
 le second est une bombe à retardement de déploiement, sans rapport avec la sécurité.
+
+✅ **COS-346 est fait, et sa description était écrite au mauvais temps.** Le fichier
+`getScreenshotcontroller.js` est requis en `getScreenshotController` depuis le commit qui a créé les
+deux (20/08/2023) : APFS résout, ext4 non, et le `require` étant en tête du routeur des bookmarks,
+c'est le démarrage du serveur qui tombe. Le ticket disait « le serveur ne démarre pas », au présent,
+ce qui se lit comme une panne en cours — **il n'y en a pas eu** : le premier déploiement de la refonte
+n'a pas encore eu lieu, donc cette ligne n'a jamais tourné ailleurs que sur des machines qui ne
+peuvent pas la voir échouer. Elle mordrait à ce déploiement-là, et c'est tout ce qu'elle a jamais
+menacé de faire.
+
+**Vérifié plutôt que déduit**, parce que c'est précisément le genre de défaut qu'une machine de dev ne
+sait pas montrer : un volume APFS **sensible à la casse** a été monté, le code y a été copié, le
+routeur chargé dessus. Avec le nom d'avant, `Cannot find module` ; après le renommage, les quatre
+routeurs chargent.
+
+**Et le garde-fou qui manquait, en une trentaine de lignes.** `backend/scripts/check-require-paths.js`
+relit les 97 `require` relatifs du back et refuse celui dont la casse ne correspond pas au fichier ;
+il tourne dans `pnpm lint`. Le front avait déjà ce filet **gratuitement** — une casse fausse fait
+échouer `next build`, qui est sur le chemin de la production — là où le back est déployé en source et
+démarré par pm2, sans une seule étape qui relise ces chemins entre le poste de dev et le serveur.
+C'est ce qui explique qu'un écart d'un caractère ait tenu trois ans, et ce qui fait que le renommage
+seul n'aurait rien appris.
 
 ⚠️ **DATA 01 était déjà livré à 90 %, et le reliquat ne ressemblait pas à son titre.** La pagination
 serveur, l'objet de filtres à six champs et la sérialisation vers l'expression de la barre de commande
