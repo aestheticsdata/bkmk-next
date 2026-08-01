@@ -94,6 +94,20 @@ export const DuplicateCandidatesSchema = z.object({
   candidates: z.array(DuplicateCandidateSchema),
 });
 
+/* `GET /bookmarks/page-title?url=…` — what the page at that address calls itself (COS-329).
+ *
+ * ⚠️ **`title` is nullable, and the null is the ordinary case rather than the failure.** A host can
+ * be unreachable, slow, a pdf, or behind a bot check that answers 403 — `stackoverflow.com` and
+ * `etsy.com` both do — and every one of those comes back as `null` with a 200. The screen treats it
+ * as "nothing to fill in", never as an error: the field was typed by hand before this route existed
+ * and still can be.
+ *
+ * One field, and deliberately: the page's description and its OG image have nowhere to go on a record
+ * screen, which the ticket says in as many words. */
+export const PageTitleSchema = z.object({
+  title: z.string().nullish(),
+});
+
 /** `GET /bookmarks/export?format=…` (COS-333). Mirror of the backend's `exportQuerySchema`; the
  *  response is a file, so there is nothing else to describe on this boundary.
  *

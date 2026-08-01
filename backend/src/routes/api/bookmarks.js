@@ -4,12 +4,14 @@ const sessionAuthMiddleware = require("../../auth/sessionAuthMiddleware");
 const multer = require("multer");
 const upload = multer({ limits: { fileSize: 10_000_000 } });
 const validate = require("../../middlewares/validate");
+const { rateLimit } = require("../../middlewares/rateLimit");
 const {
   bookmarkIdParamsSchema,
   createBookmarkBodySchema,
   duplicatesQuerySchema,
   exportQuerySchema,
   listBookmarksQuerySchema,
+  pageTitleQuerySchema,
   screenshotQuerySchema,
   updateBookmarkBodySchema,
 } = require("../../schemas/bookmarks");
@@ -20,6 +22,7 @@ const postBookmarkController = require("../controllers/bookmarks/postBookmarkCon
 const deleteBookmarkController = require("../controllers/bookmarks/deleteBookmarkController");
 const exportBookmarksController = require("../controllers/bookmarks/exportBookmarksController");
 const getDuplicatesController = require("../controllers/bookmarks/getDuplicatesController");
+const getPageTitleController = require("../controllers/bookmarks/getPageTitleController");
 const getStatsController = require("../controllers/bookmarks/getStatsController");
 const editBookmarkController = require("../controllers/bookmarks/editBookmarkController");
 const parseImportController = require("../controllers/bookmarks/parseImportController");
@@ -62,6 +65,30 @@ router.get("/import/last", catchAsync(getLastImportController));
  *  routes are: `/duplicates` under a `/:id` route is a request for the record numbered `duplicates`,
  *  refused with a 400 by `bookmarkIdParamsSchema`. */
 router.get("/duplicates", validate({ query: duplicatesQuerySchema }), catchAsync(getDuplicatesController));
+
+/* What the page at this address calls itself (COS-329). Above `/:id` for the reason the routes
+ * above it are.
+ *
+ * ⚠️ **The only route here that makes the server open a connection to an address the caller chose**,
+ * so it is the only one that carries a quota of its own. `fetchPageTitle` holds the other half — the
+ * scheme, the address ranges, the timeout and the byte cap — and this bounds how *often* a signed-in
+ * caller can spend one of those requests. Keyed on the session's user rather than on `req.ip`: every
+ * request here has a session by the time it arrives, and a household behind one address is several
+ * people filling in several forms.
+ *
+ * **Sixty per five minutes** is the shape of a form, not of a crawler. The field asks once per url,
+ * on blur, and only when the title is still empty — so a person filling the screen in honestly does
+ * not reach ten. */
+router.get(
+  "/page-title",
+  validate({ query: pageTitleQuerySchema }),
+  rateLimit({
+    bucket: "pageTitle",
+    windowSeconds: 5 * 60,
+    quotas: [{ name: "user", of: (req) => String(req.user?.id ?? ""), limit: 60 }],
+  }),
+  catchAsync(getPageTitleController),
+);
 
 /** The whole index, out (COS-333). Above `/:id` for the reason the two routes above it are. */
 router.get("/export", validate({ query: exportQuerySchema }), catchAsync(exportBookmarksController));

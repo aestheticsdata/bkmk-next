@@ -154,6 +154,18 @@ const duplicatesQuerySchema = z.object({
   url: z.string().max(FIELD_LIMITS.url).optional(),
 });
 
+/** `GET /bookmarks/page-title` — the address whose `<head>` is to be read (COS-329).
+ *
+ *  ⚠️ **Strict where `duplicatesQuerySchema` is lenient, and the difference is what the route does.**
+ *  That one is asked on every settled keystroke and answers `0 candidates` for a half-typed string,
+ *  so refusing it would put an error under an unfinished form. This one makes the server open a
+ *  connection to an address the caller chose — so it is asked once, on blur, about something the
+ *  screen has already parsed, and anything that is not a url is refused before a request is spent on
+ *  it. `z.url()` accepts any scheme; `fetchPageTitle` is what holds the line at `http` and `https`. */
+const pageTitleQuerySchema = z.object({
+  url: z.url().max(FIELD_LIMITS.url),
+});
+
 /** `GET /bookmarks/export` — which of the three files to write (COS-333).
  *
  *  The keys are `EXPORT_FORMATS`'s, so a format cannot exist in the writer and be refused here. No
@@ -168,6 +180,7 @@ module.exports = {
   bookmarkIdParamsSchema,
   duplicatesQuerySchema,
   exportQuerySchema,
+  pageTitleQuerySchema,
   screenshotQuerySchema,
   createBookmarkBodySchema,
   updateBookmarkBodySchema,

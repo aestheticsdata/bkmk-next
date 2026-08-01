@@ -1,10 +1,10 @@
 "use client";
 
+import { EMPTY_DRAFT, fieldsInError, isDirty, toInput, validateDraft } from "@components/bookmarks/draft";
 import { AlarmField } from "@components/bookmarks/fields/AlarmField";
 import { PriorityField } from "@components/bookmarks/fields/PriorityField";
 import { StarsField } from "@components/bookmarks/fields/StarsField";
 import { TagsField } from "@components/bookmarks/fields/TagsField";
-import { EMPTY_DRAFT, fieldsInError, isDirty, toInput, validateDraft } from "@components/bookmarks/draft";
 import { InsertCommandBar } from "@components/bookmarks/insert/InsertCommandBar";
 import { InsertPreview } from "@components/bookmarks/insert/InsertPreview";
 import { Card } from "@components/ds/Card";
@@ -14,9 +14,10 @@ import { ROUTES } from "@components/shared/config/constants";
 import { FIELD_LIMITS } from "@src/schemas/fieldLimits";
 import { useBookmarkCreate } from "@src/services/useBookmarkCreate";
 import { useCategoryList } from "@src/services/useCategoryList";
+import { usePageTitle } from "@src/services/usePageTitle";
 import { CREATE_TEXT } from "@text/create";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { BookmarkDraft } from "@components/bookmarks/draft";
 
@@ -30,11 +31,11 @@ import type { BookmarkDraft } from "@components/bookmarks/draft";
  * prop, which is why half of it was `useEffect`s copying a record into the form. Editing is a modal
  * now (COS-319), so this creates and only creates.
  *
- * ⚠️ **Two of the handoff's readings are still mocked, and marked where they are drawn — COS-329.**
- * The automatic capture and the title fetched from the page's `<title>` do not exist on either side
- * of the wire. They are kept as the mockup writes them rather than dropped, which is the owner's rule
- * for this redesign; the ticket that gives each one real data is named at every site. **The third,
- * the duplicate count, is real since COS-308** — see `InsertDuplicates`.
+ * ⚠️ **One of the handoff's readings is still mocked, and it is marked where it is drawn — COS-393.**
+ * The automatic capture does not exist on either side of the wire; it is kept as the mockup writes it
+ * rather than dropped, which is the owner's rule for this redesign. The other two are real: **the
+ * duplicate count since COS-308** (`InsertDuplicates`) and **the fetched title since COS-329**, which
+ * is the blur handler below.
  *
  * **The five controls that are not text inputs live in `bookmarks/fields/`**, because the edit modal
  * needs exactly the same five. What is here is the layout, the draft and the commit.
@@ -65,6 +66,47 @@ function BookmarkInsert() {
    * recomputed on each keystroke. */
   const messageFor = (field: string, copy: string) =>
     submitted && invalid.has(field) ? <Overline className="text-gr-accent-2">{copy}</Overline> : undefined;
+
+  /* The title, read off the page the url points at (COS-329) — the handoff's `auto-fetched from
+   * <title>`, which was a placeholder promising nothing until this ticket.
+   *
+   * ⚠️ **On blur, and only into an empty field.** Three conditions, and each one exists because
+   * breaking it would be worse than not having the feature:
+   *
+   * - **Never overwrite.** Checked here *and again when the answer lands*, because the request takes
+   *   a few hundred milliseconds and the natural gesture is to tab straight from the url into the
+   *   title and start typing. A fetch that arrives second must not take the field back off you.
+   * - **Asked once per url.** `asked` is a ref rather than state: clicking through the url field
+   *   without changing it — which happens on the way to `commit` — is not a new question, and it
+   *   would be a request to a stranger's server for an answer already given. It is a ref because
+   *   nothing on screen depends on it, so it must not cause a render.
+   * - **Only a url.** The same `URL` parse the preview's `host` line uses. A field halfway through
+   *   being typed is not an address, and blur fires on it every time.
+   *
+   * The failure is silent by design — see `CREATE_TEXT.autoTitle`. `mutate`'s own `onError` is not
+   * handled because there is nothing to do with it: the field keeps whatever it had. */
+  const pageTitle = usePageTitle();
+  const asked = useRef<string | null>(null);
+
+  const fetchTitle = () => {
+    const url = draft.url.trim();
+    if (url === "" || draft.title.trim() !== "" || asked.current === url) return;
+
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return;
+    } catch {
+      return;
+    }
+
+    asked.current = url;
+    pageTitle.mutate(url, {
+      onSuccess: (title) => {
+        if (!title) return;
+        setDraft((current) => (current.title.trim() === "" ? { ...current, title } : current));
+      },
+    });
+  };
 
   const leave = () => router.push(ROUTES.bookmarks.path);
 
@@ -140,17 +182,27 @@ function BookmarkInsert() {
               maxLength={FIELD_LIMITS.url}
               value={draft.url}
               onChange={(event) => patch({ url: event.target.value })}
+              onBlur={fetchTitle}
               message={messageFor("url", CREATE_TEXT.errors.url)}
               autoFocus
             />
 
+            {/* The validation message wins the slot when there is one: `required` is something to fix
+                and `reading…` is something to wait for, and a field cannot be both at once. */}
             <Field
               label={CREATE_TEXT.sections.title}
               placeholder={CREATE_TEXT.fields.titlePlaceholder}
               maxLength={FIELD_LIMITS.title}
               value={draft.title}
               onChange={(event) => patch({ title: event.target.value })}
-              message={messageFor("title", CREATE_TEXT.errors.title)}
+              message={
+                messageFor("title", CREATE_TEXT.errors.title) ??
+                (pageTitle.isPending ? (
+                  <Overline className="text-gr-fg-4">{CREATE_TEXT.autoTitle.reading}</Overline>
+                ) : pageTitle.isSuccess && pageTitle.data === null ? (
+                  <Overline className="text-gr-fg-4">{CREATE_TEXT.autoTitle.nothing}</Overline>
+                ) : undefined)
+              }
             />
 
             {/* No `rows`: `ui/textarea` is `field-sizing-content` over a `min-h-16`, which is the

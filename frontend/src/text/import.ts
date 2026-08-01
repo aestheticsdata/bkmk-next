@@ -10,7 +10,7 @@
  * The state of each entry and the `new` / `duplicate` halves of the summary are the API's answer, the
  * two live options travel with the commit, and `last import` is read from `import_run`. What is left
  * disabled is `capture shots`, because nothing in the application captures a screenshot from a url —
- * that one is COS-329, and it is said in one line beside the caption rather than promised here. */
+ * that one is COS-393, and it is said in one line beside the caption rather than promised here. */
 
 export const IMPORT_TEXT = {
   command: {

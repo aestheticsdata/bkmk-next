@@ -85,7 +85,7 @@ export type LastImport = z.infer<typeof LastImportResponseSchema>["lastImport"];
 
 /** The two switches the commit accepts. `captureShots` is not among them: nothing in this
  *  application captures a screenshot from a url, so the API does not pretend to take the flag and
- *  the screen leaves it disabled — COS-329 is where that capture gets built. */
+ *  the screen leaves it disabled — COS-393 is where that capture gets built. */
 export type ImportOptions = {
   skipDuplicates: boolean;
   tagAsImported: boolean;
