@@ -55,7 +55,8 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | UI 05 | COS-301 — écran Record : la fiche en consultation | ✅ mergé (PR #23) |
 | UI 06 | COS-302 — écran Insert : le formulaire de création | ✅ mergé (PR #25) |
 | hors lot | COS-329 — de-mock de l'écran Insert : le titre automatique | ✅ mergé (PR #42) |
-| hors lot | COS-393 — capture auto depuis l'url, détachée de COS-329 | ⏳ ouvert par COS-329 |
+| hors lot | COS-393 — capture auto depuis l'url, détachée de COS-329 | ❌ annulé — la capture reste manuelle |
+| hors lot | COS-394 — retrait de la capture auto de l'écran et de l'import | ✅ mergé (PR #43) |
 | UI 07 | COS-303 — écran Import : dépôt, staging, formats | ✅ mergé (PR #26) |
 | UI 08 | COS-304 — écran Alarms : inventaire, compte à rebours, charge 14 jours | ✅ mergé (PR #27) |
 | hors lot | COS-330 — de-mock de l'écran Alarms (snooze / done) | ⏳ ouvert par UI 08 |
@@ -123,11 +124,18 @@ index`, et le titre récupéré depuis le `<title>` de la page. Le `record previ
 mocké — chaque ligne est calculée depuis le brouillon, et son `id` affiche `—` parce que
 l'identifiant est ce que l'insertion retourne.
 
-✅ **Soldé depuis, en trois temps** : les doublons par COS-308, le titre par COS-329, et la capture
-automatique — seule valeur encore en dur sur cet écran — détachée en **COS-393**, qui est le ticket
-que les marqueurs de mock citent désormais. La règle a donc tenu jusqu'au bout sur cet écran : rien
-n'a été retiré en silence, et chaque valeur inventée a fini par être remplacée ou par changer de
-ticket au vu de tous.
+✅ **Soldé depuis, et les trois lectures ont fini de trois façons différentes** : les doublons sont
+devenus réels avec COS-308, le titre avec COS-329, et la capture automatique a été **abandonnée**.
+Détachée d'abord en COS-393, celui-ci a été annulé — « je ne veux pas du ticket 393, c'est trop
+lourd, je continue à faire les screenshots à la main » — et **COS-394** a retiré de l'écran les deux
+lectures qui l'annonçaient.
+
+⚠️ **Ce troisième cas est la sortie de la règle, pas une exception à celle-ci, et c'est ce qui la rend
+sûre.** « Ce qui n'existe pas se mocke, et un ticket de-mock le reprend » ne tient que parce que la
+donnée finit par arriver. Une fois acté qu'elle n'arrivera jamais, la valeur en dur n'est plus un
+emplacement réservé, ce sont des mots faux : ils partent avec la fonctionnalité. Le regroupement sous
+`CREATE_TEXT.mock` est précisément ce qui a rendu ce retrait mécanique — un seul endroit où chercher
+tout ce qui devait suivre. Rien, sur aucun de ces trois chemins, n'a été retiré en silence.
 
 ⚠️ **Le périmètre de contenu, lui, reste celui de l'écran existant** — les deux règles ne se
 contredisent pas. UI 06 livre les huit champs que le formulaire portait déjà et rien de plus ; `group`
@@ -495,9 +503,10 @@ ticket parle de doublons à l'intérieur d'un compte ; le problème mord aussi e
 manque de temps.**
 
 Le ticket portait trois dé-mocks d'ampleurs très inégales. Les doublons étaient déjà soldés par
-COS-308. La capture automatique est un navigateur sans tête, une file et un worker : elle part en
-**COS-393**, et tous les marqueurs de mock du code la citent maintenant à la place de COS-329. Reste
-ce qui est livré : le titre lu dans le `<title>` de la page, sur `GET /bookmarks/page-title`. Le
+COS-308. La capture automatique est un navigateur sans tête, une file et un worker : elle est partie
+en **COS-393** — ⚠️ **annulé depuis, et retiré de l'écran par COS-394** : le propriétaire continue de
+faire les captures à la main. Reste ce qui est livré : le titre lu dans le `<title>` de la page, sur
+`GET /bookmarks/page-title`. Le
 placeholder du champ redevient les mots du handoff, `auto-fetched from <title>`, que UI 06 avait
 refusés faute de pouvoir les tenir.
 
@@ -639,6 +648,14 @@ ne croie l'inverse. Les deux autres options sont vivantes : `skip duplicates` fi
 recalculé au commit, `tag as imported` range les nouvelles lignes sous une catégorie `imported`
 créée à la première utilisation. Règle du §0 appliquée : chercher le ticket existant avant d'en
 ouvrir un.
+
+❌ **Périmé depuis (COS-394) : la case n'est plus dessinée du tout.** COS-393 annulé, il n'y avait
+plus de « un jour » pour la justifier — et l'argument qui la faisait montrer, celui du menu de compte
+(COS-321 : montrer la ligne pour apprendre ce que l'écran fera, la griser plutôt que la laisser sans
+effet), repose entièrement sur ce « un jour ». Un contrôle qui ne s'allumera jamais se lit comme
+cassé, pas comme non construit. La ligne `capture not wired yet` part avec. **Le back n'a pas bougé** :
+avoir refusé le drapeau plutôt que l'accepter en l'ignorant est exactement ce qui a rendu ce retrait
+purement client.
 
 ⚠️ **Un fichier qui se répète est compté comme se répétant.** L'ensemble des urls connues grandit
 pendant qu'on parcourt les entrées, donc la seconde occurrence d'une url *dans le même fichier* est
@@ -2279,8 +2296,8 @@ de COS-329** — la ligne `2 duplicate candidates in index` était le `2` de la 
 `CREATE_TEXT.mock`, parce que rien ne cherchait. COS-329 se réduit à deux points : la capture
 automatique et le titre récupéré depuis le `<title>`.
 
-✅ **Et depuis, à un seul** : COS-329 a livré le titre, et la capture automatique est partie en
-COS-393. Voir le §0.
+✅ **Et depuis, à zéro** : COS-329 a livré le titre, et la capture automatique est partie en COS-393,
+annulé — le retrait de ses lectures est COS-394. Plus rien n'est mocké sur cet écran. Voir le §0.
 
 La question est posée sur `url.normalised`, c'est-à-dire sur le helper de COS-338, celui-là même
 qu'appelle le staging d'import. C'est tout l'intérêt d'avoir pris DATA 09 avant : les deux écrans ne
