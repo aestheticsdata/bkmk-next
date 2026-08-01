@@ -1,12 +1,17 @@
 /* Which staged entries the index already holds (COS-307).
  *
- * ⚠️ **"Same url" means the same string, and that is an assumed limit, not an oversight.**
- * `url.original` has no normal form: `https://x.com/a`, `http://x.com/a/` and the same address
- * carrying a `?utm_source=` are three different rows today, and this comparison calls them three
- * different bookmarks. DATA 09 (COS-338) is the ticket that brings a normalised url and the backfill
- * that goes with it; taking it first was the alternative, and the owner chose to ship the staging on
- * an exact match and refine the count afterwards. When that helper lands, this file is the one place
- * that changes — the two endpoints ask it the question, they do not answer it themselves.
+ * ⚠️ **"Same url" is the normal form now, and this is the one file that changed for it (COS-338).**
+ * It used to be the exact string, an assumed limit written down here rather than hidden: `url` had no
+ * normal form, so `https://x.com/a`, `http://x.com/a/` and the same address carrying a
+ * `?utm_source=` were three rows and three different bookmarks. `helpers/normaliseUrl` is the
+ * definition, `url.normalised` is where it is kept, and the comparison below reads that column
+ * against the key the parse computed for each entry. The two endpoints still only ask the question —
+ * they do not answer it themselves, which is what made this a one-file change.
+ *
+ * **What that is worth, measured on the real index: one pair.** The rows already in the database were
+ * written by paths that never varied a url's shape on their own. The gain is on what comes *next* —
+ * 1 075 of 1 237 rows carry `www.` and 57 a trailing slash, so an export of the same pages taken from
+ * a different browser used to arrive as entirely new entries.
  *
  * **The index is read once, not once per entry.** A Session Buddy export runs to thousands of lines;
  * a query per line is thousands of round trips, and an `IN (…)` list of thousands of urls is a
@@ -26,7 +31,7 @@
 const STATES = { new: "NEW", duplicate: "DUP" };
 
 const EXISTING_URLS = `
-  SELECT u.original
+  SELECT u.normalised
     FROM bookmark b
     INNER JOIN url u ON u.id = b.url_id
    WHERE b.user_id = ? AND b.active = 1
@@ -36,18 +41,21 @@ const EXISTING_URLS = `
  *  handoff's summary. */
 async function markImportDuplicates(conn, userID, entries) {
   const [rows] = await conn.execute(EXISTING_URLS, [userID]);
-  const known = new Set(rows.map((row) => row.original));
+  // `normalised` is NULL only for a row whose `original` is blank, which no write path produces —
+  // and no entry could match it anyway, since a line without a link never becomes an entry. Dropped
+  // rather than trusted: a `Set` holding `null` would call such a row a duplicate of nothing.
+  const known = new Set(rows.map((row) => row.normalised).filter((key) => key !== null));
 
   let fresh = 0;
   let duplicates = 0;
 
   const marked = entries.map((entry) => {
-    if (known.has(entry.link)) {
+    if (known.has(entry.normalised)) {
       duplicates += 1;
       return { ...entry, state: STATES.duplicate };
     }
 
-    known.add(entry.link);
+    known.add(entry.normalised);
     fresh += 1;
     return { ...entry, state: STATES.new };
   });

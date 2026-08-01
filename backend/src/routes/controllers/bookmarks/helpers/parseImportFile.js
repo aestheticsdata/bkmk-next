@@ -1,3 +1,4 @@
+const { normaliseUrl } = require("../../../../helpers/normaliseUrl");
 const { FIELD_LIMITS } = require("../../../../schemas/fieldLimits");
 
 /* The import file's parser, and now the only one (COS-307).
@@ -13,10 +14,11 @@ const { FIELD_LIMITS } = require("../../../../schemas/fieldLimits");
  * the two defects COS-303 fixed in both copies, kept here as the fixed version: the format is
  * decided by the **last** dot segment, and a line with no `;` is skipped rather than fatal.
  *
- * What it adds over the legacy controller is `malformed` and `host`. Neither changes what is
- * imported: the count is a number the handoff's summary asks for, and the host is a column the
- * staged table draws. A link the `URL` constructor cannot read is still imported, exactly as before
- * — it simply has no host to show.
+ * What it adds over the legacy controller is `malformed`, `host` and `normalised`. None of them
+ * changes what is imported: the count is a number the handoff's summary asks for, the host is a
+ * column the staged table draws, and the normal form is the key the duplicate question is asked on
+ * (COS-338). A link the `URL` constructor cannot read is still imported, exactly as before — it
+ * simply has no host to show.
  */
 
 /** Which parser to run.
@@ -25,16 +27,6 @@ const { FIELD_LIMITS } = require("../../../../schemas/fieldLimits");
  *  for `session_buddy.2026_07_11.csv`, so that file went down the `.txt` path and imported pairs of
  *  lines out of a csv — garbage, without failing. Fixed on both sides by COS-303 and kept here. */
 const isCsv = (filename) => String(filename).toLowerCase().split(".").pop() === "csv";
-
-/** The host, for the staged table's middle column. Not a validity test: a link that is not a url is
- *  imported all the same, as it always has been, and simply has nothing to put in that cell. */
-const hostOf = (link) => {
-  try {
-    return new URL(link).host;
-  } catch {
-    return null;
-  }
-};
 
 /** A line that yielded a title and a link, but a link longer than the `url.original` column can
  *  hold. Counted as malformed rather than truncated: half a url is a link to somewhere else. */
@@ -46,10 +38,20 @@ const isOverLong = (link) => link.length > FIELD_LIMITS.url;
  *  `commitImportController` on why it no longer stores it that way. */
 const clampTitle = (title) => (title.length > FIELD_LIMITS.title ? title.slice(0, FIELD_LIMITS.title) : title);
 
+/* An entry, with the two readings of its link that the rest of the import needs (COS-338).
+ *
+ * ⚠️ **`host` used to be `new URL(link).host` right here, and it is the shared helper now.** It kept
+ * `www.`, so the staged table's middle column said `www.youtube.com` where the `host` column now
+ * stored `youtube.com` — two answers to "which host is this" for one link, and the rail's host axis
+ * would have been built on the other one. The visible consequence is that the staged column drops the
+ * `www.`, which is also what the index will file the row under.
+ *
+ * Neither reading is a validity test: a link the `URL` constructor cannot read is imported all the
+ * same, as it always has been, and simply has no host to show. */
 const entryOf = (title, link, at) => ({
   title: clampTitle(title),
   link,
-  host: hostOf(link),
+  ...normaliseUrl(link),
   /** Its position in the file, which is the only stable key an entry has — two lines can be
    *  identical, and often are in an export taken twice. */
   at,
@@ -118,7 +120,7 @@ function parseSessionBuddy(text) {
 }
 
 /** The file, as both endpoints read it: `{ entries, malformed }`, where an entry is
- *  `{ title, link, host, at }`. */
+ *  `{ title, link, normalised, host, at }`. */
 function parseImportFile(filename, text) {
   return isCsv(filename) ? parseCsv(text) : parseSessionBuddy(text);
 }

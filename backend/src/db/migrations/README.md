@@ -53,8 +53,11 @@ module.exports = async (conn) => {
 };
 ```
 
-The `.js` case is not hypothetical: MySQL has no url-decoding function, so the text-normalisation
-migration (DATA 07) cannot be a statement.
+The `.js` case is not hypothetical, and `2026-08-01-add-url-normal-form.js` is the first of them:
+MySQL cannot parse a url — there is no function that reads a host out of one or drops a
+`?utm_source=` — so the backfill is the same JavaScript the controllers call, run once over the
+table. The text normalisation still queued behind it (DATA 07) has the same shape and the same
+reason.
 
 Each file opens with the ticket it comes from and **what breaks if it has not been run** — that
 sentence is what a deploy reads when something answers 500.

@@ -1,5 +1,6 @@
 const { format } = require("date-fns");
 const dbConnection = require("../../../db/dbinitmysql");
+const { normaliseUrl } = require("../../../helpers/normaliseUrl");
 const jimpHelper = require("./helpers/jimpHelper");
 const generateHexColor = require("./helpers/generateHexColor");
 
@@ -11,15 +12,27 @@ const DELETE_SCREENSHOT = "delete";
 
 const today = () => format(new Date(), "yyyy-MM-dd");
 
-/** The url the record should end up pointing at, given the one it points at now.
+/* The url the record should end up pointing at, given the one it points at now.
  *
- *  `url` lives in its own table behind `bookmark.url_id`, so "no url" is a null column and a missing
- *  row rather than an empty string. An absent field is therefore a **removal**, which is what the
- *  form means by it: it only sends `url` when there is one. */
+ * `url` lives in its own table behind `bookmark.url_id`, so "no url" is a null column and a missing
+ * row rather than an empty string. An absent field is therefore a **removal**, which is what the form
+ * means by it: it only sends `url` when there is one.
+ *
+ * ⚠️ **The row is updated in place, which is exactly why `url.normalised` carries no unique key**
+ * (COS-338). The table has no `user_id`; if a unique index made two accounts share the row for a page
+ * they both bookmarked, this `UPDATE` would rewrite a stranger's link. Every write path here creates
+ * its own row, and the normal form is a comparison key rather than an identity. */
 const applyUrl = async (conn, bookmark, url) => {
+  const { normalised, host } = normaliseUrl(url);
+
   if (bookmark.url_id) {
     if (url) {
-      await conn.execute("UPDATE url SET original=? WHERE id=?", [url, bookmark.url_id]);
+      await conn.execute("UPDATE url SET original=?, normalised=?, host=? WHERE id=?", [
+        url,
+        normalised,
+        host,
+        bookmark.url_id,
+      ]);
       return;
     }
     // Detach before deleting: the column is what points at the row.
@@ -29,7 +42,11 @@ const applyUrl = async (conn, bookmark, url) => {
   }
 
   if (url) {
-    const [inserted] = await conn.execute("INSERT INTO url (original) VALUES (?)", [url]);
+    const [inserted] = await conn.execute("INSERT INTO url (original, normalised, host) VALUES (?, ?, ?)", [
+      url,
+      normalised,
+      host,
+    ]);
     await conn.execute("UPDATE bookmark SET url_id=? WHERE id=?", [inserted.insertId, bookmark.id]);
   }
 };
