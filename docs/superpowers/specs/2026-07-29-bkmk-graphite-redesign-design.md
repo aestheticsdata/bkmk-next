@@ -79,6 +79,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | DATA 05 | COS-310 — compteurs du rail, bloc `storage`, charge des 14 jours | ✅ mergé (PR #41) |
 | FIN 01 | COS-311 — passe responsive `@container` sur les 9 écrans | ⏳ en relecture |
 | hors lot | COS-401 — alarms : `snooze` / `done` injoignables au doigt sous le pli | ⏳ ouvert par FIN 01 |
+| hors lot | COS-404 — menu utilisateur : câbler `change password` et `set recovery passphrase` | ⏳ ouvert |
 
 ⚠️ **DATA 03 n'a qu'un étage sur les deux que son ticket décrit, et c'est une mesure qui l'a
 tranché.** Le premier — même url normalisée — trouve 17 groupes et 56 fiches sur l'index réel. Le
@@ -105,6 +106,11 @@ montrées plutôt que cachées parce que le menu est aussi la façon d'apprendre
 grisées plutôt que promises. Le même passage a **retiré les trois lectures inventées du chrome** sur
 demande du propriétaire : `IDX/2.4.1` et `uptime 04:12` côté application, `build 2.4.1 · tls on` côté
 auth (remplacé par le domaine de l'hôte). Voir le §8.1 plus bas, dont le point 1 est amendé.
+
+⚠️ **COS-404 est le ticket qui câble les deux.** Il n'existait pas avant le 2026-08-02 — ni celui-ci
+ni COS-324 (qui ne fait que consommer la passphrase depuis `/recover`, pas la poser depuis le menu)
+ne couvraient le re-câblage que ce paragraphe annonçait. `language` reste désactivée : elle attend
+toujours sa couche de traduction, hors périmètre de COS-404.
 
 ⚠️ **UI 05 a livré trois boutons sur les quatre, et corrigé deux défauts trouvés en route.** Le
 `alarm` de la maquette est le seul des quatre qui n'a rien à faire — armer un rappel écrit `reminder`

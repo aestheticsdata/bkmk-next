@@ -8,13 +8,20 @@
  * The query is parameterised. Nothing here is client-supplied — the id comes from our own
  * session — but COS-295 is about to convert the rest of the API, and new SQL has no reason
  * to be written the old way.
+ *
+ * `recovery_passphrase` is selected only so `toAuthUser` can turn it into `hasRecoveryPassphrase`
+ * (COS-404) — the hash itself never reaches `res.json`.
  */
 const dbConnection = require("../../../db/dbinitmysql");
 const { getOrCreateCsrfToken } = require("../../../auth/csrfToken");
+const toAuthUser = require("./helpers/toAuthUser");
 
 module.exports = async (req, res) => {
   const conn = await dbConnection();
-  const [users] = await conn.execute("SELECT id, name, email FROM user WHERE id = ?;", [req.user.id]);
+  const [users] = await conn.execute(
+    "SELECT id, name, email, recovery_passphrase FROM user WHERE id = ?;",
+    [req.user.id],
+  );
   await conn.end();
 
   // The session outlived the account. Ten-minute sessions make this unlikely rather than
@@ -24,7 +31,7 @@ module.exports = async (req, res) => {
   }
 
   return res.json({
-    user: users[0],
+    user: toAuthUser(users[0]),
     csrfToken: getOrCreateCsrfToken(req),
   });
 };

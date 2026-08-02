@@ -11,19 +11,31 @@
  *   pass them anyway; it is left off to say so.
  * - `POST /logout` takes the CSRF check but **not** the session check: logging out without a
  *   session is not an error.
+ * - `PATCH /me/password` and `PATCH /me/passphrase` (COS-404) need both: they mutate an
+ *   authenticated account. `sessionAuthMiddleware` first, so an anonymous caller is refused
+ *   before CSRF or the body is even looked at; `validate` last, so a malformed body still gets
+ *   its specific shape error rather than a generic 401/403.
  */
 const router = require("express").Router();
 const csrfMiddleware = require("../../auth/csrfMiddleware");
 const sessionAuthMiddleware = require("../../auth/sessionAuthMiddleware");
 const validate = require("../../middlewares/validate");
 const { rateLimit } = require("../../middlewares/rateLimit");
-const { signInBodySchema, signUpBodySchema, recoverBodySchema } = require("../../schemas/auth");
+const {
+  signInBodySchema,
+  signUpBodySchema,
+  recoverBodySchema,
+  changePasswordBodySchema,
+  setRecoveryPassphraseBodySchema,
+} = require("../../schemas/auth");
 const signInController = require("../controllers/users/signInController");
 const recoverController = require("../controllers/users/recoverController");
 const addUserController = require("../controllers/users/addUserController");
 const getMeController = require("../controllers/users/getMeController");
 const getCsrfController = require("../controllers/users/getCsrfController");
 const logoutController = require("../controllers/users/logoutController");
+const changePasswordController = require("../controllers/users/changePasswordController");
+const setRecoveryPassphraseController = require("../controllers/users/setRecoveryPassphraseController");
 const catchAsync = require("../../utils/catchAsync");
 
 router.post("/", validate({ body: signInBodySchema }), catchAsync(signInController));
@@ -31,6 +43,20 @@ router.post("/add", validate({ body: signUpBodySchema }), catchAsync(addUserCont
 router.get("/me", sessionAuthMiddleware, catchAsync(getMeController));
 router.get("/csrf", sessionAuthMiddleware, getCsrfController);
 router.post("/logout", csrfMiddleware, logoutController);
+router.patch(
+  "/me/password",
+  sessionAuthMiddleware,
+  csrfMiddleware,
+  validate({ body: changePasswordBodySchema }),
+  catchAsync(changePasswordController),
+);
+router.patch(
+  "/me/passphrase",
+  sessionAuthMiddleware,
+  csrfMiddleware,
+  validate({ body: setRecoveryPassphraseBodySchema }),
+  catchAsync(setRecoveryPassphraseController),
+);
 
 /* `/recover` is what that promise became (COS-324). There is still no `/resetpassword`: the
  * commented-out one that sat here went with its controller under COS-298, mail through Sendinblue

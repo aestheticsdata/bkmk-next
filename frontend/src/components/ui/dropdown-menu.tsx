@@ -85,7 +85,7 @@ function DropdownMenuItem({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
   inset?: boolean;
-  variant?: "default" | "destructive";
+  variant?: "default" | "destructive" | "primary";
 }) {
   return (
     <DropdownMenuPrimitive.Item
@@ -97,8 +97,12 @@ function DropdownMenuItem({
            keyboard, so one rule lights the row under the mouse and the row under the arrow keys,
            and the two can never disagree. The lit surface is the system's own white wash, the one
            the chrome's tabs and the index's rows use. `data-[variant=destructive]` becomes oxide:
-           the ink for anything that ends something. */
-        "relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs outline-hidden transition-colors duration-120 select-none focus:bg-white/26 focus:text-gr-fg-2 data-[disabled]:pointer-events-none data-[disabled]:opacity-45 data-[inset]:pl-8 data-[variant=destructive]:text-gr-accent-2 data-[variant=destructive]:focus:bg-gr-accent-2/12 data-[variant=destructive]:focus:text-gr-accent-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 [&_svg:not([class*='text-'])]:text-gr-fg-3 data-[variant=destructive]:*:[svg]:text-gr-accent-2!",
+           the ink for anything that ends something irreversibly.
+           `data-[variant=primary]` becomes the muted teal `gr-accent` — the same ink `StatusBar`
+           gives `ready` — for a row that is safe rather than final. `log out` (COS-404, on the
+           owner's call) moved here from `destructive`: nothing is lost when a session ends, and
+           signing back in undoes the whole of it, which oxide does not say. */
+        "relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs outline-hidden transition-colors duration-120 select-none focus:bg-white/26 focus:text-gr-fg-2 data-[disabled]:pointer-events-none data-[disabled]:opacity-45 data-[inset]:pl-8 data-[variant=destructive]:text-gr-accent-2 data-[variant=destructive]:focus:bg-gr-accent-2/12 data-[variant=destructive]:focus:text-gr-accent-2 data-[variant=primary]:text-gr-accent data-[variant=primary]:focus:bg-gr-accent/12 data-[variant=primary]:focus:text-gr-accent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 [&_svg:not([class*='text-'])]:text-gr-fg-3 data-[variant=destructive]:*:[svg]:text-gr-accent-2! data-[variant=primary]:*:[svg]:text-gr-accent!",
         className,
       )}
       {...props}

@@ -12,6 +12,11 @@ export const AuthUserSchema = z.object({
   id: numberLikeSchema,
   name: z.string(),
   email: z.string(),
+  /** Whether the account has a recovery passphrase set — never the passphrase itself (COS-404).
+   *  Lets the account menu tell `set recovery passphrase` from `change recovery passphrase`
+   *  without a second round trip, and is what the two account-menu dialogs read to know which
+   *  mode they are in. */
+  hasRecoveryPassphrase: z.boolean(),
 });
 
 export type AuthUser = z.infer<typeof AuthUserSchema>;
@@ -200,3 +205,88 @@ export const RecoverFormSchema = z
   });
 
 export type RecoverFormValues = z.infer<typeof RecoverFormSchema>;
+
+/** `PATCH /users/me/password` (COS-404). `currentPassword` carries no minimum, mirroring
+ *  `SignInPayloadSchema.password` — it is proved, not chosen, and some of the 11 accounts predate
+ *  `SECRET_RULES.passwordMin`. */
+export const ChangePasswordPayloadSchema = z.object({
+  currentPassword: z.string().min(1, "required"),
+  newPassword: z.string().min(SECRET_RULES.passwordMin).max(SECRET_RULES.max),
+});
+
+export type ChangePasswordPayload = z.infer<typeof ChangePasswordPayloadSchema>;
+
+/** What the change-password **form** holds — one `superRefine` over three plain strings, for the
+ *  reason `SignUpFormSchema`'s comment gives at length: an object that always parses is one whose
+ *  cross-field check always runs. */
+export const ChangePasswordFormSchema = z
+  .object({
+    currentPassword: z.string(),
+    newPassword: z.string(),
+    confirmNewPassword: z.string(),
+  })
+  .superRefine((values, ctx) => {
+    const problem = (path: string, message: string) => ctx.addIssue({ code: "custom", path: [path], message });
+
+    if (!values.currentPassword) {
+      problem("currentPassword", "required");
+    }
+
+    if (values.newPassword.length < SECRET_RULES.passwordMin) {
+      problem("newPassword", `min ${SECRET_RULES.passwordMin} chars`);
+    } else if (values.newPassword.length > SECRET_RULES.max) {
+      problem("newPassword", `max ${SECRET_RULES.max} chars`);
+    }
+
+    if (!values.confirmNewPassword) {
+      problem("confirmNewPassword", "required");
+    } else if (values.confirmNewPassword !== values.newPassword) {
+      problem("confirmNewPassword", MISMATCH_MESSAGE);
+    }
+  });
+
+export type ChangePasswordFormValues = z.infer<typeof ChangePasswordFormSchema>;
+
+/** `PATCH /users/me/passphrase` (COS-404) — same asymmetry as `ChangePasswordPayloadSchema`:
+ *  `currentPassword` proves, `recoveryPassphrase` is chosen. */
+export const SetRecoveryPassphrasePayloadSchema = z.object({
+  currentPassword: z.string().min(1, "required"),
+  recoveryPassphrase: z.string().min(SECRET_RULES.passphraseMin).max(SECRET_RULES.max),
+});
+
+export type SetRecoveryPassphrasePayload = z.infer<typeof SetRecoveryPassphrasePayloadSchema>;
+
+export const SetRecoveryPassphraseFormSchema = z
+  .object({
+    currentPassword: z.string(),
+    recoveryPassphrase: z.string(),
+    confirmRecoveryPassphrase: z.string(),
+  })
+  .superRefine((values, ctx) => {
+    const problem = (path: string, message: string) => ctx.addIssue({ code: "custom", path: [path], message });
+
+    if (!values.currentPassword) {
+      problem("currentPassword", "required");
+    }
+
+    if (values.recoveryPassphrase.length < SECRET_RULES.passphraseMin) {
+      problem("recoveryPassphrase", `min ${SECRET_RULES.passphraseMin} chars`);
+    } else if (values.recoveryPassphrase.length > SECRET_RULES.max) {
+      problem("recoveryPassphrase", `max ${SECRET_RULES.max} chars`);
+    }
+
+    if (!values.confirmRecoveryPassphrase) {
+      problem("confirmRecoveryPassphrase", "required");
+    } else if (values.confirmRecoveryPassphrase !== values.recoveryPassphrase) {
+      problem("confirmRecoveryPassphrase", MISMATCH_MESSAGE);
+    }
+  });
+
+export type SetRecoveryPassphraseFormValues = z.infer<typeof SetRecoveryPassphraseFormSchema>;
+
+/** `PATCH /users/me/passphrase`'s answer — never the passphrase itself. */
+export const SetRecoveryPassphraseResponseSchema = z.object({
+  hasRecoveryPassphrase: z.boolean(),
+});
+
+export type SetRecoveryPassphraseResponse = z.infer<typeof SetRecoveryPassphraseResponseSchema>;
