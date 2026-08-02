@@ -16,6 +16,11 @@ const dbConnection = require("../../../db/dbinitmysql");
 const DAYS_UNTIL_NEXT_FIRE =
   "MOD(alarm.frequency - MOD(DATEDIFF(CURDATE(), alarm.date_added), alarm.frequency), alarm.frequency)";
 
+/** An alarm whose clock is running (COS-330). `paused_at` is `NULL` while it does, so this is the
+ *  whole test — written once because three places below need it, and a fourth spelling of it is how
+ *  they would stop agreeing. */
+const RUNNING = "alarm.paused_at IS NULL";
+
 /* `GET /reminders` — every armed alarm, with how long until it rings (COS-304).
  *
  * ⚠️ **This used to return only what fires today**, and the screen above it now needs the whole
@@ -41,21 +46,32 @@ const DAYS_UNTIL_NEXT_FIRE =
  * browser an hour past midnight in another zone would have produced a different day.
  *
  * ⚠️ **`ORDER BY` names the select alias**, which MySQL allows and which is the point: repeating the
- * expression a third time is how the ordering and the column stop matching. */
+ * expression a third time is how the ordering and the column stop matching.
+ *
+ * ⚠️ **A sleeping alarm keeps its row and loses its two numbers** (COS-330). It stays in the list —
+ * that is what `snooze` means here, as against `done`, which disarms the record and takes the row
+ * away with it — but a stopped clock has no next firing, so `alarm_days_until` and `alarm_next_fire`
+ * come back `NULL` rather than carrying a countdown that is not counting down.
+ *
+ * ⚠️ **`(alarm.paused_at IS NOT NULL) ASC` leads the `ORDER BY`, and it is a fix rather than a
+ * preference.** MySQL sorts `NULL` **first** in an ascending order, so without it the alarms about to
+ * ring would be pushed underneath the ones that never will — on a list whose whole order is
+ * imminence. */
 module.exports = async (req, res) => {
   const sql = `
     SELECT b.*,
            alarm.id AS alarm_id,
            alarm.frequency AS alarm_frequency,
            alarm.date_added AS alarm_added,
-           ${DAYS_UNTIL_NEXT_FIRE} AS alarm_days_until,
-           DATE_ADD(CURDATE(), INTERVAL ${DAYS_UNTIL_NEXT_FIRE} DAY) AS alarm_next_fire,
+           alarm.paused_at AS alarm_paused_at,
+           CASE WHEN ${RUNNING} THEN ${DAYS_UNTIL_NEXT_FIRE} END AS alarm_days_until,
+           CASE WHEN ${RUNNING} THEN DATE_ADD(CURDATE(), INTERVAL ${DAYS_UNTIL_NEXT_FIRE} DAY) END AS alarm_next_fire,
            u.original AS original_url
     FROM bookmark b
     INNER JOIN alarm ON b.alarm_id = alarm.id
     LEFT JOIN url u ON b.url_id = u.id
     WHERE b.user_id = ? AND b.active = 1 AND alarm.frequency > 0
-    ORDER BY alarm_days_until ASC, b.title ASC
+    ORDER BY (alarm.paused_at IS NOT NULL) ASC, alarm_days_until ASC, b.title ASC
   `;
 
   const conn = await dbConnection();

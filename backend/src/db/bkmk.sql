@@ -44,7 +44,11 @@ CREATE TABLE url (
 CREATE TABLE alarm (
     id          INT(11) AUTO_INCREMENT PRIMARY KEY,
     frequency   INT(3),
-    date_added  DATE NOT NULL
+    date_added  DATE NOT NULL,
+    -- NULL: the alarm runs. A date: it has slept since that day (COS-330). `resume` slides
+    -- `date_added` forward by the sleep, which freezes the countdown instead of shifting it.
+    -- See migrations/ for the arithmetic and for why `done` needs no column at all.
+    paused_at   DATE NULL
 );
 
 CREATE TABLE bookmark_group (

@@ -4,6 +4,7 @@ import { CommandBar } from "@components/ds/CommandBar";
 import { Overline } from "@components/ds/Overline";
 import { ROUTES } from "@components/shared/config/constants";
 import { Button } from "@components/ui/button";
+import { useAlarmsPause } from "@src/services/useAlarmPause";
 import { ALARMS_TEXT } from "@text/alarms";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -27,11 +28,18 @@ const TICK_MS = 30_000;
  * is also why there is no placeholder in it: a dash that turns into a time reads as a value that
  * failed to load.
  *
- * ⚠️ **`snooze all` is drawn and disabled — COS-330**, with the row-level pair it belongs to. `arm
- * new` is not: arming an alarm means giving a record a reminder, and the insert screen is where that
+ * ⚠️ **`snooze all` works since COS-330, and it stops the clocks — it does not empty the screen.**
+ * Every alarm keeps its row and loses its countdown, which is also what makes the button reversible:
+ * once they are all asleep it reads `resume all`, and pressing it slides each series forward by
+ * exactly the sleep, so every countdown comes back on the number it froze on. `arm new` was never in
+ * that list: arming an alarm means giving a record a reminder, and the insert screen is where that
  * field lives, so the primary action goes there and works. */
-function AlarmsCommandBar() {
+function AlarmsCommandBar({ running, total }: { running: number; total: number }) {
   const [now, setNow] = useState<Date>();
+  const pauseAll = useAlarmsPause();
+  /* Which of the two words the button carries. `running === 0` on a non-empty list means everything
+     is asleep, and the only thing left to offer is waking it. */
+  const asleep = total > 0 && running === 0;
 
   useEffect(() => {
     setNow(new Date());
@@ -57,14 +65,16 @@ function AlarmsCommandBar() {
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
         {/* The title rides the wrapper: a disabled button receives no pointer events and would never
-            show one of its own. */}
-        <span title={ALARMS_TEXT.row.pending}>
+            show one of its own. Disabled on an empty list only — there is no third state, and no
+            confirmation either: unlike `done`, a second press undoes this one. */}
+        <span title={total === 0 ? ALARMS_TEXT.command.noAlarms : undefined}>
           <Button
             variant="chrome"
             size="chrome"
-            disabled
+            disabled={total === 0 || pauseAll.isPending}
+            onClick={() => pauseAll.mutate({ paused: !asleep })}
           >
-            {ALARMS_TEXT.command.snoozeAll}
+            {asleep ? ALARMS_TEXT.command.resumeAll : ALARMS_TEXT.command.snoozeAll}
           </Button>
         </span>
         <Button

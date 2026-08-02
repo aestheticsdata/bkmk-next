@@ -1,7 +1,8 @@
 "use client";
 
 import { MiniButton } from "@components/ds/MiniButton";
-import { ROUTES } from "@components/shared/config/constants";
+import { Overline } from "@components/ds/Overline";
+import { alarmRowId, ROUTES } from "@components/shared/config/constants";
 import { Progress } from "@components/ui/progress";
 import { cn } from "@lib/utils";
 import { ALARMS_TEXT } from "@text/alarms";
@@ -56,23 +57,54 @@ const IMMINENT_DAYS = 1;
  * frequency` — so a weekly alarm and a monthly one both fill as they approach and both read full on
  * the day they ring.
  *
- * ⚠️ **`snooze` and `done` are drawn and disabled — COS-330.** No route pushes an alarm back or
- * acknowledges one. The `title` sits on the wrapper rather than on the buttons because a disabled
- * button receives no pointer events and would never show it. */
-function AlarmsRow({ alarm }: { alarm: Reminder }) {
+ * ⚠️ **A sleeping alarm keeps its row and loses its two readings** (COS-330). `countdown` reads
+ * `paused` with no gauge and `fires` reads a dash, because the server sends `null` for both: an
+ * alarm whose clock is stopped has no next firing, and printing the number it used to have would be
+ * a countdown counting down to nothing. The row stays, and that is the whole difference between
+ * `snooze` and `done` — one silences an alarm you still have, the other says you are finished with
+ * it. */
+function AlarmsRow({
+  alarm,
+  busy,
+  confirming,
+  flashing,
+  onPause,
+  onAskDone,
+  onCancelDone,
+  onConfirmDone,
+}: {
+  alarm: Reminder;
+  busy: boolean;
+  confirming: boolean;
+  /** Lit for a moment because the record screen sent us here — see `Alarms`. */
+  flashing: boolean;
+  onPause: (paused: boolean) => void;
+  onAskDone: () => void;
+  onCancelDone: () => void;
+  onConfirmDone: () => void;
+}) {
   const title = alarm.title;
   const url = alarm.original_url ?? undefined;
+  /* `alarm_days_until` and `alarm_paused_at` are two halves of one state and the server writes them
+     together, but the branch below tests the countdown: it is the value the cell needs, and narrowing
+     on it is what lets that branch read it without a fallback that could never be taken. */
   const days = alarm.alarm_days_until;
-  const imminent = days <= IMMINENT_DAYS;
-  const elapsed = ((alarm.alarm_frequency - days) / alarm.alarm_frequency) * 100;
+  const asleep = alarm.alarm_paused_at !== null;
+  const imminent = !asleep && days !== null && days <= IMMINENT_DAYS;
 
   return (
+    /* The `id` is what the record's `alarm` button aims at (COS-330), built by the same helper that
+       builds the address so the two cannot drift. The flash rides the row's existing
+       `transition-colors`, which is why there is no animation here: taking the tint away is already
+       a 120ms fade. */
     <div
       role="row"
+      id={alarmRowId(alarm.id)}
       className={cn(
         "relative grid h-11 items-center border-b border-gr-border text-2xs transition-colors duration-120 hover:bg-white/20",
         ALARM_COLUMNS,
         "@max-3xl:h-auto @max-3xl:px-3 @max-3xl:py-2",
+        flashing && "bg-gr-accent/12",
       )}
     >
       {/* `pl-4` rides the first column — it is the card's left margin, not the title's. */}
@@ -97,23 +129,31 @@ function AlarmsRow({ alarm }: { alarm: Reminder }) {
         role="cell"
         className="flex items-center gap-2"
       >
-        <span className={cn("num shrink-0", imminent ? "text-gr-accent-2" : "text-gr-fg-2")}>
-          {ALARMS_TEXT.row.countdown(days)}
-        </span>
-        {/* 56px, the handoff's width. Gone below the fold, where the number carries the column on its
-            own and 56px of bar is the difference between the title fitting and not. */}
-        <Progress
-          value={elapsed}
-          aria-label={ALARMS_TEXT.columns.countdown}
-          className={cn("w-14 @max-3xl:hidden", imminent && "[&_[data-slot=progress-indicator]]:bg-gr-accent-2")}
-        />
+        {asleep || days === null ? (
+          /* No gauge beside it: the bar shows how far through its period an alarm is, and one that
+             is not advancing through a period has no reading to give. */
+          <span className="shrink-0 text-gr-fg-4">{ALARMS_TEXT.row.paused}</span>
+        ) : (
+          <>
+            <span className={cn("num shrink-0", imminent ? "text-gr-accent-2" : "text-gr-fg-2")}>
+              {ALARMS_TEXT.row.countdown(days)}
+            </span>
+            {/* 56px, the handoff's width. Gone below the fold, where the number carries the column on
+                its own and 56px of bar is the difference between the title fitting and not. */}
+            <Progress
+              value={((alarm.alarm_frequency - days) / alarm.alarm_frequency) * 100}
+              aria-label={ALARMS_TEXT.columns.countdown}
+              className={cn("w-14 @max-3xl:hidden", imminent && "[&_[data-slot=progress-indicator]]:bg-gr-accent-2")}
+            />
+          </>
+        )}
       </div>
 
       <div
         role="cell"
         className="num text-2xs text-gr-fg-3"
       >
-        {format(alarm.alarm_next_fire, "yyyy-MM-dd")}
+        {alarm.alarm_next_fire ? format(alarm.alarm_next_fire, "yyyy-MM-dd") : ALARMS_TEXT.row.noFire}
       </div>
 
       <div
@@ -128,19 +168,58 @@ function AlarmsRow({ alarm }: { alarm: Reminder }) {
         </div>
       </div>
 
-      {/* `z-1` puts the pair above the title link's overlay, which is what lets the wrapper's tooltip
-          appear at all. */}
+      {/* `z-1` puts the controls above the title link's overlay, which is what lets them be pressed
+          at all — without it the anchor's `::after` swallows every click, and none of these handlers
+          would need `stopPropagation` because none of them would ever run.
+
+          ⚠️ **The confirm strip is wider than this column and leaves the flow to say so.** Measured
+          in Chrome at 1440×900 against the real IBM Plex Mono: the `act` column is 136 and the quiet
+          `SNOOZE` / `DONE` pair 114, while `done? · confirm · cancel` measures **180** — 44 more than
+          the column can hold. So it is taken out of the flow and pinned to the row's right edge,
+          which is `IndexRow`'s arrangement and its reason word for word.
+
+          `right-4` is the cell's own `pr-4` and nothing else: both right edges land on 1409, so the
+          strip ends exactly where the pair it replaces ended. The 88px it takes from `added / armed`
+          on its left are covered rather than reflowed — the index does the same, and a question that
+          moved the row's other columns while it was open would be worse. */}
       <div
         role="cell"
-        className="flex justify-end gap-2 pr-4 @max-3xl:hidden"
+        className="relative flex justify-end gap-2 pr-4 @max-3xl:hidden"
       >
-        <span
-          title={ALARMS_TEXT.row.pending}
-          className="relative z-1 flex gap-2"
-        >
-          <MiniButton disabled>{ALARMS_TEXT.row.snooze}</MiniButton>
-          <MiniButton disabled>{ALARMS_TEXT.row.done}</MiniButton>
-        </span>
+        {confirming ? (
+          <span className="absolute inset-y-0 right-4 z-1 flex items-center gap-2">
+            <Overline className="text-gr-accent-2">{ALARMS_TEXT.row.askDone}</Overline>
+            <MiniButton
+              danger
+              disabled={busy}
+              onClick={onConfirmDone}
+              className="hover:translate-y-0"
+            >
+              {ALARMS_TEXT.row.confirm}
+            </MiniButton>
+            <MiniButton
+              onClick={onCancelDone}
+              className="hover:translate-y-0"
+            >
+              {ALARMS_TEXT.row.cancel}
+            </MiniButton>
+          </span>
+        ) : (
+          <span className="relative z-1 flex gap-2">
+            <MiniButton
+              disabled={busy}
+              onClick={() => onPause(!asleep)}
+            >
+              {asleep ? ALARMS_TEXT.row.resume : ALARMS_TEXT.row.snooze}
+            </MiniButton>
+            <MiniButton
+              disabled={busy}
+              onClick={onAskDone}
+            >
+              {ALARMS_TEXT.row.done}
+            </MiniButton>
+          </span>
+        )}
       </div>
     </div>
   );

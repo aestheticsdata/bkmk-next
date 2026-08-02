@@ -33,8 +33,13 @@ export const SHELL_TEXT = {
     state: "ready",
     /** The default right-hand slot: the size of the index, then a static sync marker. */
     index: (total: string) => `idx ${total} · sync 12s`,
-    /** The reminders screen's right-hand slot. */
+    /** The reminders screen's right-hand slot: how many alarms are actually going to ring. */
     armed: (count: string) => `${count} armed`,
+    /** The same slot once something is asleep (COS-330). ⚠️ **`armed` on its own would be a false
+     *  reading**: a paused alarm sits in the list, and the tab above counts it under `alarms NNN`
+     *  because the list is the screen's inventory — but it is not armed, and this is the word that
+     *  says so. The second half appears only when there is something for it to say. */
+    armedWithPaused: (armed: string, paused: string) => `${armed} armed · ${paused} paused`,
     /** The record screen's (COS-301). Which record is open, read off the address bar by
      *  `useShellRoute` — the one screen whose right-hand slot is neither a counter nor a constant. */
     record: (id: string) => `record ${id}`,

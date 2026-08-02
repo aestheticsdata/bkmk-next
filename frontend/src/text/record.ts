@@ -10,10 +10,11 @@
  * brings them back with the columns behind them. They are simply not rendered: no placeholder, no
  * permanent skeleton, nothing that reads as a value that failed to load.
  *
- * ⚠️ **No `alarm` button either**, though the handoff's command bar draws one. It is the one control
- * of the four with nothing to do: arming a reminder means writing `reminder` on the record, which is
- * the edit form's field, and the legacy screen this replaces had `back / edit / delete` and no alarm
- * control at all. The value is on the screen — `fields.alarm` — and `edit` is how it changes. */
+ * ✅ **The handoff's fourth button is here since COS-330, and it is not what it looked like.** It was
+ * left out because arming a reminder is the edit form's field, so a control called `alarm` had
+ * nothing to do; what it does now is the other direction — it opens the alarms screen and lands on
+ * this record's row, which is where a reminder is silenced or finished. Arming still happens in
+ * `edit`, and the value is still read in `fields.alarm`. */
 
 export const RECORD_TEXT = {
   /** The command bar's breadcrumb: the way back, then which record this is. */
@@ -23,6 +24,12 @@ export const RECORD_TEXT = {
 
   actions: {
     edit: "edit",
+    /** The handoff's fourth button, and the one COS-330 finally gave something to do: it opens the
+     *  alarms screen and lands on this record's row. */
+    alarm: "alarm",
+    /** Same slot on a record with no reminder, so the bar keeps its shape whichever record is open —
+     *  the arrangement `open url ↗` uses on a record with no url. */
+    noAlarm: "no alarm on this record",
     /** The primary action of the screen: the record exists to be opened. */
     open: "open url ↗",
     /** Same slot on a record with no url, so the bar keeps its shape. */

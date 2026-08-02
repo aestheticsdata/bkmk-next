@@ -56,6 +56,10 @@ function BookmarkRecord({ id }: { id: string }) {
         id={id}
         title={record.title}
         url={record.original_url ?? undefined}
+        /* `alarm_frequency` and not an alarm id: it is the field `getBookmarkController` returns, and
+           the one `RecordFields` already reads to choose between `armed · every Nd` and `none`. Two
+           places on one screen deciding "is this armed" differently is the thing to avoid. */
+        hasAlarm={Boolean(record.alarm_frequency)}
         busy={remove.isPending}
         onRemove={() => remove.mutate(undefined, { onSuccess: () => router.replace(ROUTES.bookmarks.path) })}
       />

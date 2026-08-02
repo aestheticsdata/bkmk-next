@@ -198,8 +198,13 @@ module.exports = async (req, res) => {
       conditions.push("b.alarm_id IS NULL");
       break;
     case "due":
+      /* `a.paused_at IS NULL` is the third copy of one guard (COS-330), beside `getRemindersController`
+         and `getAlarmLoadController`: an alarm whose clock is stopped is never imminent, and a filter
+         answering `≤ 3d` about a row the alarms screen draws as `paused` would be two screens
+         disagreeing about one alarm. `armed` and `none` above are untouched — they are about the
+         presence of the link, which a pause does not change. */
       conditions.push(
-        "a.frequency > 0 AND MOD(a.frequency - MOD(DATEDIFF(CURDATE(), a.date_added), a.frequency), a.frequency) <= ?",
+        "a.frequency > 0 AND a.paused_at IS NULL AND MOD(a.frequency - MOD(DATEDIFF(CURDATE(), a.date_added), a.frequency), a.frequency) <= ?",
       );
       conditionParams.push(REMINDER_DUE_DAYS);
       break;
