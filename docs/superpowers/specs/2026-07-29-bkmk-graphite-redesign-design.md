@@ -454,6 +454,18 @@ la carte fait **216 px avec le lien et 216 px sans**, sur une barre de 30 px qui
 ligne. `/recover` fait 480 × 329, sans débordement horizontal, et sa paire de clés replie sur une
 colonne à 480.
 
+⚠️ **COS-402 a défait ce placement**, et la mesure ci-dessus est ce qui rendait le débat possible,
+pas ce qui le tranchait : elle dit que le lien était gratuit dans la barre, pas qu'il y était à sa
+place. `forgot key?` est devenu **`recover account →`** — le nom de l'écran où l'on va plutôt que du
+symptôme avec lequel on arrive — et il est descendu dans un **bandeau au bas de la carte** : le
+`PagerBar` de `ds/CommandBar` à la gouttière de cette carte-ci (`px-5.5` et non `px-3.5`), ce qui
+fait démarrer le lien sur la même verticale que les champs — 503 px pour les deux, mesurés à 1440.
+Le bandeau fait **37 px** et la carte passe de 216 à **253 px**. C'est le prix, et il est payé pour
+que la barre d'action ne dise plus qu'une chose — ce que la carte *fait* — et que la sortie vers
+`/recover` soit ailleurs. La structure suit : le `p-5.5` descend du `<form>` sur un `<div>` interne,
+faute de quoi rien ne peut être à fleur des bords, et le `<form>` prend `overflow-hidden` ou le
+bandeau équarrit ses deux coins du bas.
+
 **Vérifié en lançant le serveur** : 15 contrôles en HTTP sur des comptes jetables créés et supprimés
 dans la même passe — les trois refus identiques, une passphrase de moins de 20 caractères refusée
 par `validate` *sans* être comptée, la colonne réellement réécrite, aucun `csrfToken` dans le corps,

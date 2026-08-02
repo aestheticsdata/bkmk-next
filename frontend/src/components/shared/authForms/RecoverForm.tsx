@@ -95,9 +95,20 @@ function RecoverForm({
         label={copy.passphrase}
         hint={copy.passphraseHint}
         type={passphraseRevealed ? "text" : "password"}
-        /* `current-password`, not `new-password`: this is a secret the browser may already hold from
-           sign-up, and offering to fill it is the correct behaviour for a field being proved. */
-        autoComplete="current-password"
+        /* ⚠️ **`off`, and the two tokens that look right are both wrong** (COS-402). This field
+           carried `current-password` from COS-324, on the premise that the browser already held the
+           passphrase from sign-up. It never did: sign-up declares it `new-password`, and a password
+           manager keeps one credential per origin — the identity and *the key*. So the token could
+           not resolve to the passphrase, and resolved to what it names instead. Beside the `email`
+           field above it, `current-password` is the textbook signature of a login form, and Chrome
+           filled the saved key into the box asking for the passphrase.
+
+           `new-password` is the other wrong answer: it suppresses the fill, but it offers to
+           generate a secret on a field you are transcribing off paper, and it competes with the two
+           real `new-password` fields below for the save prompt.
+
+           There is no autofill token for a secret held out of band, so the field claims none. */
+        autoComplete="off"
         error={messageFor("recoveryPassphrase")}
         action={
           <RevealToggle
