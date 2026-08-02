@@ -21,8 +21,9 @@ export interface AuthActionCopy {
 export interface SignInCopy extends AuthActionCopy {
   identity: string;
   key: string;
-  /** The second way out of this card, and the only screen that has one (COS-324). */
-  forgotKey: string;
+  /** The second way out of this card, and the only screen that has one (COS-324). It sits in the
+   *  card's footer band rather than in the action row since COS-402. */
+  recoverAccount: string;
 }
 
 export interface SignUpCopy extends AuthActionCopy {

@@ -65,8 +65,14 @@ export const AUTH_TEXT = {
     failed: "could not sign in",
     /** The way to `/recover` (COS-324). UI 01 removed a `/forgotPassword` that had neither a page
      *  nor a route behind it; this is the live link that replaces it, and it is the only entrance —
-     *  a screen you reach by typing its address is a screen nobody reaches. */
-    forgotKey: "forgot key?",
+     *  a screen you reach by typing its address is a screen nobody reaches.
+     *
+     *  ⚠️ **It was `forgot key?` in the action row until COS-402**, which renamed it and moved it
+     *  into the card's footer band. The question named the *symptom* the visitor arrives with; this
+     *  names the screen it opens, which is the thing they are choosing to go to. The arrow is
+     *  `about bkmk →`'s — the other link on this page that leaves the card. `Overline` uppercases,
+     *  so the case written here is not what puts it in capitals. */
+    recoverAccount: "recover account →",
   },
 
   /* The two placeholders are the handoff's own words (COS-298). UI 01 had put "account" and "open an

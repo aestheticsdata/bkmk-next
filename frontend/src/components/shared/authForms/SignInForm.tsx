@@ -56,7 +56,7 @@ function SignInForm({
     <AuthCard
       action={copy}
       switchHref={switchHref}
-      secondary={{ href: recoverHref, label: copy.forgotKey }}
+      secondary={{ href: recoverHref, label: copy.recoverAccount }}
       error={error}
       busy={isSubmitting}
       onSubmit={handleSubmit(onSubmit)}
