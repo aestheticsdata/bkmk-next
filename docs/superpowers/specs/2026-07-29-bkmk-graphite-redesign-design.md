@@ -59,7 +59,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-394 — retrait de la capture auto de l'écran et de l'import | ✅ mergé (PR #43) |
 | UI 07 | COS-303 — écran Import : dépôt, staging, formats | ✅ mergé (PR #26) |
 | UI 08 | COS-304 — écran Alarms : inventaire, compte à rebours, charge 14 jours | ✅ mergé (PR #27) |
-| hors lot | COS-330 — de-mock de l'écran Alarms (snooze / done) | ⏳ ouvert par UI 08 |
+| hors lot | COS-330 — de-mock de l'écran Alarms (snooze / done) | ⏳ ouvert par UI 08, spécifié le 2026-08-02 (§0) |
 | hors lot | COS-331 — SEC : secrets en clair dans l'historique git | ⏳ trouvé pendant UI 08 |
 | UI 10 | COS-319 — modale d'édition d'un record, portée par une route | ✅ mergé (PR #28) |
 | hors lot | COS-341 — dialog : le corps défile, plus le panneau autour | ✅ mergé (PR #29) |
@@ -72,6 +72,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | DATA 01 | COS-306 — la page se décrit elle-même, et `?userID=` quitte le fil | ✅ mergé (PR #31) |
 | DATA 02 | COS-307 — staging d'import : parse, commit, options, `last import` | ✅ mergé (PR #32) |
 | hors lot | COS-338 — DATA 09 : forme normale d'url, colonne `host`, backfill | ✅ mergé (PR #34) |
+| hors lot | COS-353 — création : une transaction, et plus rien derrière un 500 | ✅ mergé (PR #44) |
 | DATA 03 | COS-308 — détection de doublons à la création | ✅ mergé (PR #35) |
 | AUTH 05 | COS-324 — récupération par passphrase : écran `/recover` et route | ✅ mergé (PR #40) |
 | DATA 05 | COS-310 — compteurs du rail, bloc `storage`, charge des 14 jours | ✅ mergé (PR #41) |
@@ -205,6 +206,10 @@ Les hints `s snooze` / `d done` de la barre de statut sont retirés en attendant
 laisse l'écran Record sans aucun hint — le tableau de COS-312 ne les porte pas non plus, donc c'est
 COS-330 qui les rétablira. `arm new`, lui, n'est pas dans cette liste : armer une alarme, c'est donner
 un rappel à un signet, et le formulaire de création est l'écran où ce champ vit.
+
+❌ **Amendé le 2026-08-02 : COS-330 ne les rétablit pas.** Il livre les trois contrôles et laisse les
+deux hints où ils sont, parce qu'il ne lie aucune touche — un hint sans écouteur est le défaut qui
+les a fait partir. Voir la section COS-330 à la fin de ce §0.
 
 ⚠️ **Deux correctifs sont venus avec la requête.** La suppression est douce et laisse la ligne
 `alarm` en place, donc **un signet supprimé continuait de sonner ici et d'être compté dans le chrome**,
@@ -761,6 +766,169 @@ modale reste collée à l'écran lors d'une navigation par `Link`.
 
 Les deux autres surfaces restent en état client : la confirmation de suppression est éphémère,
 et la modale de filtres n'a que son ouverture à porter.
+
+### COS-330 — `snooze` met l'alarme en pause, `done` la désarme (décidé le 2026-08-02)
+
+Le ticket laissait une décision ouverte avant d'écrire la route — « une alarme bkmk est une
+fréquence, pas une échéance » — et proposait deux lectures : décaler `date_added` de N jours, ou
+ajouter une colonne qui fait sauter une occurrence. **Le propriétaire a tranché une troisième**, et
+elle n'est ni l'une ni l'autre : les deux repoussent *une* sonnerie, et ce qu'il veut est **arrêter
+la pendule**.
+
+- `snooze` **met la récurrence en pause** et laisse la ligne dans la liste.
+- `done` **retire le signet de la liste des alarmes**, sous confirmation en place.
+- `snooze all` fait le premier sur toute la liste.
+- La ligne ouvre déjà la fiche depuis UI 08 ; la **fiche** gagne le bouton `alarm` qui ramène à
+  l'écran, sur la ligne du signet.
+
+#### La donnée : une colonne, et `done` n'en a pas
+
+```sql
+ALTER TABLE alarm ADD COLUMN paused_at DATE NULL AFTER date_added;
+```
+
+`NULL`, l'alarme tourne. Une date, elle dort depuis ce jour-là.
+
+| action | écriture |
+|---|---|
+| `snooze` | `paused_at = CURDATE()` **`WHERE paused_at IS NULL`** |
+| `resume` | `date_added += DATEDIFF(CURDATE(), paused_at)`, puis `paused_at = NULL`, **`WHERE paused_at IS NOT NULL`** |
+| `snooze all` / `resume all` | les deux mêmes, sans le filtre sur l'identifiant |
+| `done` | `UPDATE bookmark SET alarm_id=NULL` puis `DELETE FROM alarm`, dans une transaction |
+
+⚠️ **Les deux gardes du `WHERE` portent la promesse d'idempotence, elles ne la décorent pas.** Sans
+la première, endormir une alarme déjà endormie **remet `paused_at` à aujourd'hui** et lui fait perdre
+tout le sommeil déjà accumulé : au réveil la série glisserait de moins que la durée réelle, et le
+compte à rebours repartirait plus tôt qu'il ne s'était arrêté. C'est le cas courant, pas le cas
+tordu — `snooze all` sur une liste où deux lignes dorment déjà le déclenche au premier clic.
+
+⚠️ **Le compte à rebours ne dérive pas : il reprend sur le nombre où il s'est arrêté**, et c'est une
+identité, pas une approximation. En mettant en pause le jour `p` et en réveillant le jour `r`, la
+nouvelle origine est `d' = d + (r - p)`, donc `(r - d') mod f = (p - d) mod f` : les deux `r`
+s'annulent. `T-15d` au moment où on l'endort, `T-15d` au réveil, quarante jours plus tard. C'est la
+lecture (1) du ticket — la série glisse, le rythme est préservé — appliquée à la pause au lieu d'une
+occurrence, et c'est ce qui la rend exacte plutôt qu'approchée.
+
+**Et `date_added` ne peut pas passer dans le futur**, ce qui rendrait `DATEDIFF` négatif et le `MOD`
+avec lui : on arme avant d'endormir et on endort avant de réveiller, donc `d ≤ p ≤ r`, donc
+`d' = d + (r - p) ≤ r`. Au pire l'alarme se réveille datée d'aujourd'hui, c'est-à-dire sonnant
+aujourd'hui.
+
+⚠️ **Pourquoi pas les deux colonnes que le ticket proposait.** `snoozed_until` demande une date de
+réveil que personne ne choisit — l'écran n'a pas de champ pour elle, et une valeur par défaut serait
+une durée inventée. `acknowledged_at` oblige chaque lecture à recalculer si le dernier acquittement
+couvre encore la période courante, c'est-à-dire à porter la même arithmétique modulaire une troisième
+fois, dans un fichier de plus.
+
+⚠️ **Pourquoi pas un `status ENUM('armed','paused','done')`**, qui aurait porté les trois états dans
+une colonne. Parce que `done` aurait alors **deux vérités sur « ce signet est armé »** :
+`bookmark.alarm_id IS NOT NULL`, que lisent le filtre `alarm=armed` de l'index, le rail, la fiche, la
+modale d'édition, l'export et la détection de doublons — et `alarm.status`, que seul l'écran alarmes
+lirait. Six lecteurs à mettre au courant, ou six lecteurs qui mentent. En désarmant pour de bon, `done`
+n'ajoute aucune colonne et emprunte le chemin qu'`applyAlarm` prend déjà quand on vide le champ
+`reminder` dans la modale d'édition — un chemin testé, et le seul qui existe.
+
+**C'est ce qui rend la confirmation due.** La fréquence et la date d'armement partent avec la ligne :
+`done` est irréversible, donc il demande, là où `snooze` ne demande rien parce qu'un second clic le
+défait. L'ordre `UPDATE` puis `DELETE` n'est pas un style : la clé étrangère `bookmark.alarm_id`
+refuse l'inverse.
+
+#### Trois lectures apprennent la colonne
+
+- **`getRemindersController`** — sélectionne `alarm_paused_at`, et met `alarm_days_until` /
+  `alarm_next_fire` à `NULL` sous un `CASE WHEN alarm.paused_at IS NULL` : une pendule arrêtée n'a pas
+  de prochaine sonnerie, et un nombre à cet endroit en serait une. ⚠️ **Le `ORDER BY` gagne
+  `(alarm.paused_at IS NOT NULL) ASC` en tête** — sans lui MySQL trie les `NULL` **en premier** et les
+  alarmes endormies prendraient la tête d'une liste ordonnée par imminence.
+- **`getAlarmLoadController`** — `AND alarm.paused_at IS NULL`. Une alarme en pause ne dessine aucune
+  barre dans la quinzaine, pour la raison qui lui retire sa date de sonnerie.
+- **`getBookmarksController`**, filtre `alarm=due` — la même garde. Une alarme en pause n'est jamais
+  imminente. `alarm=armed` et `alarm=none` ne bougent pas : ils portent sur la présence du lien, qui
+  reste exacte.
+
+Le troisième point tient la promesse écrite dans les trois fichiers : l'expression du compte à
+rebours est la même à la parenthèse près aux trois endroits, et une garde ajoutée à deux d'entre eux
+sur trois est exactement la dérive contre laquelle ces commentaires sont écrits.
+
+#### Les routes
+
+```
+PATCH  /reminders/:alarmId   { paused: boolean }
+PATCH  /reminders            { paused: boolean }
+DELETE /reminders/:alarmId
+```
+
+⚠️ **`{ paused: boolean }` et non une route qui bascule.** Un basculement lu sur une liste périmée
+part dans le mauvais sens : on voit `snooze`, un autre onglet a déjà réveillé l'alarme, et le clic la
+rendort. L'état voulu est dans le corps, donc la même requête rejouée deux fois donne le même
+résultat.
+
+Le périmètre vient de la session et jamais du chemin, la règle de COS-322 : l'identifiant est celui
+de l'**alarme**, mais la propriété se vérifie par la jointure sur `bookmark.user_id` et `b.active = 1`
+— une alarme n'a pas de propriétaire, c'est le signet qui en a un. `validate()` porte les deux
+schémas, comme partout ailleurs.
+
+Côté front, trois mutations sous `queryKeys.reminders` ; `done` invalide en plus
+`queryKeys.bookmarks.all` et `queryKeys.bookmark.detail(id)`, parce qu'il change ce que la fiche
+affiche dans `fields.alarm` et ce que le filtre `has alarm` du rail ramène.
+
+#### La ligne, la barre, le schéma
+
+`ReminderSchema` gagne `alarm_paused_at` et **rend `alarm_days_until` et `alarm_next_fire`
+nullables** — c'est le changement qui traverse la frontière zod, et il est visible partout où la
+ligne les lit.
+
+- Cellule `countdown` : `paused` en `--fg-4`, sans jauge. Cellule `fires` : `—`. Ni l'un ni l'autre
+  n'invente une date que la base ne porte plus.
+- La paire devient `resume` / `done` quand la ligne dort.
+- `done` remplace la paire **en place** par `done? · confirm · cancel`, `confirm` en oxyde plein —
+  la bande de l'index (`IndexRow`), et c'est le commentaire de `RecordCommandBar` qui l'autorise mot
+  pour mot : une confirmation en place marche **sur une ligne**, parce qu'on la regarde ; ce qu'elle
+  ne pouvait pas faire, c'est tenir sur une barre de commande dont l'écran entier est ce qu'on
+  supprime.
+- ⚠️ **La bande est plus large que la colonne `act`**, dont les 136px sont mesurés pour la paire
+  `SNOOZE` / `DONE` (114 + `pr-4`). Elle sort donc du flux et se cale à droite, comme celle de
+  l'index, qui sort pour exactement cette raison. **La largeur se mesure en Chrome sans tête avant
+  d'écrire un nombre** — aucune valeur de cette section n'est estimée depuis la maquette.
+- `snooze all` lit `resume all` quand toutes les lignes dorment. Pas de confirmation : un second clic
+  le défait.
+- `AlarmsLoad` reçoit `armed` — le nombre d'alarmes **qui tournent**, plus `alarms.length`. Sinon un
+  écran où tout dort afficherait quatorze barres plates sous le message qui parle d'une quinzaine sans
+  sonnerie, alors que la cause est ailleurs.
+
+#### La fiche ramène à l'écran
+
+`RecordCommandBar` gagne le **quatrième bouton de la maquette**, `alarm`, entre `edit` et `delete`.
+La note de `@text/record.ts` qui explique qu'il est le seul des quatre à n'avoir rien à faire cesse
+d'être vraie et part avec lui. Désactivé sur une fiche sans alarme, avec un `title` qui le dit —
+l'arrangement de `open url ↗` sur une fiche sans url.
+
+Il pointe sur `/bookmarks/reminders#alarm-<id du record>`.
+
+⚠️ **Le fragment ne peut pas défiler tout seul.** La liste arrive de react-query, donc au premier
+rendu aucun élément ne porte cet identifiant et le navigateur ne trouve rien à viser. C'est un effet
+dans `Alarms` qui attend la donnée, puis `scrollIntoView({ block: "center" })` et fait clignoter la
+ligne une fois. Un fragment plutôt qu'un `?focus=` : il ne part pas au serveur, et `useSearchParams`
+obligerait cet écran à une frontière `Suspense` qu'il n'a pas — le même arbitrage que la fiche, qui
+lit son id dans `params` pour ne pas sortir du prérendu.
+
+**Il n'y a pas de « page » où aller.** La table des alarmes est un seul défilement qui porte toute la
+liste (`AlarmsTable`, et `useAlarms` l'écrit) ; la paginer serait un autre ticket, `LIMIT`/`OFFSET`
+côté serveur compris. Viser la ligne est ce que « la page où se trouve ce signet » veut dire tant
+qu'il n'y a qu'une page.
+
+#### Ce qui est laissé dehors, et ce qui entre en plus
+
+❌ **Les hints `s snooze` / `d done` que le ticket demande de rétablir ne reviennent pas.** La raison
+est écrite dans `@text/shell.ts` : ils nomment des touches que rien n'écoute, et aucun écran ne lie
+de touche tant que COS-312 n'est pas fait — dont le tableau ne les porte pas non plus. Les rétablir
+sans écouteur recrée exactement le défaut qui les a fait retirer. Ils reviennent avec les raccourcis,
+ou avec un ticket qui lie `s` et `d` sur la ligne qui a le focus.
+
+✅ **La barre de statut cesse de mentir.** `N armed` compte la longueur de la liste, et une alarme en
+pause est dans la liste sans être armée. Elle lit `N armed · M paused` dès que quelque chose dort.
+C'est le seul ajout au périmètre demandé, et il est là parce que la pause rend fausse une lecture qui
+était vraie.
 
 ---
 
