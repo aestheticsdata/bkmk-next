@@ -59,7 +59,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | hors lot | COS-394 — retrait de la capture auto de l'écran et de l'import | ✅ mergé (PR #43) |
 | UI 07 | COS-303 — écran Import : dépôt, staging, formats | ✅ mergé (PR #26) |
 | UI 08 | COS-304 — écran Alarms : inventaire, compte à rebours, charge 14 jours | ✅ mergé (PR #27) |
-| hors lot | COS-330 — de-mock de l'écran Alarms (snooze / done) | ⏳ ouvert par UI 08, spécifié le 2026-08-02 (§0) |
+| hors lot | COS-330 — de-mock de l'écran Alarms (snooze / done) | ✅ mergé (PR #45) |
 | hors lot | COS-331 — SEC : secrets en clair dans l'historique git | ⏳ trouvé pendant UI 08 |
 | UI 10 | COS-319 — modale d'édition d'un record, portée par une route | ✅ mergé (PR #28) |
 | hors lot | COS-341 — dialog : le corps défile, plus le panneau autour | ✅ mergé (PR #29) |
@@ -207,9 +207,10 @@ laisse l'écran Record sans aucun hint — le tableau de COS-312 ne les porte pa
 COS-330 qui les rétablira. `arm new`, lui, n'est pas dans cette liste : armer une alarme, c'est donner
 un rappel à un signet, et le formulaire de création est l'écran où ce champ vit.
 
-❌ **Amendé le 2026-08-02 : COS-330 ne les rétablit pas.** Il livre les trois contrôles et laisse les
-deux hints où ils sont, parce qu'il ne lie aucune touche — un hint sans écouteur est le défaut qui
-les a fait partir. Voir la section COS-330 à la fin de ce §0.
+❌ **Amendé le 2026-08-02 : COS-330 ne les a pas rétablis.** Il a livré les trois contrôles et laissé
+les deux hints où ils sont, parce qu'il ne lie aucune touche — un hint sans écouteur est le défaut
+qui les a fait partir. C'est COS-312 qui les ramènera, avec l'écouteur. Voir la section COS-330 à la
+fin de ce §0.
 
 ⚠️ **Deux correctifs sont venus avec la requête.** La suppression est douce et laisse la ligne
 `alarm` en place, donc **un signet supprimé continuait de sonner ici et d'être compté dans le chrome**,
@@ -767,7 +768,38 @@ modale reste collée à l'écran lors d'une navigation par `Link`.
 Les deux autres surfaces restent en état client : la confirmation de suppression est éphémère,
 et la modale de filtres n'a que son ouverture à porter.
 
-### COS-330 — `snooze` met l'alarme en pause, `done` la désarme (décidé le 2026-08-02)
+### COS-330 — `snooze` met l'alarme en pause, `done` la désarme (décidé et fait le 2026-08-02)
+
+✅ **Mergé (PR #45), et la conception ci-dessous a tenu telle quelle — c'est l'exécution qui a appris
+deux choses.**
+
+**Le gel du compte à rebours a été mesuré, pas déduit.** Une alarme armée le 26/06 tous les 15 jours,
+endormie le 23/07 sur `T-03d`, réveillée dix jours plus tard : `T-03d`. L'identité écrite plus bas
+n'est donc pas restée sur le papier, et c'est le seul contrôle qui justifiait toute la colonne.
+
+⚠️ **Un défaut trouvé en mesurant, et qui n'aurait pas été trouvé autrement : l'atterrissage sur une
+ligne s'arrêtait 190px trop haut.** Sur une liste de 37 lignes, `scrollIntoView` visait juste puis la
+ligne se retrouvait hors de vue. La cause n'est pas dans le calcul : la carte du graphe est une
+**seconde requête**, donc elle se monte *après* et la grille `1fr auto` rétrécit le défileur sous une
+position déjà figée. Le correctif ne devine pas un délai — un `ResizeObserver` re-vise tant que la
+boîte bouge, ce qui couvre aussi une police qui arrive tard ou un changement de largeur. **La leçon
+est générale** : sur cet écran, tout ce qui se positionne au moment où la donnée arrive se positionne
+avant que la mise en page ait fini de bouger.
+
+**Et la bande de confirmation a été mesurée avant d'écrire un nombre** (Chrome sans tête, 1440×900) :
+180 contre 136 de colonne, donc elle sort du flux ; les deux bords droits tombent sur 1409, donc elle
+finit exactement où finissait la paire qu'elle remplace. Elle recouvre 88px de `added / armed`, ce
+qui est accepté — c'est ce que fait l'index, et une question qui déplacerait les autres colonnes
+pendant qu'elle est ouverte serait pire.
+
+⚠️ **Un dernier constat, sans rapport avec le ticket : la base de dev portait 8 alarmes orphelines**,
+ids 120 à 127, en deux séries identiques de quatre, datées du 22/07 au 01/08. C'est la signature
+d'une création qui échoue après avoir inséré l'alarme — le chemin que **COS-353** a mis sous
+transaction deux commits plus tôt. Des débris d'avant le correctif, pas une fuite en cours ;
+supprimés sur arbitrage du propriétaire (« c'est une base locale, ce sont des données mocks »). Ils
+mesurent au passage ce que COS-353 a fermé.
+
+---
 
 Le ticket laissait une décision ouverte avant d'écrire la route — « une alarme bkmk est une
 fréquence, pas une échéance » — et proposait deux lectures : décaler `date_added` de N jours, ou
