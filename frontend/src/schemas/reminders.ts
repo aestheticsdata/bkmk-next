@@ -26,12 +26,20 @@ export const ReminderSchema = BookmarkSchema.omit({ categories: true }).extend({
    *  zero: the query excludes those, because they are what makes the countdown below undefined. */
   alarm_frequency: numberLikeSchema,
   alarm_added: dateLikeSchema,
+  /** The day the alarm was put to sleep, `null` while it runs (COS-330). It is what tells a row that
+   *  stays in the list without ringing from one that is counting down — `snooze` keeps the row,
+   *  `done` takes it away. */
+  alarm_paused_at: dateLikeSchema.nullable(),
   /** Days until the next firing, `0` on the day itself. Computed by MySQL from the two fields above
-   *  — see `getRemindersController` for the expression and for why it is not derived here. */
-  alarm_days_until: numberLikeSchema,
+   *  — see `getRemindersController` for the expression and for why it is not derived here.
+   *
+   *  ⚠️ **`null` on a sleeping alarm** (COS-330): a stopped clock has no next firing, and a number
+   *  here would be a countdown counting down to nothing. */
+  alarm_days_until: numberLikeSchema.nullable(),
   /** The date of that next firing. **A day, not a moment**: an alarm has no time of day anywhere in
-   *  the schema, so nothing downstream may print one. */
-  alarm_next_fire: dateLikeSchema,
+   *  the schema, so nothing downstream may print one. `null` on a sleeping alarm, with the field
+   *  above and for its reason. */
+  alarm_next_fire: dateLikeSchema.nullable(),
 });
 
 export type Reminder = z.infer<typeof ReminderSchema>;

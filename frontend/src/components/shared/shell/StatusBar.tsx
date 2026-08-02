@@ -26,9 +26,21 @@ function StatusBar() {
   // carries one where the value is static.
   const entry: { hints: readonly string[]; right?: string } = SHELL_STATUS[screen];
 
-  const armed = screen === "reminders";
-  const count = armed ? counts.reminders : counts.bookmarks;
-  const format = armed ? SHELL_TEXT.status.armed : SHELL_TEXT.status.index;
+  /* ⚠️ **`armed` used to name the screen and now names the number**, which is the change: the slot
+     said `N armed` about the length of the alarms list, and since COS-330 a row can sit in that list
+     with its clock stopped. So the count is the list minus what is asleep, and the sleeping ones get
+     a word of their own rather than being quietly counted as armed. */
+  const onAlarms = screen === "reminders";
+  const paused = counts.remindersPaused ?? 0;
+  const count = onAlarms
+    ? counts.reminders === undefined
+      ? undefined
+      : counts.reminders - paused
+    : counts.bookmarks;
+  const format = onAlarms
+    ? (value: string) =>
+        paused > 0 ? SHELL_TEXT.status.armedWithPaused(value, String(paused)) : SHELL_TEXT.status.armed(value)
+    : SHELL_TEXT.status.index;
 
   /* Three sources, in order of how specific they are: the record screen names the record it is on
      (COS-301), a screen with a static slot prints it, and everything else falls back to the counter.

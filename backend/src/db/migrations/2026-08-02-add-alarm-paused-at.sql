@@ -1,0 +1,25 @@
+-- COS-330 — the alarm that is asleep.
+--
+-- An alarm is a frequency, not a deadline: it repeats every `frequency` days from `date_added`, so
+-- there is no next-fire row to move, and `snooze` cannot push one back. What it does instead is stop
+-- the clock -- and stopping a clock needs somewhere to write the day it stopped.
+--
+-- NULL means the alarm runs. A date means it has slept since that day, and `resume` slides
+-- `date_added` forward by exactly that sleep: with `d' = d + (r - p)`, `(r - d') MOD f` equals
+-- `(p - d) MOD f`, so the countdown comes back on the number it froze on rather than drifting. The
+-- new origin cannot land in the future either -- an alarm is armed before it sleeps and sleeps
+-- before it wakes, so `d <= p <= r` gives `d' <= r`.
+--
+-- DATE and not DATETIME, like every other date in this schema: an alarm has no hour anywhere, and a
+-- column able to carry one would be the first place to print a precision nothing can produce.
+--
+-- `done` needs no column of its own -- it clears `bookmark.alarm_id` and deletes the row, which is
+-- the path `editBookmarkController.applyAlarm` already takes when the `reminder` field is emptied.
+-- A `status` enum carrying all three states would have given "this record is armed" two answers:
+-- `bookmark.alarm_id IS NOT NULL`, which the index filter, the rail, the record, the edit modal, the
+-- export and the duplicate check all read, and the enum, which only the alarms screen would.
+--
+-- Without this migration: `GET /reminders` answers 500 on `Unknown column 'alarm.paused_at'`, and
+-- with it the alarms screen and both counters in the chrome.
+
+ALTER TABLE alarm ADD COLUMN paused_at DATE NULL AFTER date_added;

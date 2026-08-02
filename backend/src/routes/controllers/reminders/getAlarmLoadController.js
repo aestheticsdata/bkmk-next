@@ -34,6 +34,11 @@ const DAYS_UNTIL_NEXT_FIRE =
  * with no alarm at all. The front used to build that skeleton itself; a chart whose length depends
  * on the result set is a chart that silently shortens.
  *
+ * ⚠️ **A sleeping alarm draws no bar** (COS-330), for the reason it has no fire date in the list
+ * beside it: the fortnight is a forecast of firings, and an alarm whose clock is stopped has none to
+ * forecast. It comes back the day it is woken, and its bars land on the slid series rather than on
+ * the one it had before.
+ *
  * `day` is dated from the server's `CURDATE()`, like `alarm_next_fire` next door, so the axis and
  * the countdowns cannot disagree — a browser an hour past midnight in another zone would have
  * labelled the first bar with a different day. It is what let the front drop `alarmsToday`, which
@@ -52,7 +57,7 @@ module.exports = async (req, res) => {
              ${DAYS_UNTIL_NEXT_FIRE} AS days_until
         FROM bookmark b
         INNER JOIN alarm ON b.alarm_id = alarm.id
-       WHERE b.user_id = ? AND b.active = 1 AND alarm.frequency > 0
+       WHERE b.user_id = ? AND b.active = 1 AND alarm.frequency > 0 AND alarm.paused_at IS NULL
     )
     SELECT o.n                                   AS day_offset,
            DATE_ADD(CURDATE(), INTERVAL o.n DAY) AS day,

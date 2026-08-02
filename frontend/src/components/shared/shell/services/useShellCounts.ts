@@ -31,7 +31,7 @@ import { useQuery } from "@tanstack/react-query";
  * with it — and it changed what the list asks for rather than whether a total exists, so this
  * hook survived it as predicted. `?userID=` left both requests in the same change: the scope
  * of either is its session. */
-const useShellCounts = (): { bookmarks?: number; reminders?: number } => {
+const useShellCounts = (): { bookmarks?: number; reminders?: number; remindersPaused?: number } => {
   const { privateRequest } = useRequestHelper();
   /* Only the gate — see `useBookmarkIndex` (COS-306). Both counters would 401 before the
    * session is up, and would then sit at their error state on a screen with no way to retry. */
@@ -57,7 +57,15 @@ const useShellCounts = (): { bookmarks?: number; reminders?: number } => {
     ...QUERY_OPTIONS,
   });
 
-  return { bookmarks: bookmarks.data, reminders: reminders.data?.length };
+  /* Two readings off one list (COS-330). The tab's `alarms NNN` is the length — the screen's whole
+     inventory, sleeping rows included, because they are still alarms the account holds. The status
+     bar needs the other half: `N armed` said of an alarm whose clock is stopped is false, so it is
+     told how many are asleep and subtracts them itself. */
+  return {
+    bookmarks: bookmarks.data,
+    reminders: reminders.data?.length,
+    remindersPaused: reminders.data?.filter((reminder) => reminder.alarm_paused_at !== null).length,
+  };
 };
 
 export default useShellCounts;

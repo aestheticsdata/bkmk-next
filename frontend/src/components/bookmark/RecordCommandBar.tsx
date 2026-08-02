@@ -3,7 +3,7 @@
 import { DeleteConfirm } from "@components/bookmarks/DeleteConfirm";
 import { CommandBar } from "@components/ds/CommandBar";
 import { Overline } from "@components/ds/Overline";
-import { editHref, ROUTES } from "@components/shared/config/constants";
+import { alarmHref, editHref, ROUTES } from "@components/shared/config/constants";
 import { Button } from "@components/ui/button";
 import { RECORD_TEXT } from "@text/record";
 import Link from "next/link";
@@ -22,7 +22,9 @@ import { useState } from "react";
  * The modal repeats the title and the url back, which is what tells you *which* record you are about
  * to lose, and says what leaves with it.
  *
- * ⚠️ **The handoff's fourth button, `alarm`, is not here** — see the note in `@text/record.ts`.
+ * **`alarm` goes the other way round from what its name suggests** (COS-330): it does not arm one —
+ * that is `edit`, and it always was — it opens the alarms screen on this record's row, which is where
+ * a reminder is silenced or finished. See `alarmHref`.
  *
  * `flex-wrap` below the fold is not decoration: three buttons and the breadcrumb are wider than a
  * phone, and a command bar that does not wrap pushes `open url` off the card. */
@@ -30,12 +32,14 @@ function RecordCommandBar({
   id,
   title,
   url,
+  hasAlarm,
   busy,
   onRemove,
 }: {
   id: string;
   title: string;
   url?: string;
+  hasAlarm: boolean;
   busy: boolean;
   onRemove: () => void;
 }) {
@@ -62,6 +66,28 @@ function RecordCommandBar({
         >
           <Link href={editHref(id)}>{RECORD_TEXT.actions.edit}</Link>
         </Button>
+
+        {/* The handoff's order — `edit`, `alarm`, then the primary. Disabled rather than absent on a
+            record with no reminder, as `open url ↗` is on a record with no url: the bar keeps the
+            same shape whichever record is open. */}
+        {hasAlarm ? (
+          <Button
+            asChild
+            variant="chrome"
+            size="chrome"
+          >
+            <Link href={alarmHref(id)}>{RECORD_TEXT.actions.alarm}</Link>
+          </Button>
+        ) : (
+          <Button
+            variant="chrome"
+            size="chrome"
+            disabled
+            title={RECORD_TEXT.actions.noAlarm}
+          >
+            {RECORD_TEXT.actions.alarm}
+          </Button>
+        )}
 
         {/* Outline oxide, not filled: this button opens a question, it does not delete. The filled
             one is inside the modal, and there is exactly one of it. */}

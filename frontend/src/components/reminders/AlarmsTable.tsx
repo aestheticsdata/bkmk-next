@@ -2,8 +2,12 @@
 
 import { Overline } from "@components/ds/Overline";
 import { ALARM_COLUMNS, AlarmsRow } from "@components/reminders/AlarmsRow";
+import { alarmRowId } from "@components/shared/config/constants";
 import { cn } from "@lib/utils";
+import { useAlarmDisarm } from "@src/services/useAlarmDisarm";
+import { useAlarmPause } from "@src/services/useAlarmPause";
 import { ALARMS_TEXT } from "@text/alarms";
+import { useState } from "react";
 
 import type { Reminder } from "@src/schemas/reminders";
 
@@ -31,11 +35,21 @@ function AlarmsTable({
   alarms,
   isLoading,
   isError,
+  flashing,
 }: {
   alarms: Reminder[];
   isLoading: boolean;
   isError: boolean;
+  /** The `id` of the row the record screen sent us to, if any — see `Alarms`. */
+  flashing?: string;
 }) {
+  /* ⚠️ **One row at a time**, which is the index table's own rule and holds for its reason: asking a
+     second row to confirm cancels the first, so the list never carries a trail of half-armed
+     questions down it. Keyed on the alarm, which is also what keys the rows. */
+  const [confirming, setConfirming] = useState<number>();
+  const pause = useAlarmPause();
+  const disarm = useAlarmDisarm();
+
   return (
     <div
       role="table"
@@ -84,6 +98,18 @@ function AlarmsTable({
             <AlarmsRow
               key={alarm.alarm_id}
               alarm={alarm}
+              busy={pause.isPending || disarm.isPending}
+              confirming={confirming === alarm.alarm_id}
+              flashing={flashing === alarmRowId(alarm.id)}
+              onPause={(paused) => pause.mutate({ alarmId: alarm.alarm_id, paused })}
+              onAskDone={() => setConfirming(alarm.alarm_id)}
+              onCancelDone={() => setConfirming(undefined)}
+              onConfirmDone={() =>
+                disarm.mutate(
+                  { alarmId: alarm.alarm_id, bookmarkId: alarm.id },
+                  { onSettled: () => setConfirming(undefined) },
+                )
+              }
             />
           ))
         )}

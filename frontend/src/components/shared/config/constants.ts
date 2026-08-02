@@ -27,6 +27,21 @@ export const ROUTES = {
  *  intercepted and full-page-navigates instead. */
 export const editHref = (id: number | string): string => `${ROUTES.bookmarksRecord.path}/${id}/edit`;
 
+/** `/bookmarks/reminders#alarm-<id>` — the alarms screen, landing on this record's row (COS-330).
+ *
+ *  ⚠️ **A fragment rather than `?focus=`.** It never reaches the server, and `useSearchParams` would
+ *  put the alarms screen behind a `Suspense` boundary it does not have — the arrangement the record
+ *  route explains, reading its id from `params` so that nothing in its subtree opts out of
+ *  prerendering.
+ *
+ *  ⚠️ **The fragment cannot scroll on its own.** The list arrives from react-query, so at first paint
+ *  nothing carries the id and the browser has nothing to aim at. `Alarms` waits for the data and
+ *  scrolls itself; this pair exists so that the address and the element cannot drift apart. */
+export const alarmHref = (id: number | string): string => `${ROUTES.bookmarksReminders.path}#alarm-${id}`;
+
+/** The `id` an alarms row carries — the other half of `alarmHref`. */
+export const alarmRowId = (id: number | string): string => `alarm-${id}`;
+
 export const COLUMN_WIDTH = {
   linkIcon: "w-[20px]",
   title: "w-[400px]",
