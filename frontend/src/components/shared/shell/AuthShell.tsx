@@ -19,6 +19,16 @@ import type * as React from "react";
  * The block is centred with `place-items-center` on a grid rather than `justify-center` on a
  * flex column: at a height where the card no longer fits, grid centring still lets the
  * overflow scroll in both directions, where a centred flex child would be clipped at the top.
+ *
+ * ⚠️ **`grid-cols-1` is what makes the block fold, and its absence is what stopped it** (COS-311).
+ * The handoff's narrow rule for this screen is one line — `.gr-auth{width:100%}` — and the block
+ * already carried what should have been its equivalent, a 480px width with a 100% ceiling. It never
+ * fired: an implicit grid column is sized `auto`, so the track took the block's own 480 (576 on
+ * sign-up), and a percentage ceiling measured against a track the item itself sized is always the
+ * item. Measured in a 420px window: the track read `480px`, the block `480`, and `main` handed the
+ * screen 76px of horizontal scroll — 172 on sign-up. Tailwind spells `grid-cols-1` as
+ * `repeat(1, minmax(0, 1fr))`, and it is the `0` minimum that makes the track the container rather
+ * than the content. The rail's category list is bounded the same way, and first (COS-299).
  */
 function AuthShell({
   hints,
@@ -41,7 +51,7 @@ function AuthShell({
         <Led />
       </header>
 
-      <main className="grid min-h-0 flex-1 animate-gr-screen place-items-center overflow-auto p-3.5 @max-3xl:p-2">
+      <main className="grid min-h-0 flex-1 animate-gr-screen grid-cols-1 place-items-center overflow-auto p-3.5 @max-3xl:p-2">
         {children}
       </main>
 

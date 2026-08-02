@@ -34,10 +34,15 @@ import type { Reminder } from "@src/schemas/reminders";
  *  Exported because the header row must use the identical string: two grids that agree by accident
  *  drift the first time one is edited.
  *
- *  **Below the fold it is three columns**, which is the ticket's own instruction: title, then
- *  `countdown` and `fires`, with `added / armed` and `act` gone. */
+ *  **Below the fold it is two ranks, not one line of three columns** (COS-311). The handoff spells
+ *  the folded reminder row out — `grid-template-areas: "t t" "c f"` — so the title has the card to
+ *  itself and `countdown` / `fires` share the rank under it, `added / armed` and `act` gone. It was
+ *  built as `1fr auto auto` on a single rank, which left the title 263px of a 402px card and
+ *  truncated it there (measured at 420px); the same title has 378 now. Auto-placement does
+ *  the rest: the title spans both tracks, and the two cells that survive fall into the next rank on
+ *  their own. `gap-y-1` is the fold's own `row-gap: 5px`, on the scale. */
 const ALARM_COLUMNS =
-  "grid-cols-[1fr_--spacing(27)_--spacing(19)_--spacing(35)_--spacing(34)] gap-x-2 @max-3xl:grid-cols-[1fr_auto_auto]";
+  "grid-cols-[1fr_--spacing(27)_--spacing(19)_--spacing(35)_--spacing(34)] gap-x-2 @max-3xl:grid-cols-[1fr_auto] @max-3xl:gap-y-1";
 
 /** Oxide at one day or less — the ticket's rule, and the token's own definition: `--gr-accent-2` is
  *  documented as "stars, imminent alarm". `0` is today. */
@@ -107,10 +112,11 @@ function AlarmsRow({
         flashing && "bg-gr-accent/12",
       )}
     >
-      {/* `pl-4` rides the first column — it is the card's left margin, not the title's. */}
+      {/* `pl-4` rides the first column — it is the card's left margin, not the title's. Below the
+          fold it takes the whole first rank, which is the handoff's `"t t"`. */}
       <div
         role="cell"
-        className="grid min-w-0 pl-4 @max-3xl:pl-0"
+        className="grid min-w-0 pl-4 @max-3xl:col-span-2 @max-3xl:pl-0"
       >
         <Link
           href={`${ROUTES.bookmarksRecord.path}/${alarm.id}`}
@@ -149,9 +155,12 @@ function AlarmsRow({
         )}
       </div>
 
+      {/* Right-aligned below the fold — the handoff's `"c f"` puts it at the far end of its rank,
+          against the card's edge, which is what makes the two readings read as a pair rather than as
+          a run-on. Left-aligned above it, like every other column of the table. */}
       <div
         role="cell"
-        className="num text-2xs text-gr-fg-3"
+        className="num text-2xs text-gr-fg-3 @max-3xl:text-right"
       >
         {alarm.alarm_next_fire ? format(alarm.alarm_next_fire, "yyyy-MM-dd") : ALARMS_TEXT.row.noFire}
       </div>

@@ -55,11 +55,14 @@ export default async function AboutPage() {
      should not jump to the top-left corner because the visitor happens to have a session. The desk
      is a flex column, so the grid takes the leftover height and `place-items-center` does the rest —
      and on a window too short for the block, grid centring still lets it scroll in both directions
-     where a centred flex child would be clipped at the top. */
+     where a centred flex child would be clipped at the top.
+
+     `grid-cols-1` for the reason `AuthShell` writes out at length (COS-311): an implicit `auto`
+     track is sized by the block, so the block's own 100% ceiling measures itself and never folds. */
   if (signedIn) {
     return (
       <AppShell>
-        <div className="grid min-h-0 flex-1 place-items-center">{notice}</div>
+        <div className="grid min-h-0 flex-1 grid-cols-1 place-items-center">{notice}</div>
       </AppShell>
     );
   }

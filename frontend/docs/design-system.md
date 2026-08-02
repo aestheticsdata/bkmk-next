@@ -347,6 +347,55 @@ primitives, so a field never depends on who renders it. The dropdown menu's two 
 carried theirs — checked, not assumed. Everything else in a modal states its own size and was already
 right.
 
+### What the pass over all nine screens found (COS-311)
+
+FIN 01 read the fold on every screen against the handoff's `@container` block, measured through CDP
+at a 420px **container** inside a 1440px window — the split view the rule exists for — and again in a
+420px window, which is the only width a portalled modal ever sees. Four things were wrong, and one
+lesson generalises.
+
+⚠️ **A `max-w-full` measured against a track the item itself sized is not a ceiling.** The auth block
+carried `w-120 max-w-full` (`w-144` on sign-up) inside a centring grid with no explicit column. An
+implicit column is `auto`, so the track took the block's own width — the computed
+`grid-template-columns` read literally `480px` — and the percentage then resolved against 480. The
+block never folded, and `main` handed **login, sign-up, `/recover` and About** 76px of horizontal
+scroll (172 on sign-up) at a phone width. `grid-cols-1` is the fix, because Tailwind spells it
+`repeat(1, minmax(0, 1fr))` and the `0` minimum is what makes the track the container rather than the
+content. **The rule to carry forward: a percentage ceiling needs a definite containing block, and an
+`auto` grid track is not one.** The rail's category list was bounded the same way in COS-299, and
+the general form of that bug — a grid item sized by its content instead of by its track — is the
+`min-w-0` note in `IndexRail`.
+
+**The folded index row gives the title its own rank now.** It shared one line with the url, and at
+420px the cell is 284px of which the title had 136 — an 80-character title ended after 30. The title
+takes the full 284 and wraps (`basis-full`, `whitespace-normal`); the alarm glyph and the url fall
+onto the second rank, which is the handoff's own folded card. The rest of that card — `stars · date`,
+then `tags` — was **not** brought back: its second rank reads `id · stars · date` and `id` left this
+index with COS-299, and three ranks would put a 43px row past double the height on a page of 22. The
+owner's call, taken on the measurement. What COS-326 reserved stays reserved: the action strip keeps
+its `auto` track and does not touch either line.
+
+**The folded alarms row is two ranks, which the handoff spells out** (`grid-template-areas: "t t"
+"c f"`). It was one line of three columns, leaving the title 263px; it has 378 now, with `countdown`
+and `fires` sharing the rank under it. Its column header goes with the change — the handoff hides
+`.gr-th` outright below the fold, and three captions on one line cannot head a two-rank card.
+
+**Everything else measured right**, and the numbers are recorded so the next change can be checked
+against them: chrome 38 → 48, command bar 46 → 54 (it grows past that where it wraps, which is the
+`flex-wrap` answer above, not a fold), buttons 30 → 34, desk padding and gap 14/12 → 8/8, card radius
+12 → 16 (the handoff's 14, snapped — §4), tab bar four columns of 48, the rail replaced by its
+scroller at 32px segments, the index and import headers gone, `pri`/`stars`/`tags`/`shot`/`added`
+gone, the row actions at `opacity: 1` and 26px, the two-pane screens in one column with a top rule
+instead of a left one at 16/14, and the import table down to title + state. At 1440 nothing moved on
+any of the nine.
+
+⚠️ **The three modals were measured in a 420px *window*, not against a folded container**, and that
+is the only way to measure them: they are portalled outside the app screen, so shrinking the
+container leaves them at 640px and tells you nothing. All three come back as the viewport less a
+10px gutter each side — 400 at 420 — capped at the viewport less 24, in the app's own family and
+size. Squeezed until they overflow (420 × 200 for the confirmation), it is `DialogBody` that scrolls
+and the panel that does not, which is COS-341's arrangement holding at a phone height.
+
 Two live consequences, both deliberate:
 
 - **`ui/dialog` has no width variants.** COS-291 gave its header and footer a copy of `CommandBar`'s

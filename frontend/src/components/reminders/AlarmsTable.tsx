@@ -15,11 +15,11 @@ import type { Reminder } from "@src/schemas/reminders";
  *  the one order this screen is about — soonest first, from the server's `ORDER BY alarm_days_until`
  *  — and a header that reorders by title would be a way of hiding what is imminent. */
 const HEADERS: { key: keyof typeof ALARMS_TEXT.columns; className?: string }[] = [
-  { key: "title", className: "pl-4 @max-3xl:pl-0" },
+  { key: "title", className: "pl-4" },
   { key: "countdown" },
   { key: "fires" },
-  { key: "added", className: "@max-3xl:hidden" },
-  { key: "act", className: "justify-end pr-4 @max-3xl:hidden" },
+  { key: "added" },
+  { key: "act", className: "justify-end pr-4" },
 ];
 
 /* The alarms table (COS-304): the header row, the rows, and the three things that can be there
@@ -57,15 +57,17 @@ function AlarmsTable({
       aria-rowcount={alarms.length}
       className="flex min-h-0 flex-1 flex-col"
     >
-      {/* ⚠️ **`@max-3xl:px-3` mirrors the row's own**, and it is a fix rather than symmetry: above the
-          fold the left margin is the title cell's `pl-4` and the right one the act cell's `pr-4`, and
-          both of those cells change below it — the first loses its padding, the second is hidden
-          entirely. Without this the header sat flush to both edges while the rows were inset 12,
-          which put `TITLE` 12px left of every title under it and clipped `FIRES` against the card. */}
+      {/* ⚠️ **Gone below the fold, like every other column header in the system** (COS-311). The
+          handoff hides `.gr-th` outright there, and the alarms header carries that class as much as
+          the index's does. It had been kept and patched into place instead — 12px of inset added
+          below the fold so the captions lined up with the rows — and once the row folds to the
+          handoff's two ranks there is nothing left for three captions on one line to head: `FIRES`
+          would sit above the countdown and `COUNTDOWN` above the title. A card is read by its own
+          labels, not by a table's. */}
       <div
         role="row"
         className={cn(
-          "grid h-7 shrink-0 items-center border-b border-gr-border-2 bg-gr-panel-2 @max-3xl:px-3",
+          "grid h-7 shrink-0 items-center border-b border-gr-border-2 bg-gr-panel-2 @max-3xl:hidden",
           ALARM_COLUMNS,
         )}
       >

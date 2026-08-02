@@ -119,7 +119,9 @@ function BookmarkImport() {
           {commit.isError && <Overline className="text-gr-accent-2">{IMPORT_TEXT.errors.submit}</Overline>}
         </div>
 
-        <div className="gr-scroll grid min-h-0 content-start gap-4 overflow-y-auto border-l border-gr-border bg-white/10 p-5 @max-3xl:overflow-visible @max-3xl:border-t @max-3xl:border-l-0 @max-3xl:p-3.5">
+        {/* `16/14` below the fold, the padding the column beside it takes — see the note in
+            `BookmarkRecord` (COS-311). */}
+        <div className="gr-scroll grid min-h-0 content-start gap-4 overflow-y-auto border-l border-gr-border bg-white/10 p-5 @max-3xl:overflow-visible @max-3xl:border-t @max-3xl:border-l-0 @max-3xl:px-3.5 @max-3xl:py-4">
           <ImportFormats />
         </div>
       </div>
