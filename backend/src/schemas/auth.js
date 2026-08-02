@@ -47,4 +47,31 @@ const recoverBodySchema = z.object({
   password: z.string().min(SECRET_RULES.passwordMin).max(SECRET_RULES.max),
 });
 
-module.exports = { signInBodySchema, signUpBodySchema, recoverBodySchema };
+/* Changing a password from the account menu (COS-404) — the counterpart `/recover` never needed:
+ * that route resets a password you cannot prove, this one changes a password you can.
+ * `currentPassword` therefore carries no minimum, exactly like `signInBodySchema.password` — some
+ * of the 11 accounts predate `SECRET_RULES.passwordMin`, and a bound here would lock them out of
+ * proving a password that is, by definition, already correct. `newPassword` is the secret being
+ * chosen, so it takes the real bounds. */
+const changePasswordBodySchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(SECRET_RULES.passwordMin).max(SECRET_RULES.max),
+});
+
+/* Setting or changing the recovery passphrase from the account menu (COS-404) — what the 11
+ * accounts that predate the column (COS-298), and anyone who wants to change theirs, both go
+ * through. `POST /users/recover` (COS-324) only *spends* a passphrase; nothing before this ticket
+ * could create or replace one. Same asymmetry as `changePasswordBodySchema`: `currentPassword`
+ * proves an existing secret, `recoveryPassphrase` is the one being chosen. */
+const setRecoveryPassphraseBodySchema = z.object({
+  currentPassword: z.string().min(1),
+  recoveryPassphrase: z.string().min(SECRET_RULES.passphraseMin).max(SECRET_RULES.max),
+});
+
+module.exports = {
+  signInBodySchema,
+  signUpBodySchema,
+  recoverBodySchema,
+  changePasswordBodySchema,
+  setRecoveryPassphraseBodySchema,
+};

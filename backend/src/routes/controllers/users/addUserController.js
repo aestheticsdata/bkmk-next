@@ -53,7 +53,15 @@ module.exports = async (req, res, next) => {
       [name, passwordHash, passphraseHash, email, format(registerDate, "yyyy-MM-dd")],
     );
 
-    return await establishSession(req, res, { id: created.insertId, name, email }, 201);
+    // `recovery_passphrase` here is only so `toAuthUser` can derive `hasRecoveryPassphrase`
+    // (COS-404) — sign-up always sets one, so this is always true. The hash itself never reaches
+    // the response; only `Boolean(...)` does, inside `toAuthUser`.
+    return await establishSession(
+      req,
+      res,
+      { id: created.insertId, name, email, recovery_passphrase: passphraseHash },
+      201,
+    );
   } finally {
     await conn.end();
   }

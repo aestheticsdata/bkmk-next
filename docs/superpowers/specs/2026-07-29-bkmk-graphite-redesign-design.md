@@ -44,6 +44,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | AUTH 03 | COS-295 — requêtes SQL paramétrées | ✅ mergé (PR #12) |
 | AUTH 04 | COS-296 — AuthContext, cookie, intercepteur CSRF | ✅ mergé (PR #12) |
 | UI 01 | COS-297 — écran Login | ✅ mergé (PR #14) |
+| hors lot | COS-402 — `recover account` dans un bandeau, et l'autofill de la passphrase | ✅ mergé (PR #46) |
 | UI 02 | COS-298 — écran Signup + passphrase de récupération | ✅ mergé (PR #15) |
 | UI 03 | COS-299 — écran Index : rail, table dense, pager | ✅ mergé (PR #16) |
 | UI 04 | COS-300 — modale de filtres | ✅ mergé (PR #17) |
@@ -78,6 +79,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | DATA 05 | COS-310 — compteurs du rail, bloc `storage`, charge des 14 jours | ✅ mergé (PR #41) |
 | FIN 01 | COS-311 — passe responsive `@container` sur les 9 écrans | ⏳ en relecture |
 | hors lot | COS-401 — alarms : `snooze` / `done` injoignables au doigt sous le pli | ⏳ ouvert par FIN 01 |
+| hors lot | COS-404 — menu utilisateur : câbler `change password` et `set recovery passphrase` | ⏳ ouvert |
 
 ⚠️ **DATA 03 n'a qu'un étage sur les deux que son ticket décrit, et c'est une mesure qui l'a
 tranché.** Le premier — même url normalisée — trouve 17 groupes et 56 fiches sur l'index réel. Le
@@ -104,6 +106,11 @@ montrées plutôt que cachées parce que le menu est aussi la façon d'apprendre
 grisées plutôt que promises. Le même passage a **retiré les trois lectures inventées du chrome** sur
 demande du propriétaire : `IDX/2.4.1` et `uptime 04:12` côté application, `build 2.4.1 · tls on` côté
 auth (remplacé par le domaine de l'hôte). Voir le §8.1 plus bas, dont le point 1 est amendé.
+
+⚠️ **COS-404 est le ticket qui câble les deux.** Il n'existait pas avant le 2026-08-02 — ni celui-ci
+ni COS-324 (qui ne fait que consommer la passphrase depuis `/recover`, pas la poser depuis le menu)
+ne couvraient le re-câblage que ce paragraphe annonçait. `language` reste désactivée : elle attend
+toujours sa couche de traduction, hors périmètre de COS-404.
 
 ⚠️ **UI 05 a livré trois boutons sur les quatre, et corrigé deux défauts trouvés en route.** Le
 `alarm` de la maquette est le seul des quatre qui n'a rien à faire — armer un rappel écrit `reminder`
@@ -467,6 +474,18 @@ que la barre d'action ne dise plus qu'une chose — ce que la carte *fait* — e
 `/recover` soit ailleurs. La structure suit : le `p-5.5` descend du `<form>` sur un `<div>` interne,
 faute de quoi rien ne peut être à fleur des bords, et le `<form>` prend `overflow-hidden` ou le
 bandeau équarrit ses deux coins du bas.
+
+⚠️ **Le même ticket a retiré `autocomplete="current-password"` de la passphrase de `/recover`**, où
+il était depuis AUTH 05 sur la prémisse que le navigateur tenait déjà le secret depuis l'inscription.
+Il ne l'a jamais tenu : l'inscription déclare la passphrase `new-password`, et un gestionnaire garde
+un credential par origine — l'identité et *la clé*. Le jeton ne pouvait donc pas résoudre vers la
+passphrase, et résolvait vers ce qu'il nomme ; à côté du champ `email` juste au-dessus, il compose la
+signature d'un formulaire de connexion, et Chrome versait la clé enregistrée dans la case qui demande
+la passphrase. Le champ ne réclame plus rien (`off`) : `new-password` supprimerait le remplissage
+mais proposerait de générer un secret qu'on recopie depuis une feuille, et entrerait en concurrence
+avec les deux vrais `new-password` en dessous. **Le §« fond blanc des champs de connexion » plus bas
+décrivait déjà ce mécanisme** — `current-password` fait remplir, `new-password` non — ce qui rend le
+défaut lisible dans cette spec avant d'être visible à l'écran.
 
 **Vérifié en lançant le serveur** : 15 contrôles en HTTP sur des comptes jetables créés et supprimés
 dans la même passe — les trois refus identiques, une passphrase de moins de 20 caractères refusée

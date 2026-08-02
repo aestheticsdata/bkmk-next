@@ -45,16 +45,19 @@ export const SHELL_TEXT = {
     record: (id: string) => `record ${id}`,
   },
 
-  /* The account menu (COS-321). Three of its four entries are drawn and **disabled**: the
-   * password screen, the recovery passphrase and the locale each need a route that does not
-   * exist yet, and `language` needs a translation layer bkmk has none of. They are shown rather
-   * than hidden because the menu is also how you learn what an account has — and greyed rather
-   * than promised, because the one thing worse than a missing entry is an entry that does
-   * nothing when pressed. `log out` is the entry that works, and the reason the menu exists. */
+  /* The account menu (COS-321, wired further by COS-404). `change password` and
+   * `set/change recovery passphrase` now open real dialogs; `language` is still drawn and
+   * **disabled** — it needs a translation layer bkmk has none of, out of scope for COS-404. It
+   * stays shown rather than hidden for the same reason it always was: the menu is also how you
+   * learn what an account has. `log out` remains the entry that works unconditionally. */
   menu: {
     caption: "signed in",
     password: "change password",
+    /** Shown when the account has no recovery passphrase yet. */
     passphrase: "set recovery passphrase",
+    /** Shown once it does (COS-404) — the label is the only thing that tells the two states
+     *  apart, there is no third. */
+    passphraseChange: "change recovery passphrase",
     language: "language",
     /** The only locale there is. No submenu while the row is disabled — see `UserMenu`. */
     languageValue: "english",

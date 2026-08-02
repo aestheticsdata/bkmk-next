@@ -20,9 +20,15 @@
  * from pfa test it with `typeof userId === "string"`; storing a number there would make every
  * session read as anonymous. A string also matches what the rest of the API already handles —
  * `?userID=` has always arrived as one — and what `clearSessionsForUser` compares.
+ *
+ * `user` must now carry `recovery_passphrase` (the hash or `NULL`), not just `id`/`name`/`email`
+ * (COS-404) — `toAuthUser` reads it to derive `hasRecoveryPassphrase`. `signInController` already
+ * selects `SELECT *`, so it needs no change; `addUserController` was updated by the same ticket to
+ * add it to the object it builds by hand.
  */
 const redisService = require("../../../../redisService");
 const { rotateCsrfToken } = require("../../../../auth/csrfToken");
+const toAuthUser = require("./toAuthUser");
 
 const regenerateSession = (req) =>
   new Promise((resolve, reject) => {
@@ -35,11 +41,7 @@ module.exports = async (req, res, user, status) => {
   req.session.userId = String(user.id);
 
   return res.status(status).json({
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    },
+    user: toAuthUser(user),
     csrfToken: rotateCsrfToken(req),
   });
 };
