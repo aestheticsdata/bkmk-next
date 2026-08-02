@@ -76,6 +76,8 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | DATA 03 | COS-308 — détection de doublons à la création | ✅ mergé (PR #35) |
 | AUTH 05 | COS-324 — récupération par passphrase : écran `/recover` et route | ✅ mergé (PR #40) |
 | DATA 05 | COS-310 — compteurs du rail, bloc `storage`, charge des 14 jours | ✅ mergé (PR #41) |
+| FIN 01 | COS-311 — passe responsive `@container` sur les 9 écrans | ⏳ en relecture |
+| hors lot | COS-401 — alarms : `snooze` / `done` injoignables au doigt sous le pli | ⏳ ouvert par FIN 01 |
 
 ⚠️ **DATA 03 n'a qu'un étage sur les deux que son ticket décrit, et c'est une mesure qui l'a
 tranché.** Le premier — même url normalisée — trouve 17 groupes et 56 fiches sur l'index réel. Le
@@ -2542,6 +2544,69 @@ qu'a la production) rend bien l'API joignable depuis la page, et `curl` à trave
 200 ; la même requête émise par le navigateur répond 500, ce qui n'a pas été reproduit ailleurs et
 n'a pas été poursuivi. **Ce qui précède est du markup et du CSS, pas une capture** — même formule
 qu'UI 01.
+
+---
+
+## 6 quater. FIN 01 — la passe responsive (COS-311), faite le 2026-08-02
+
+Le seul ticket du chantier dont le livrable est **une mesure**, pas une fonctionnalité : relire le
+bloc `@container` du handoff sur les neuf écrans et corriger ce qui ne le tient pas. Le détail des
+correctifs est dans **`frontend/docs/design-system.md` §7**, sous « What the pass over all nine
+screens found ». Ce qui suit est ce qui mérite d'être retenu au niveau de la spec.
+
+### Le harnais, et pourquoi il compte plus que les quatre correctifs
+
+La recette du §6 bis est enfin **outillée** plutôt que rejouée à la main : Chrome sans tête avec
+`--remote-debugging-port`, Node qui parle CDP tout seul, un compte jetable de 27 fiches créé par
+l'API et supprimé après, et un sondage qui rend les `getBoundingClientRect` de tout l'écran en un
+aller-retour. Deux modes, et **les deux sont nécessaires** :
+
+* **conteneur replié à 420 dans une fenêtre de 1440** — c'est l'instruction du ticket, et c'est le
+  seul mode qui prouve que le pli suit la largeur du panneau et pas celle de la fenêtre (split view,
+  embed) ;
+* **fenêtre réellement à 420** — parce qu'une modale est portée dans `document.body`, hors du
+  `@container`, donc elle ne voit *que* la fenêtre. Replier le conteneur laisse la modale à 640px et
+  ne dit rien de ce qu'elle vaut sur un téléphone.
+
+⚠️ **Un troisième piège a failli faire passer un défaut pour un écran sain.** Le premier sondage
+listait ce qui dépasse le bord droit en ignorant tout ce qu'un ancêtre découpe — raisonnable, sauf
+que le `<main>` des écrans d'auth est lui-même un conteneur de défilement. Le bloc de connexion
+dépassait donc sans jamais « dépasser » : il rendait à l'écran une barre de défilement horizontale.
+La lecture juste n'est pas la position de la boîte, c'est `scrollWidth > clientWidth` **sur le
+scroller**. À refaire dans cet ordre : d'abord les scrollers, ensuite les boîtes.
+
+### Ce que la mesure a trouvé
+
+Quatre défauts, dont un sur quatre écrans à la fois — **login, inscription, `/recover` et About ne se
+repliaient pas du tout** : `max-w-full` sur un bloc posé dans une grille sans colonne explicite se
+mesure contre une piste que le bloc a lui-même dimensionnée, donc contre lui-même. La piste calculée
+lisait littéralement `480px`. C'est la leçon générale de la passe, et elle vaut au-delà de ces quatre
+écrans : **un plafond en pourcentage a besoin d'un bloc contenant défini, et une piste de grille en
+`auto` n'en est pas un.**
+
+Les trois autres : le titre de la ligne d'index partageait sa ligne avec l'url et s'arrêtait à 136px
+sur 284 ; la ligne d'alarme repliée tenait sur un rang au lieu des deux que le handoff écrit ; les
+volets droits des écrans à deux colonnes prenaient 14px de padding au lieu de 16/14.
+
+### Deux arbitrages du propriétaire, et un ticket
+
+**La fiche d'index à 3 rangs du ticket n'est pas construite.** Sa checklist demande `titre` /
+`id · stars · date` / `tags` — mais `id` a quitté cet index avec COS-299, et trois rangs mettent une
+ligne de 43px à plus du double sur une page de 22. Seul le titre prend son rang ; la piste réservée
+par COS-326 pour la bande d'actions reste réservée, et la mesure qui a ouvert COS-326 tient toujours
+(aucun recouvrement entre l'url et la bande, à 420 comme à 1440).
+
+**La colonne `act` des alarmes reste masquée sous le pli**, comme le demandent le handoff et le
+ticket — mais COS-330 a branché `snooze` et `done` depuis, donc la lettre du ticket rend deux actions
+réelles injoignables au doigt, sur la même passe qui rend éditer/supprimer atteignables sur l'index.
+Les deux écrans répondent différemment à la même question. **COS-401** porte l'arbitrage plutôt que
+de le trancher en passant.
+
+⚠️ **Non vérifié : rien à l'œil.** Aucune capture n'a été regardée — ce sont des rectangles et des
+styles calculés, sur un jeu de données choisi pour le pli (titres de 80 et 120 caractères, une fiche
+sans url, une url longue, 27 fiches sur deux pages, trois alarmes). Ce que la mesure ne dit pas :
+si la ligne d'index à 49/65px se lit bien en défilant, et si le rang `countdown · fires` de l'alarme
+respire à 4px de gouttière. C'est la QA visuelle du propriétaire.
 
 ---
 

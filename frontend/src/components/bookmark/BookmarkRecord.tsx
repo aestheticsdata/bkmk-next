@@ -79,7 +79,10 @@ function BookmarkRecord({ id }: { id: string }) {
           <RecordNote note={record.notes} />
         </div>
 
-        <div className="gr-scroll flex min-h-0 flex-col overflow-y-auto border-l border-gr-border bg-white/10 p-5 @max-3xl:overflow-visible @max-3xl:border-t @max-3xl:border-l-0 @max-3xl:p-3.5">
+        {/* `16/14` below the fold, the same padding the column above it takes (COS-311): the handoff
+            gives both halves of a stacked split one rule, and 14 all round put the pane's first line
+            2px closer to the rule than the left column's was to the command bar. */}
+        <div className="gr-scroll flex min-h-0 flex-col overflow-y-auto border-l border-gr-border bg-white/10 p-5 @max-3xl:overflow-visible @max-3xl:border-t @max-3xl:border-l-0 @max-3xl:px-3.5 @max-3xl:py-4">
           <RecordPreview record={record} />
         </div>
       </div>

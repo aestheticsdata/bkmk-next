@@ -107,15 +107,28 @@ function IndexRow({
         <Stars n={bookmark.stars} />
       </div>
 
+      {/* ⚠️ **Below the fold the title takes the rank and the url drops under it** (COS-311), which is
+          the handoff's own folded card: the cell wraps, the title is given the whole line
+          (`flex-basis: 100%`, `white-space: normal`), and what is left — the alarm glyph, then the
+          url — falls onto the second. It shared one line with the url until this ticket, and the
+          measurement is why it stops: at 420px the cell is 284px, of which the title had 136 and the
+          url the rest, so an 80-character title ended after 30. It has all 284 now and wraps onto a
+          second line instead — the same title measures two lines and no ellipsis. The row grows from
+          43px to 49 when it fits on one, 65 when it does not.
+
+          The rest of the handoff's card — `stars · date`, then `tags` — is deliberately **not**
+          brought back. Its second rank reads `id · stars · date`, and `id` left this index with
+          COS-299; the three ranks would also put a 43px row at better than double the height, on a
+          page of 22. The owner's call, taken on the measurement. */}
       <div
         role="cell"
-        className="flex min-w-0 items-center gap-2.5"
+        className="flex min-w-0 items-center gap-2.5 @max-3xl:flex-wrap @max-3xl:gap-y-1"
       >
         {/* The link that covers the row. `truncate` on the anchor keeps a long title from pushing the
-            url out of the cell. */}
+            url out of the cell — above the fold, where they share a 30px line. */}
         <Link
           href={`${ROUTES.bookmarksRecord.path}/${bookmark.id}`}
-          className="min-w-0 truncate rounded-sm text-gr-fg-2 outline-none after:absolute after:inset-0 after:content-[''] focus-visible:ring-3 focus-visible:ring-gr-ring"
+          className="min-w-0 truncate rounded-sm text-gr-fg-2 outline-none after:absolute after:inset-0 after:content-[''] focus-visible:ring-3 focus-visible:ring-gr-ring @max-3xl:basis-full @max-3xl:overflow-visible @max-3xl:whitespace-normal"
         >
           {title}
         </Link>
@@ -132,7 +145,7 @@ function IndexRow({
         {url && (
           <span
             data-slot="index-row-url"
-            className="min-w-0 truncate text-3xs text-gr-fg-3"
+            className="min-w-0 truncate text-3xs text-gr-fg-3 @max-3xl:flex-1"
           >
             {url.replace(/^https?:\/\//, "")}
           </span>
