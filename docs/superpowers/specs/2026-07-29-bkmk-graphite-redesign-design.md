@@ -44,6 +44,7 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | AUTH 03 | COS-295 — requêtes SQL paramétrées | ✅ mergé (PR #12) |
 | AUTH 04 | COS-296 — AuthContext, cookie, intercepteur CSRF | ✅ mergé (PR #12) |
 | UI 01 | COS-297 — écran Login | ✅ mergé (PR #14) |
+| hors lot | COS-402 — `recover account` dans un bandeau, et l'autofill de la passphrase | ✅ mergé (PR #46) |
 | UI 02 | COS-298 — écran Signup + passphrase de récupération | ✅ mergé (PR #15) |
 | UI 03 | COS-299 — écran Index : rail, table dense, pager | ✅ mergé (PR #16) |
 | UI 04 | COS-300 — modale de filtres | ✅ mergé (PR #17) |
@@ -467,6 +468,18 @@ que la barre d'action ne dise plus qu'une chose — ce que la carte *fait* — e
 `/recover` soit ailleurs. La structure suit : le `p-5.5` descend du `<form>` sur un `<div>` interne,
 faute de quoi rien ne peut être à fleur des bords, et le `<form>` prend `overflow-hidden` ou le
 bandeau équarrit ses deux coins du bas.
+
+⚠️ **Le même ticket a retiré `autocomplete="current-password"` de la passphrase de `/recover`**, où
+il était depuis AUTH 05 sur la prémisse que le navigateur tenait déjà le secret depuis l'inscription.
+Il ne l'a jamais tenu : l'inscription déclare la passphrase `new-password`, et un gestionnaire garde
+un credential par origine — l'identité et *la clé*. Le jeton ne pouvait donc pas résoudre vers la
+passphrase, et résolvait vers ce qu'il nomme ; à côté du champ `email` juste au-dessus, il compose la
+signature d'un formulaire de connexion, et Chrome versait la clé enregistrée dans la case qui demande
+la passphrase. Le champ ne réclame plus rien (`off`) : `new-password` supprimerait le remplissage
+mais proposerait de générer un secret qu'on recopie depuis une feuille, et entrerait en concurrence
+avec les deux vrais `new-password` en dessous. **Le §« fond blanc des champs de connexion » plus bas
+décrivait déjà ce mécanisme** — `current-password` fait remplir, `new-password` non — ce qui rend le
+défaut lisible dans cette spec avant d'être visible à l'écran.
 
 **Vérifié en lançant le serveur** : 15 contrôles en HTTP sur des comptes jetables créés et supprimés
 dans la même passe — les trois refus identiques, une passphrase de moins de 20 caractères refusée
