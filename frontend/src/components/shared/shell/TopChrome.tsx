@@ -45,7 +45,7 @@ function TopChrome() {
       <Link
         href={ROUTES.bookmarks.path}
         aria-label={SHELL_TEXT.aria.home}
-        className="text-xs font-semibold tracking-caps text-gr-fg-2"
+        className="rounded-sm text-xs font-semibold tracking-caps text-gr-fg-2 outline-none focus-visible:ring-3 focus-visible:ring-gr-ring"
       >
         {SHELL_TEXT.wordmark}
       </Link>
@@ -64,8 +64,9 @@ function TopChrome() {
               href={item.path}
               aria-current={on ? "page" : undefined}
               className={cn(
-                "flex h-6 items-center gap-2 rounded-md border px-3",
+                "flex h-6 items-center gap-2 rounded-md border px-3 outline-none",
                 "text-2xs uppercase tracking-widest transition-colors duration-120",
+                "focus-visible:ring-3 focus-visible:ring-gr-ring",
                 // The border is transparent at rest rather than absent: the active state
                 // adds one, and without this the lit tab would be 2px taller and wider
                 // than its neighbours and nudge the whole row.

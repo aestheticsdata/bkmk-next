@@ -33,8 +33,9 @@ function TabBar() {
             href={item.path}
             aria-current={on ? "page" : undefined}
             className={cn(
-              "flex h-12 flex-col items-center justify-center gap-1 rounded-xl border",
+              "flex h-12 flex-col items-center justify-center gap-1 rounded-xl border outline-none",
               "text-3xs uppercase tracking-widest transition-colors duration-120",
+              "focus-visible:ring-3 focus-visible:ring-gr-ring",
               // Transparent at rest for the same reason as the chrome's tabs: the lit
               // button must not be a pixel bigger than the other three.
               on
