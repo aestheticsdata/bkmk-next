@@ -27,13 +27,18 @@ import type * as React from "react";
  *
  * The submit is disabled only while a request is in flight, never by validity. A button that will
  * not press and does not say why is the worst of both, and assistive technology is told the
- * control is unavailable with no reason given. */
+ * control is unavailable with no reason given.
+ *
+ * `disabled` is the exception to that last rule (COS-416): sign-up locked down instance-wide
+ * outranks "in flight", and unlike `busy` it is not transient. Only the sign-up screen ever
+ * passes it — sign-in stays untouched. */
 function AuthCard({
   action,
   switchHref,
   secondary,
   error,
   busy = false,
+  disabled = false,
   onSubmit,
   children,
 }: {
@@ -53,6 +58,9 @@ function AuthCard({
   /** What the server said, if it refused. */
   error?: string | null;
   busy?: boolean;
+  /** `NEXT_PUBLIC_SIGNUPS_ENABLED === "false"` (COS-416) — the submit stays inert regardless of
+   *  `busy`. */
+  disabled?: boolean;
   onSubmit: React.FormEventHandler<HTMLFormElement>;
   children: React.ReactNode;
 }) {
@@ -75,7 +83,7 @@ function AuthCard({
             type="submit"
             variant="primary"
             size="chrome"
-            disabled={busy}
+            disabled={busy || disabled}
           >
             {action.submit}
           </Button>

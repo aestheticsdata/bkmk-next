@@ -36,7 +36,13 @@ import type { SignUpFormValues } from "@src/schemas/auth";
  * ⚠️ **No import checkbox.** The handoff draws `[x] import my Session Buddy export after signup`;
  * it was built, then dropped on the owner's call. Registering and importing are two decisions, and
  * tying the second to a checkbox on the first only buys a redirect — the import screen is reachable
- * from the chrome as soon as you are in. */
+ * from the chrome as soon as you are in.
+ *
+ * **Locked down, not hidden (COS-416).** `NEXT_PUBLIC_SIGNUPS_ENABLED === "false"` disables every
+ * field and the submit button while leaving the page and the form exactly where they are — the API
+ * refuses `POST /users/add` regardless, so this is a visible "no" rather than the actual gate. */
+const signupsEnabled = process.env.NEXT_PUBLIC_SIGNUPS_ENABLED !== "false";
+
 function SignUpForm({
   copy,
   switchHref,
@@ -106,6 +112,7 @@ function SignUpForm({
       switchHref={switchHref}
       error={error}
       busy={isSubmitting}
+      disabled={!signupsEnabled}
       onSubmit={handleSubmit(onSubmit)}
     >
       <AuthField
@@ -115,6 +122,7 @@ function SignUpForm({
         autoComplete="email"
         placeholder={copy.identityPlaceholder}
         error={messageFor("email")}
+        disabled={!signupsEnabled}
         {...register("email")}
       />
 
@@ -128,6 +136,7 @@ function SignUpForm({
           autoComplete="new-password"
           placeholder={copy.keyPlaceholder}
           error={messageFor("password")}
+          disabled={!signupsEnabled}
           {...register("password")}
         />
         <AuthField
@@ -136,6 +145,7 @@ function SignUpForm({
           type={keyRevealed ? "text" : "password"}
           autoComplete="new-password"
           error={confirmMessageFor("confirmPassword", values.password)}
+          disabled={!signupsEnabled}
           action={
             <RevealToggle
               revealed={keyRevealed}
@@ -174,6 +184,7 @@ function SignUpForm({
           type={passphraseRevealed ? "text" : "password"}
           autoComplete="new-password"
           error={messageFor("recoveryPassphrase")}
+          disabled={!signupsEnabled}
           action={
             <RevealToggle
               revealed={passphraseRevealed}
@@ -191,6 +202,7 @@ function SignUpForm({
           type={passphraseRevealed ? "text" : "password"}
           autoComplete="new-password"
           error={confirmMessageFor("confirmRecoveryPassphrase", values.recoveryPassphrase)}
+          disabled={!signupsEnabled}
           {...register("confirmRecoveryPassphrase")}
         />
         <p className="text-2xs text-gr-fg-4">{copy.passphraseNote}</p>
