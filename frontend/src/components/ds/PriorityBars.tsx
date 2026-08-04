@@ -13,10 +13,17 @@ import type * as React from "react";
  *
  * The empty string is a real state, not a missing one: the create form sends `priority`
  * unset that way and the backend tests `!== ""`. It renders as four dim bars — present,
- * unranked — rather than as nothing, which would leave a hole in the column. */
+ * unranked — rather than as nothing, which would leave a hole in the column.
+ *
+ * COS-412 replaces the two-tone `--fg-2`/`--fg-3` split (which only ever told `highest`
+ * apart from the rest) with a fixed gradient across bar *position* — `--gr-pri-1..4`,
+ * lightest to darkest left to right — so a filled bar keeps the tone of its slot instead
+ * of the whole run taking one color for the row's level. */
 const PRIORITY_LEVELS = ["low", "medium", "high", "highest"] as const;
 
 type Priority = (typeof PRIORITY_LEVELS)[number] | "";
+
+const BAR_COLOR = ["text-gr-pri-1", "text-gr-pri-2", "text-gr-pri-3", "text-gr-pri-4"];
 
 function PriorityBars({ p, className, ...props }: React.ComponentProps<"span"> & { p: Priority }) {
   const filled = p === "" ? 0 : PRIORITY_LEVELS.indexOf(p) + 1;
@@ -25,20 +32,18 @@ function PriorityBars({ p, className, ...props }: React.ComponentProps<"span"> &
       data-slot="priority-bars"
       role="img"
       aria-label={p === "" ? "no priority" : `priority ${p}`}
-      className={cn(
-        "whitespace-nowrap tracking-tighter",
-        filled === PRIORITY_LEVELS.length ? "text-gr-fg-2" : "text-gr-fg-3",
-        className,
-      )}
+      className={cn("whitespace-nowrap tracking-tighter", className)}
       {...props}
     >
-      <span aria-hidden>{"▮".repeat(filled)}</span>
-      <span
-        aria-hidden
-        className="text-gr-fg-4 opacity-40"
-      >
-        {"▮".repeat(PRIORITY_LEVELS.length - filled)}
-      </span>
+      {PRIORITY_LEVELS.map((level, index) => (
+        <span
+          key={level}
+          aria-hidden
+          className={index < filled ? BAR_COLOR[index] : "text-gr-fg-4 opacity-40"}
+        >
+          ▮
+        </span>
+      ))}
     </span>
   );
 }
