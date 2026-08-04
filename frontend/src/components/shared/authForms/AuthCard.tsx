@@ -88,31 +88,20 @@ function AuthCard({
             {action.submit}
           </Button>
           <Overline>{action.or}</Overline>
-          {/* Plain text next to a live button reads as "also live" (COS-298) — next to a *disabled*
-              one it reads as "also disabled" instead, which is the opposite of what COS-416 needs:
-              this is the one thing on a locked screen that still works. A `MiniButton`-style chip
-              (COS-416) removes the ambiguity outright rather than relying on a color difference a
-              plain text link can't carry on its own. Undisabled screens (sign-in, sign-up before
-              lock) keep the plain text — nothing beside it is muted, so there's nothing to
-              disambiguate. */}
-          {disabled ? (
-            <Button
-              asChild
-              variant="chrome"
-              size="mini"
-            >
-              <Link href={switchHref}>{action.switchTo}</Link>
-            </Button>
-          ) : (
-            /* `asChild`, so the link *is* the label. Wrapped, it would be a 12px flex item around
-                10px text and its strut would drop `sign in` a pixel and a half below `or`. */
-            <Overline
-              asChild
-              className="text-gr-accent hover:text-gr-fg-2"
-            >
-              <Link href={switchHref}>{action.switchTo}</Link>
-            </Overline>
-          )}
+          {/* `asChild`, so the link *is* the label. Wrapped, it would be a 12px flex item around 10px
+              text and its strut would drop `sign in` a pixel and a half below `or`.
+              `font-bold` only when `disabled` (COS-416): plain text next to a now-muted REGISTER
+              reads as "also inert" at a glance, and `gr-accent` is a *muted* teal by design (it is
+              the same color everywhere in the app, including the unlocked screen, where nothing
+              beside it is dimmed and the question never comes up). Weight, not a box or a brighter
+              color: still a plain link, just heavier stroke so the eye doesn't lump it in with the
+              greyed-out button beside it. */}
+          <Overline
+            asChild
+            className={disabled ? "text-gr-accent font-bold" : "text-gr-accent hover:text-gr-fg-2"}
+          >
+            <Link href={switchHref}>{action.switchTo}</Link>
+          </Overline>
           <Overline
             role="alert"
             className="ml-auto truncate text-gr-accent-2 @max-3xl:ml-0"
