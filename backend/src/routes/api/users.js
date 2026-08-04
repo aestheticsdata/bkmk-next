@@ -21,6 +21,7 @@ const csrfMiddleware = require("../../auth/csrfMiddleware");
 const sessionAuthMiddleware = require("../../auth/sessionAuthMiddleware");
 const validate = require("../../middlewares/validate");
 const { rateLimit } = require("../../middlewares/rateLimit");
+const { signupGate } = require("../../middlewares/signupGate");
 const {
   signInBodySchema,
   signUpBodySchema,
@@ -39,7 +40,9 @@ const setRecoveryPassphraseController = require("../controllers/users/setRecover
 const catchAsync = require("../../utils/catchAsync");
 
 router.post("/", validate({ body: signInBodySchema }), catchAsync(signInController));
-router.post("/add", validate({ body: signUpBodySchema }), catchAsync(addUserController));
+// signupGate first (COS-416): a disabled instance is refused before the body is even shaped,
+// let alone looked up against the DB.
+router.post("/add", signupGate, validate({ body: signUpBodySchema }), catchAsync(addUserController));
 router.get("/me", sessionAuthMiddleware, catchAsync(getMeController));
 router.get("/csrf", sessionAuthMiddleware, getCsrfController);
 router.post("/logout", csrfMiddleware, logoutController);
