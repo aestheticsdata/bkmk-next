@@ -90,15 +90,14 @@ function AuthCard({
           <Overline>{action.or}</Overline>
           {/* `asChild`, so the link *is* the label. Wrapped, it would be a 12px flex item around 10px
               text and its strut would drop `sign in` a pixel and a half below `or`.
-              `font-bold` only when `disabled` (COS-416): plain text next to a now-muted REGISTER
-              reads as "also inert" at a glance, and `gr-accent` is a *muted* teal by design (it is
-              the same color everywhere in the app, including the unlocked screen, where nothing
-              beside it is dimmed and the question never comes up). Weight, not a box or a brighter
-              color: still a plain link, just heavier stroke so the eye doesn't lump it in with the
-              greyed-out button beside it. */}
+              Unconditional, same as sign-in's `register` link (COS-416): two COS-416 attempts tried
+              to make this read as "still active" when the form beside it is locked - a chip, then a
+              bold weight - and both made it inconsistent with every other switch-screen link in the
+              app for no real gain, and the second one dropped the hover style in the process. Left
+              alone, it is pixel-identical to `register` on `/login`, which was never in question. */}
           <Overline
             asChild
-            className={disabled ? "text-gr-accent font-bold" : "text-gr-accent hover:text-gr-fg-2"}
+            className="text-gr-accent hover:text-gr-fg-2"
           >
             <Link href={switchHref}>{action.switchTo}</Link>
           </Overline>
