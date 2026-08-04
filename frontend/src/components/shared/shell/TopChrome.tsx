@@ -6,6 +6,7 @@ import { Overline } from "@components/ds/Overline";
 import { ROUTES } from "@components/shared/config/constants";
 import { COUNTER_DIGITS, SHELL_TABS } from "@components/shared/shell/config/constants";
 import useShellRoute from "@components/shared/shell/helpers/useShellRoute";
+import { MobileMenu } from "@components/shared/shell/MobileMenu";
 import useShellCounts from "@components/shared/shell/services/useShellCounts";
 import { UserMenu } from "@components/shared/shell/UserMenu";
 import { cn } from "@lib/utils";
@@ -34,6 +35,11 @@ function TopChrome() {
         "@max-3xl:h-12 @max-3xl:gap-3 @max-3xl:px-3.5",
       )}
     >
+      {/* The narrow-width replacement for the meta row below (COS-414): a hamburger that opens
+          a side panel carrying `about` + `UserMenu`, hidden itself above `@max-3xl` the same way
+          that row is hidden below it. */}
+      {email && <MobileMenu email={email} />}
+
       {/* The wordmark alone. `IDX/2.4.1` sat beside it until COS-321: a build number nothing
           produces, that no screen could be checked against, printed where the eye lands first. */}
       <Link

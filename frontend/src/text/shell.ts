@@ -69,6 +69,12 @@ export const SHELL_TEXT = {
      *  share one label. */
     modules: "modules",
     home: "back to the index",
+    /** `MobileMenu`'s hamburger trigger, close button, and the panel itself (COS-414). Key
+     *  names mirror pfa's own `openMenu`/`closeMenu`/`drawer` (`navBar/NavBar.tsx`) for
+     *  cross-codebase consistency; the values are bkmk's own lowercase copy style. */
+    openMenu: "open menu",
+    closeMenu: "close menu",
+    drawer: "menu",
   },
 } as const;
 
