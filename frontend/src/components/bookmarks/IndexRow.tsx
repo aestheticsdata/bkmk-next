@@ -145,7 +145,7 @@ function IndexRow({
         {url && (
           <span
             data-slot="index-row-url"
-            className="min-w-0 truncate text-3xs text-gr-fg-3 @max-3xl:flex-1"
+            className="min-w-0 truncate text-3xs text-gr-fg-4 @max-3xl:flex-1"
           >
             {url.replace(/^https?:\/\//, "")}
           </span>

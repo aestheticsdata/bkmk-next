@@ -72,7 +72,7 @@ function StarsField({
               className={cn(
                 "block cursor-pointer rounded-sm px-px text-sm leading-5 transition-colors duration-120",
                 "peer-focus-visible:ring-3 peer-focus-visible:ring-gr-ring",
-                level <= shown ? "text-gr-accent-2" : "text-gr-fg-4 opacity-55 hover:opacity-100",
+                level <= shown ? "text-gr-star" : "text-gr-fg-4 opacity-55 hover:opacity-100",
               )}
             >
               <span aria-hidden>★</span>

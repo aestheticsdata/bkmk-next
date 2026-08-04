@@ -15,7 +15,11 @@ const MAX_STARS = 5;
  * count: a bare `<span>` has no role, so its `aria-label` is discarded.
  *
  * The handoff's -0.5px letter-spacing snaps to native `tracking-tighter`: at 12px that is
- * -0.6px, and it exists to stop the glyphs from reading as five separate words. */
+ * -0.6px, and it exists to stop the glyphs from reading as five separate words.
+ *
+ * COS-412 moves the fill off the handoff's `--accent-2`: oxide is shared with errors and
+ * the imminent-alarm state, so a dedicated `--gr-star` token is what turns pink without
+ * repainting either of those. */
 function Stars({ n, className, ...props }: React.ComponentProps<"span"> & { n: number }) {
   const filled = Math.max(0, Math.min(MAX_STARS, Math.round(n)));
   return (
@@ -23,7 +27,7 @@ function Stars({ n, className, ...props }: React.ComponentProps<"span"> & { n: n
       data-slot="stars"
       role="img"
       aria-label={`${filled} out of ${MAX_STARS}`}
-      className={cn("whitespace-nowrap tracking-tighter text-gr-accent-2", className)}
+      className={cn("whitespace-nowrap tracking-tighter text-gr-star", className)}
       {...props}
     >
       <span aria-hidden>{"★".repeat(filled)}</span>
