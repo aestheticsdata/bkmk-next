@@ -1,8 +1,12 @@
 .idea
 .DS_Store
 node_modules
-ecosystem.config.js
-ecosystem.config.prod.js
+# The backend environment. Never committed.
+# The trailing * catches .bak/.orig copies too: a hand-made backup or an editor swap file would
+# otherwise be one `git add -A` from going in with it.
+# frontend/ecosystem.config.cjs is deliberately NOT matched: the front has nothing to keep.
+ecosystem.config.js*
+ecosystem.config.prod.js*
 frontend/public/screenshotsUpload/*
 notes/*
 /.next/
