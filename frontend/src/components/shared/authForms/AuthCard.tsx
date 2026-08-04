@@ -88,14 +88,31 @@ function AuthCard({
             {action.submit}
           </Button>
           <Overline>{action.or}</Overline>
-          {/* `asChild`, so the link *is* the label. Wrapped, it would be a 12px flex item around 10px
-              text and its strut would drop `sign in` a pixel and a half below `or`. */}
-          <Overline
-            asChild
-            className="text-gr-accent hover:text-gr-fg-2"
-          >
-            <Link href={switchHref}>{action.switchTo}</Link>
-          </Overline>
+          {/* Plain text next to a live button reads as "also live" (COS-298) — next to a *disabled*
+              one it reads as "also disabled" instead, which is the opposite of what COS-416 needs:
+              this is the one thing on a locked screen that still works. A `MiniButton`-style chip
+              (COS-416) removes the ambiguity outright rather than relying on a color difference a
+              plain text link can't carry on its own. Undisabled screens (sign-in, sign-up before
+              lock) keep the plain text — nothing beside it is muted, so there's nothing to
+              disambiguate. */}
+          {disabled ? (
+            <Button
+              asChild
+              variant="chrome"
+              size="mini"
+            >
+              <Link href={switchHref}>{action.switchTo}</Link>
+            </Button>
+          ) : (
+            /* `asChild`, so the link *is* the label. Wrapped, it would be a 12px flex item around
+                10px text and its strut would drop `sign in` a pixel and a half below `or`. */
+            <Overline
+              asChild
+              className="text-gr-accent hover:text-gr-fg-2"
+            >
+              <Link href={switchHref}>{action.switchTo}</Link>
+            </Overline>
+          )}
           <Overline
             role="alert"
             className="ml-auto truncate text-gr-accent-2 @max-3xl:ml-0"
