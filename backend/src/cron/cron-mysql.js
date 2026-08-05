@@ -12,7 +12,23 @@ const mysqlDump = () => {
     `
     mysqldump -u${process.env.DB_USER} -p${process.env.DB_PASSWORD} ${process.env.DB} > ${process.env.BKMK_DUMP_PATH}bkmkdump.sql
   `,
-    sshCopyDB(src, dest),
+    /* ⚠️ An arrow, not `sshCopyDB(src, dest)`.
+     *
+     * Written that way, the copy was *called* here rather than passed, so it started at the same
+     * moment as the dump instead of after it — and `exec` got its return value, `undefined`, as
+     * its callback. Every run raced the ssh transfer against a file mysqldump was still writing,
+     * which is why the offsite copy was empty, truncated, or twelve hours stale. The dump itself
+     * was always fine; only what got shipped was wrong.
+     *
+     * A non-zero exit now skips the copy outright: shipping nothing beats overwriting the last
+     * good backup with a broken one. */
+    (error, _stdout, stderr) => {
+      if (error) {
+        console.log("mysqlDump failed, skipping the offsite copy: ", stderr || error.message);
+        return;
+      }
+      sshCopyDB(src, dest);
+    },
   );
 };
 
