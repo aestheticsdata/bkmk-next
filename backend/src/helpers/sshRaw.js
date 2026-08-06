@@ -58,16 +58,46 @@ module.exports.deleteFile = (filepath) => {
   connection(deleteFile);
 };
 
-module.exports.copyDB = (src, dest) => {
-  const copy = (conn) => () =>
-    conn.sftp((err, sftp) => {
-      sftp.fastPut(src, dest, {}, (error) => {
-        if (error) {
-          console.log("db copy / sftp error: ", error);
-        } else {
+/**
+ * The offsite copy of the nightly dump — a promise, unlike its two neighbours above (COS-398).
+ *
+ * It settles because something now waits on it: `cron/cron-mysql.js` reports the backup's outcome
+ * to Zeus, and a copy that only logged its own failure would be reported as a success. That is the
+ * exact shape of the bug COS-411 fixed one layer up — the dump was fine, what got shipped was not,
+ * and nothing said so.
+ *
+ * ⚠️ **`conn.on("error")` is not decoration.** ssh2 emits `error` on an unreachable host, and an
+ * unhandled `error` event throws out of the event loop — so before this, a backup server that was
+ * down did not fail the copy, it killed the API. `connection()` above still has that hole, which
+ * is why this does not use it.
+ */
+module.exports.copyDB = (src, dest) =>
+  new Promise((resolve, reject) => {
+    const conn = new ssh.Client();
+
+    // Every path below ends here, so the connection is closed exactly once and the promise settles
+    // exactly once — `end()` on an already-closed client is a no-op, a second resolve is ignored.
+    const done = (error) => {
+      conn.end();
+      if (error) reject(error);
+      else resolve();
+    };
+
+    conn.on("error", done);
+    conn.on("ready", () =>
+      conn.sftp((err, sftp) => {
+        if (err) return done(err);
+
+        sftp.fastPut(src, dest, {}, (error) => {
+          if (error) {
+            console.log("db copy / sftp error: ", error);
+            return done(error);
+          }
           console.log("successfull bkmk DB backup");
-        }
-      });
-    });
-  connection(copy);
-};
+          done();
+        });
+      }),
+    );
+
+    conn.connect(config);
+  });
