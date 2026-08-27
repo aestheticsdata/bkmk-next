@@ -434,6 +434,7 @@ by one question: **does shadcn already provide it?**
 | `BlinkCursor` | `.gr-caret` | `animate-gr-caret` — an **underscore**, drawn; see below |
 | `RowActions` · `RowAction` | `.gr-acts` · `.gr-act` | needs `group/row` on the row |
 | `MiniButton` | `.gr-mini` | preset over `ui/button` |
+| `CursorTooltip` | — | `ui/tooltip`'s bubble, following the pointer; see below |
 
 | `ui/`, restyled | Handoff |
 |---|---|
@@ -441,6 +442,7 @@ by one question: **does shadcn already provide it?**
 | `input` · `textarea` | `.gr-in` |
 | `progress` | `.gr-meter` |
 | `dialog` · `alert-dialog` | `.gr-modal` |
+| `tooltip` | — the handoff draws none, and the bubble is ours; see below |
 
 ### The button
 
@@ -487,6 +489,49 @@ system's weight.
 Its dimensions are the one place `em` beats the spacing scale: half an em wide and `0.08em` thick —
 2px under a 24px title, 1px under 12px text — so it tracks whatever it closes. A caret that does not
 scale with its own text is the bug being fixed.
+
+### The tooltip is one bubble and two engines (BMK-69)
+
+`ui/tooltip.tsx` holds the surface — `TOOLTIP_SURFACE`, exported — and the anchored engine the
+registry ships. `ds/CursorTooltip` wears the same constant and positions itself against the pointer
+instead of against a trigger.
+
+**Two files, because of the question at the top of this section**: shadcn ships one of these engines
+and nothing that follows a pointer, and a `mode` prop on the exported `Tooltip` would be a changed
+signature in a `ui/` file, which is the one thing that stops being regenerable. **One constant**,
+because two descriptions of a single bubble drift the first time one of them is edited — the same
+reason `ds/Field` composes over `ui/input` rather than restating a field.
+
+Which to reach for:
+
+- **`ui/tooltip` (anchored)** by default. It is the one a keyboard can open: Radix shows it on focus
+  and closes it on Escape, and it needs a trigger element to hang off.
+- **`ds/CursorTooltip`** when there is no trigger element to speak of — a 30px table row, a chart
+  segment, anything where *what is being described* is decided per pixel rather than per element. It
+  is driven by a point (`helpers/useCursorHover`) rather than by hover on a node, which is what lets
+  a whole row or a whole chart resolve the answer per event.
+
+Four things it settles for both:
+
+**`z-60`, above every other portalled surface** — the modal is 50 and the delete confirmation 52 / 53.
+A tooltip is the one thing that may legitimately be drawn over any of them.
+
+**Both portal, so both state the typeface and the size.** §7's rule, and the bug COS-342: `font-mono`
+lives on the screen root and `body` carries nothing. `TOOLTIP_SURFACE` says `font-mono text-2xs`, and
+that is measured, not assumed — CDP reads `IBM Plex Mono` at 11px off the bubble.
+
+**The panel is at 90%, and nothing else in the system is.** A dropdown is a place you act, so it is
+opaque; a tooltip describes what it is sitting on top of, and letting that show faintly through is how
+it says so. The tint is on the background alone — the ink and the border stay solid, and the element's
+own opacity is spoken for by the fade.
+
+**The cursor engine is mouse-only by nature**, so nothing may live in it alone. The index shows every
+category of a row on hover; the record screen still lists them, which is what a keyboard and a finger
+have.
+
+**Its fade is inline, not a utility.** `animations.css` keeps durations at the point of use, and here
+there are two of them — the opacity transition and the timer that unmounts the bubble after it. One
+constant drives both; a `duration-*` class beside a constant is the pair that goes stale.
 
 ---
 
@@ -785,6 +830,16 @@ invalid markup anyway.
 The alternative the handoff uses — `onClick` on a `div`, `stopPropagation` on every button — is the
 same effect built the way that fails a keyboard, and it is the source of most of the legacy lint
 errors this project has agreed to stop adding to.
+
+⚠️ **What that overlay costs: a cell can never be a hover target, so the tags tooltip is delegated to
+the row** (BMK-69). A handler on the tags cell would never fire — the pseudo-element takes the event,
+and it belongs to the anchor, which is not the cell's ancestor. So the row listens, and the cell's own
+`getBoundingClientRect()` answers whether the pointer is over it: strictly inside, which also handles
+the fold for free, since a `display: none` cell measures zero on both edges (measured at 420px — no
+bubble at any x across the row). The other way out — raising the cell above the overlay with `z-1`,
+the way the action strip does — buys the hover by taking 188px of the row out of the link, and the
+whole row opening the record is not negotiable. Anything else that wants to react to the pointer over
+one column of this table has the same two options, and the same answer.
 
 **ARIA table roles over a CSS grid.** Six columns that line up across a scroll container at 30px a row
 is what `<table>` cannot do without a fight, so the structure is divs and the semantics are put back
@@ -1141,7 +1196,9 @@ whole page behind it, not a line under the cursor.
   hidden rather than as an invented digest.
 - **Every value uses the primitive the index uses** — `PriorityBars`, `Stars`, `Chip` — so a record
   reads the same in a row and on its own page. `tags` is the exception and shows all of them: the row
-  stops at three because its column is 188px wide.
+  stops at three because its column is 188px wide. Since BMK-69 the row can show the rest **without
+  growing** — the whole set is in a cursor tooltip — but this page stays the one that shows them to a
+  keyboard and a finger.
 - ⚠️ **The note is not `dangerouslySetInnerHTML` any more.** The legacy screen ran a regex over the
   note, replaced every url with an `<a>` built by string concatenation, and injected the result — the
   note is user input and nothing was escaped. The links are real elements built from a `split`, so the

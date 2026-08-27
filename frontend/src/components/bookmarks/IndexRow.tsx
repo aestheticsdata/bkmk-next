@@ -2,18 +2,22 @@
 
 import { tagHue } from "@components/bookmarks/helpers/tagHue";
 import { Chip } from "@components/ds/Chip";
+import { CursorTooltip } from "@components/ds/CursorTooltip";
 import { MiniButton } from "@components/ds/MiniButton";
 import { Overline } from "@components/ds/Overline";
 import { PriorityBars } from "@components/ds/PriorityBars";
 import { RowAction, RowActions } from "@components/ds/RowActions";
 import { Stars } from "@components/ds/Stars";
 import { editHref, ROUTES } from "@components/shared/config/constants";
+import { useCursorHover } from "@helpers/useCursorHover";
 import { cn } from "@lib/utils";
 import { INDEX_TEXT } from "@text/index";
 import { format } from "date-fns";
 import Link from "next/link";
+import { useRef } from "react";
 
 import type { Bookmark } from "@src/schemas/bookmarks";
+import type { MouseEvent } from "react";
 
 /** The columns, in 4px steps: `pri 36 · stars 62 · title 1fr · tags 188 · shot 44 · added 88`, with an
  *  8px gutter between them.
@@ -43,8 +47,8 @@ import type { Bookmark } from "@src/schemas/bookmarks";
 const INDEX_COLUMNS =
   "grid-cols-[--spacing(9)_--spacing(15.5)_1fr_--spacing(47)_--spacing(11)_--spacing(22)] gap-x-2 @max-3xl:grid-cols-[1fr_auto]";
 
-/** Three at most, as the handoff draws. A fourth would push the column, and the record screen shows
- *  them all. */
+/** Three at most, as the handoff draws. A fourth would push the column; the whole set is a hover
+ *  away in the bubble below, and the record screen lists them too. */
 const MAX_CHIPS = 3;
 
 /* One row of the index (COS-299). 30px tall — the density *is* the design; do not air it out.
@@ -81,10 +85,35 @@ function IndexRow({
   const title = bookmark.title;
   const url = bookmark.original_url ?? undefined;
 
+  const tags = useRef<HTMLDivElement>(null);
+  const { hover, show, clear } = useCursorHover();
+
+  /* ⚠️ **The hover that shows every category is delegated to the row, and it has to be** (BMK-69).
+   *
+   * The tags cell cannot be its own trigger: the title link's `::after` covers the whole row, so a
+   * handler on the cell would never fire — the pseudo-element takes the event, and it belongs to the
+   * anchor, which is not the cell's ancestor. Raising the cell above the overlay (`relative z-1`,
+   * as the action strip does) would fix the hover by taking 188px of the row out of the link, and
+   * the whole row opening the record is not negotiable.
+   *
+   * So the row listens, and the cell's own rect answers whether the pointer is over it. **Strictly**
+   * inside, which is also what handles the fold for free: below `@3xl` the cell is `display: none`
+   * and measures zero on both edges, and no pointer is ever inside nothing. */
+  const trackTags = (event: MouseEvent<HTMLDivElement>) => {
+    const cell = tags.current;
+    if (!cell || bookmark.categories.length === 0) return;
+
+    const { left, right } = cell.getBoundingClientRect();
+    if (event.clientX > left && event.clientX < right) show(event.clientX, event.clientY);
+    else clear();
+  };
+
   return (
     <div
       data-slot="index-row"
       role="row"
+      onMouseMove={trackTags}
+      onMouseLeave={clear}
       className={cn(
         "group/row relative grid h-7.5 items-center border-b border-gr-border text-2xs transition-colors duration-120",
         INDEX_COLUMNS,
@@ -153,6 +182,7 @@ function IndexRow({
       </div>
 
       <div
+        ref={tags}
         role="cell"
         className="flex gap-1.5 overflow-hidden @max-3xl:hidden"
       >
@@ -165,6 +195,26 @@ function IndexRow({
           </Chip>
         ))}
       </div>
+
+      {/* **Every category, without the row growing by a pixel** (BMK-69). The cell above shows three
+          at most and clips the third mid-word at this width, so what is visible is never a set you
+          can trust — the bubble opens on any row that has a category at all rather than on some
+          measured threshold, and it lists them in the same chips, wrapped.
+
+          It takes no grid track: it renders either nothing or a portal to `<body>`, so the row's six
+          cells and its ARIA structure are untouched. */}
+      <CursorTooltip point={hover}>
+        <div className="flex flex-wrap gap-1.5">
+          {bookmark.categories.map((category) => (
+            <Chip
+              key={category.id}
+              hue={tagHue(category)}
+            >
+              {category.name}
+            </Chip>
+          ))}
+        </div>
+      </CursorTooltip>
 
       {/* Its own column, from the legacy list: a strip you can read straight down, and sortable from
           the header. Empty when there is none — an "absent" glyph would be noise on most rows. */}
