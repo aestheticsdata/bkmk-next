@@ -9,17 +9,20 @@ set -Eeuo pipefail
 # written.
 #
 # ⚠️ **It deploys to `front/`, not to `public_html/`.** pfa's script overwrites public_html because
-# that is where its Next process already lives. bkmk's public_html still holds the *static export*
-# of the old front, which is what nginx is serving right now. Writing the new app over it would
-# destroy the running site before nginx has been told to proxy instead of serving files, turning
-# the deploy into an outage that only ends when the vhost is edited.
+# that is where its Next process already lives. bkmk's public_html holds the *static export* of the
+# old front, which nginx served until the vhost was switched. Writing the new app over it would
+# have destroyed the running site before nginx had been told to proxy instead of serving files,
+# turning the deploy into an outage that only ends when the vhost is edited.
 #
-# So the new front goes to a new directory and nothing breaks: public_html keeps serving the old
-# site until `location /` is switched to proxy_pass, and it stays there afterwards as the fastest
-# rollback available — point nginx back and reload.
+# So the new front went to a new directory and nothing broke: public_html kept serving the old site
+# until `location /` was switched to proxy_pass, and it stays there as the fastest rollback
+# available — point nginx back and reload.
 #
 # The nginx switch is deliberately NOT in this script. It needs root, and it is the one step that
-# should be run by hand with `nginx -t` in front of it.
+# should be run by hand with `nginx -t` in front of it. It was done once, and this script used to
+# end by warning that it had not been — a fixed string, checking nothing, alarming after every
+# successful deploy (BMK-70). `location /` on ks-b proxies to 127.0.0.1:3100; if that ever changes,
+# the vhost is where it will say so, not a `log` line here.
 ######################################
 
 ######################################
@@ -277,8 +280,6 @@ EOF
   log "ℹ️  Previous version: $BACKUP_DIR"
   log "ℹ️  Releases:         $RELEASES_DIR"
   log "ℹ️  Rollback with:    ./deploy-front.sh rollback"
-  log "⚠️  nginx is NOT switched by this script. Until 'location /' proxies to 127.0.0.1:3100,"
-  log "⚠️  the site still serves the old static export from public_html."
 }
 
 rollback() {
