@@ -5,9 +5,11 @@
  * the modal is `ui/dialog`, the meter is `ui/progress` — and `Stars`, `PriorityBars`,
  * `Led`, `ShotSlot`, `RowActions` are here, because no registry ships them.
  *
- * The two exceptions are composites, not reimplementations: `Field` binds an `Overline`
- * to a `ui/input`, and `MiniButton` is a named preset over `ui/button`. Both exist so a
- * screen can write the handoff's word instead of assembling it again.
+ * The exceptions are composites, not reimplementations: `Field` binds an `Overline` to a
+ * `ui/input`, `MiniButton` is a named preset over `ui/button`, and `CursorTooltip` wears
+ * `ui/tooltip`'s bubble on a second positioning engine — the registry ships the anchored
+ * one and nothing that follows a pointer. They exist so a screen can write the handoff's
+ * word instead of assembling it again.
  *
  * Import from the modules, not from this barrel, in application code — this file is here
  * so the set is discoverable and documented in one place. */
@@ -16,6 +18,7 @@ export { BlinkCursor } from "@components/ds/BlinkCursor";
 export { Card } from "@components/ds/Card";
 export { Chip } from "@components/ds/Chip";
 export { CommandBar, PagerBar } from "@components/ds/CommandBar";
+export { CursorTooltip } from "@components/ds/CursorTooltip";
 export { DropZone } from "@components/ds/DropZone";
 export { Field } from "@components/ds/Field";
 export { FieldGroup } from "@components/ds/FieldGroup";
