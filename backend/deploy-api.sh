@@ -552,7 +552,7 @@ EOF
   zeus_report "success" || log "⚠️  Zeus was not told about this deploy (non-fatal)"
 
   log "✅ API deployment completed"
-  log "ℹ️  bkmk-server is listening on 5100, proxied by nginx at /api/"
+  log "ℹ️  bkmk-server is listening on 6200, proxied by nginx at /api/"
   log "ℹ️  Pre-deploy dump:   $DUMP_FILE"
   log "ℹ️  Previous version:  $BACKEND_BACKUP_DIR"
   log "ℹ️  Releases:          $RELEASES_DIR"

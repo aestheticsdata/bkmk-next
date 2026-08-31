@@ -13,21 +13,21 @@
  * it.
  *
  * `-H 127.0.0.1` keeps the process off the public interface — nginx is the only thing that should
- * reach 3100, and binding to 0.0.0.0 would publish the front on a second, unencrypted port. */
+ * reach 3001, and binding to 0.0.0.0 would publish the front on a second, unencrypted port. */
 module.exports = {
   apps: [
     {
       name: "bkmk-front",
       cwd: __dirname,
       script: "./node_modules/next/dist/bin/next",
-      args: "start -p 3100 -H 127.0.0.1",
+      args: "start -p 3001 -H 127.0.0.1",
       interpreter: "node",
       exec_mode: "fork",
       instances: 1,
       autorestart: true,
       env: {
         NODE_ENV: "production",
-        PORT: "3100",
+        PORT: "3001",
         HOST: "127.0.0.1",
       },
     },
