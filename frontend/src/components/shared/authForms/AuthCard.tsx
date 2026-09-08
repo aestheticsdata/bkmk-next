@@ -84,6 +84,7 @@ function AuthCard({
             variant="primary"
             size="chrome"
             disabled={busy || disabled}
+            data-testid="auth-submit"
           >
             {action.submit}
           </Button>

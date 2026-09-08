@@ -9,7 +9,8 @@
     "deploy-kimsufi": "next build",
     "start": "next start -p 3100",
     "lint": "biome check ./src",
-    "lint:fix": "biome check --write ./src"
+    "lint:fix": "biome check --write ./src",
+    "video:generate": "playwright test --config playwright.demo.config.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.3",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "25.0.3",
     "@types/react": "19.2.7",

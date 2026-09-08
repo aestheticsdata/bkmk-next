@@ -116,6 +116,7 @@ function ShotField({
         <img
           src={preview}
           alt={CREATE_TEXT.aria.shot}
+          data-testid="shot-preview"
           className="h-36.5 w-full rounded-lg border border-gr-border-2 bg-gr-sunk object-cover object-top inset-shadow-gr-sunk"
         />
       ) : (
@@ -134,6 +135,7 @@ function ShotField({
           type="file"
           id={inputId}
           accept={ACCEPTED_TYPES.join(",")}
+          data-testid="shot-file"
           className="sr-only"
           onChange={(event) => {
             accept(event.target.files?.[0]);
@@ -147,6 +149,7 @@ function ShotField({
               that opens the picker. */}
           <label
             htmlFor={inputId}
+            data-testid="shot-choose"
             className="cursor-pointer"
           >
             {file ? CREATE_TEXT.shot.replace : captured ? CREATE_TEXT.shot.recapture : CREATE_TEXT.shot.choose}
@@ -159,6 +162,7 @@ function ShotField({
         {file ? (
           <MiniButton
             danger
+            data-testid="shot-remove"
             onClick={() => {
               setRejected(undefined);
               onChange(null);
@@ -169,6 +173,7 @@ function ShotField({
         ) : captured ? (
           <MiniButton
             danger
+            data-testid="shot-remove"
             onClick={onDropCaptured}
           >
             {CREATE_TEXT.shot.remove}

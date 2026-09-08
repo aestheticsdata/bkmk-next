@@ -67,6 +67,9 @@ function StarsField({
                 updates batch and the last one wins. */}
             <label
               htmlFor={`${name}-${level}`}
+              data-testid="stars-star"
+              data-level={level}
+              data-on={level <= value}
               onMouseEnter={() => setHovered(level)}
               onMouseLeave={() => setHovered(0)}
               className={cn(
@@ -84,7 +87,14 @@ function StarsField({
 
       <span className="text-3xs tabular-nums text-gr-fg-4">{CREATE_TEXT.fields.starsReadout(value, MAX_STARS)}</span>
 
-      {value > 0 && <MiniButton onClick={() => onChange(0)}>{CREATE_TEXT.fields.starsClear}</MiniButton>}
+      {value > 0 && (
+        <MiniButton
+          onClick={() => onChange(0)}
+          data-testid="stars-clear"
+        >
+          {CREATE_TEXT.fields.starsClear}
+        </MiniButton>
+      )}
     </FieldGroup>
   );
 }

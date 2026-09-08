@@ -2,3 +2,11 @@
 .vscode
 out/
 *.tsbuildinfo
+# The demo film harness (see e2e/demo/README.md): a take writes a gigabyte of JPEG in flight, then
+# an mp4, chapter files and 4K stills — none of it belongs in git.
+e2e/demo/out/
+# The demo credentials. The house dev account and nothing real, and still not something to commit;
+# `.env.test.local.example` beside it is the template.
+.env.test.local
+# Playwright's own failure artefacts (the error context of a take that fell).
+test-results/

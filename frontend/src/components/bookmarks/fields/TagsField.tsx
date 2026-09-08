@@ -116,6 +116,7 @@ function TagsField({
           onChange={(event) => setSearch(event.target.value)}
           onKeyDown={onKeyDown}
           aria-label={CREATE_TEXT.tags.search}
+          data-testid="tags-input"
           placeholder={value.length > 0 ? "" : CREATE_TEXT.tags.placeholder}
           /* `min-w-24` keeps a clickable strip of field even when the tokens fill the row, so the
              control never becomes unfocusable by pointer — which is also why there is no
@@ -142,6 +143,7 @@ function TagsField({
             action
             aria-label={CREATE_TEXT.tags.createAria(needle)}
             onClick={() => add({ label: needle })}
+            data-testid="tags-create"
             className="border-dashed"
           >
             {CREATE_TEXT.tags.create(needle)}
@@ -152,6 +154,9 @@ function TagsField({
             key={category.id}
             action
             onClick={() => add({ label: category.name, id: category.id, value: category.id })}
+            data-testid="tags-suggestion"
+            data-tag={category.name}
+            data-category-id={category.id}
           >
             {category.name}
             {/* The count only makes sense on the ranked list: on a search result it would answer a
@@ -184,6 +189,8 @@ function Token({ name, isNew, onRemove }: { name: string; isNew: boolean; onRemo
       type="button"
       onClick={onRemove}
       aria-label={CREATE_TEXT.tags.remove(name)}
+      data-testid="tags-token"
+      data-tag={name}
       className={cn(
         "inline-flex h-6 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-2xs tracking-wider transition-colors duration-120 outline-none",
         "border-gr-teal-border bg-linear-to-b from-gr-teal-from to-gr-teal-to text-gr-teal-fg shadow-gr-1 inset-shadow-gr-hair",

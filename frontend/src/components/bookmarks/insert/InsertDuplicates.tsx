@@ -39,7 +39,11 @@ function InsertDuplicates({ url }: { url: string }) {
   const hidden = count - candidates.length;
 
   return (
-    <div className="grid gap-1.5 border-t border-gr-border pt-3 text-3xs text-gr-fg-4">
+    <div
+      data-testid="insert-duplicates"
+      data-count={count}
+      className="grid gap-1.5 border-t border-gr-border pt-3 text-3xs text-gr-fg-4"
+    >
       <p>
         {count === 0 ? (
           CREATE_TEXT.duplicates.none
@@ -56,6 +60,7 @@ function InsertDuplicates({ url }: { url: string }) {
           href={`${ROUTES.bookmarksRecord.path}/${candidate.id}`}
           target="_blank"
           rel="noreferrer"
+          data-testid="insert-duplicate"
           className="flex min-w-0 items-baseline gap-2 rounded-sm text-gr-fg-3 outline-none hover:text-gr-fg-2 focus-visible:ring-3 focus-visible:ring-gr-ring"
         >
           {/* The title takes what is left and truncates into it, as the index row's does — a long

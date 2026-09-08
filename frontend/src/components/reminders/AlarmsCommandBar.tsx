@@ -57,7 +57,10 @@ function AlarmsCommandBar({ running, total }: { running: number; total: number }
         <Overline className="text-gr-accent">{ALARMS_TEXT.command.screen}</Overline>
         <Overline className="text-gr-fg-4">{ALARMS_TEXT.command.separator}</Overline>
         {now && (
-          <Overline className="num truncate text-gr-fg-2">
+          <Overline
+            data-testid="alarms-clock"
+            className="num truncate text-gr-fg-2"
+          >
             {ALARMS_TEXT.command.clock(format(now, "yyyy-MM-dd HH:mm"))}
           </Overline>
         )}
@@ -73,6 +76,7 @@ function AlarmsCommandBar({ running, total }: { running: number; total: number }
             size="chrome"
             disabled={total === 0 || pauseAll.isPending}
             onClick={() => pauseAll.mutate({ paused: !asleep })}
+            data-testid="alarms-snooze-all"
           >
             {asleep ? ALARMS_TEXT.command.resumeAll : ALARMS_TEXT.command.snoozeAll}
           </Button>
@@ -82,7 +86,12 @@ function AlarmsCommandBar({ running, total }: { running: number; total: number }
           size="chrome"
           asChild
         >
-          <Link href={ROUTES.bookmarksCreation.path}>{ALARMS_TEXT.command.armNew}</Link>
+          <Link
+            href={ROUTES.bookmarksCreation.path}
+            data-testid="alarms-arm-new"
+          >
+            {ALARMS_TEXT.command.armNew}
+          </Link>
         </Button>
       </div>
     </CommandBar>

@@ -52,7 +52,10 @@ function AlarmsLoad({ armed }: { armed: number }) {
   const busiest = Math.max(...load.map((day) => day.count));
 
   return (
-    <Card className="flex shrink-0 flex-col px-5 py-4 @max-3xl:px-3.5 @max-3xl:py-3">
+    <Card
+      data-testid="alarms-load"
+      className="flex shrink-0 flex-col px-5 py-4 @max-3xl:px-3.5 @max-3xl:py-3"
+    >
       <Overline className="mb-2.5">{ALARMS_TEXT.load.caption}</Overline>
 
       {/* 112px, and the height is the one thing here that had to be measured rather than read off
@@ -93,6 +96,9 @@ function Bar({ day, busiest }: { day: AlarmLoadDay; busiest: number }) {
   return (
     <div
       title={ALARMS_TEXT.load.day(format(day.day, "yyyy-MM-dd"), day.count)}
+      data-testid="alarm-load-bar"
+      data-day={format(day.day, "yyyy-MM-dd")}
+      data-count={day.count}
       style={{ height: `${height}%` }}
       className={cn(
         // Radius 5 → `rounded-md` (6), the step the chip and the tab were snapped to by DS 01.

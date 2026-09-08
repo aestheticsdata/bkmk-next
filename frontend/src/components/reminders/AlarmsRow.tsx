@@ -105,6 +105,13 @@ function AlarmsRow({
     <div
       role="row"
       id={alarmRowId(alarm.id)}
+      /* The marks the demo harness reads a row by (BMK-73): which alarm, whether its clock runs,
+         and how far it is from ringing — so a storyboard snoozes "a running one" off the
+         attributes rather than off the word in a cell. */
+      data-testid="alarm-row"
+      data-alarm-id={alarm.alarm_id}
+      data-paused={asleep}
+      data-days={days ?? ""}
       className={cn(
         "relative grid h-11 items-center border-b border-gr-border text-2xs transition-colors duration-120 hover:bg-white/20",
         ALARM_COLUMNS,
@@ -120,6 +127,7 @@ function AlarmsRow({
       >
         <Link
           href={`${ROUTES.bookmarksRecord.path}/${alarm.id}`}
+          data-testid="alarm-title"
           className="min-w-0 truncate rounded-sm text-gr-fg-2 outline-none after:absolute after:inset-0 after:content-[''] focus-visible:ring-3 focus-visible:ring-gr-ring"
         >
           {title}
@@ -218,12 +226,15 @@ function AlarmsRow({
             <MiniButton
               disabled={busy}
               onClick={() => onPause(!asleep)}
+              data-testid="alarm-snooze"
+              data-action={asleep ? "resume" : "snooze"}
             >
               {asleep ? ALARMS_TEXT.row.resume : ALARMS_TEXT.row.snooze}
             </MiniButton>
             <MiniButton
               disabled={busy}
               onClick={onAskDone}
+              data-testid="alarm-done"
             >
               {ALARMS_TEXT.row.done}
             </MiniButton>

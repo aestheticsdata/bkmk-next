@@ -85,6 +85,7 @@ function EditFooter({
             size="chrome"
             disabled={saving || !dirty}
             onClick={onSave}
+            data-testid="edit-save"
           >
             {saving ? EDIT_TEXT.footer.saving : EDIT_TEXT.footer.save}
           </Button>
@@ -92,6 +93,7 @@ function EditFooter({
             variant="chrome"
             size="chrome"
             onClick={onCancel}
+            data-testid="edit-cancel"
           >
             {EDIT_TEXT.footer.cancel}
           </Button>
@@ -104,6 +106,7 @@ function EditFooter({
           variant="danger"
           size="chrome"
           onClick={onAskRemove}
+          data-testid="edit-remove"
         >
           {EDIT_TEXT.footer.remove}
         </Button>

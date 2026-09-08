@@ -61,11 +61,16 @@ function IndexPager({
         <PagerArrow
           href={page > 0 ? toIndexHref(pathname, query, { page: page - 1 }) : undefined}
           label={INDEX_TEXT.pager.previous}
+          testId="pager-prev"
         >
           ←
         </PagerArrow>
 
-        <span className="text-2xs tabular-nums text-gr-fg-2">
+        <span
+          data-testid="pager-page"
+          data-page={page}
+          className="text-2xs tabular-nums text-gr-fg-2"
+        >
           {INDEX_TEXT.pager.page} <span className="font-semibold">{padded(page)}</span>
           {lastPage != null && (
             <>
@@ -76,6 +81,7 @@ function IndexPager({
                 <Link
                   href={toIndexHref(pathname, query, { page: lastPage })}
                   title={INDEX_TEXT.pager.lastPage}
+                  data-testid="pager-last"
                   className="rounded-sm text-gr-fg-4 outline-none hover:text-gr-fg-2 focus-visible:ring-3 focus-visible:ring-gr-ring"
                 >
                   {padded(lastPage)}
@@ -88,6 +94,7 @@ function IndexPager({
         <PagerArrow
           href={lastPage != null && page < lastPage ? toIndexHref(pathname, query, { page: page + 1 }) : undefined}
           label={INDEX_TEXT.pager.next}
+          testId="pager-next"
         >
           →
         </PagerArrow>
@@ -109,7 +116,18 @@ function IndexPager({
 
 /** One arrow. With a `href` it is a link — middle-click, ⌘-click, the status bar preview; without one
  *  it is the same button, disabled, occupying exactly the same box. */
-function PagerArrow({ href, label, children }: { href?: string; label: string; children: string }) {
+function PagerArrow({
+  href,
+  label,
+  testId,
+  children,
+}: {
+  href?: string;
+  label: string;
+  /** The same mark on both shapes of the arrow, so a storyboard finds it disabled as well as live. */
+  testId: string;
+  children: string;
+}) {
   if (href == null) {
     return (
       <Button
@@ -117,6 +135,7 @@ function PagerArrow({ href, label, children }: { href?: string; label: string; c
         size="page"
         disabled
         aria-label={label}
+        data-testid={testId}
       >
         {children}
       </Button>
@@ -133,6 +152,7 @@ function PagerArrow({ href, label, children }: { href?: string; label: string; c
       <Link
         href={href}
         aria-label={label}
+        data-testid={testId}
       >
         {children}
       </Link>

@@ -36,6 +36,8 @@ function PriorityField({
           key={level || "unset"}
           on={value === level}
           onClick={() => onChange(value === level ? "" : level)}
+          data-testid="priority-segment"
+          data-level={level || "none"}
         >
           {level || CREATE_TEXT.fields.unset}
         </Segment>

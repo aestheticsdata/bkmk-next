@@ -40,6 +40,7 @@ function ImportStaged({ filename, staged }: { filename: string; staged: ImportPa
         role="table"
         aria-label={IMPORT_TEXT.aria.table}
         aria-rowcount={summary.parsed}
+        data-testid="import-staged"
         className="overflow-hidden rounded-lg border border-gr-border"
       >
         <div
@@ -79,6 +80,9 @@ function ImportStaged({ filename, staged }: { filename: string; staged: ImportPa
               <div
                 key={entry.at}
                 role="row"
+                data-testid="import-staged-row"
+                data-state={entry.state}
+                data-at={entry.at}
                 className={`grid h-7.5 items-center border-b border-gr-border/60 last:border-b-0 ${STAGED_COLUMNS}`}
               >
                 <div
@@ -108,7 +112,14 @@ function ImportStaged({ filename, staged }: { filename: string; staged: ImportPa
       </div>
 
       <div className="flex flex-wrap items-center gap-x-2">
-        <Overline>{IMPORT_TEXT.summary(summary.parsed, summary.new, summary.duplicates, summary.malformed)}</Overline>
+        <Overline
+          data-testid="import-summary"
+          data-parsed={summary.parsed}
+          data-new={summary.new}
+          data-duplicates={summary.duplicates}
+        >
+          {IMPORT_TEXT.summary(summary.parsed, summary.new, summary.duplicates, summary.malformed)}
+        </Overline>
         {hidden > 0 && <Overline className="text-gr-fg-4">{IMPORT_TEXT.states.more(hidden)}</Overline>}
       </div>
     </div>

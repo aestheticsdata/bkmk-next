@@ -103,6 +103,7 @@ function IndexFilterModal({
           description, and this one has `advanced · live`. Left alone, Radix wires the two together. */}
       <DialogContent
         showCloseButton={false}
+        data-testid="filter-modal"
         onEscapeKeyDown={(event) => {
           if (search === "") return;
           event.preventDefault();
@@ -168,13 +169,18 @@ function FilterForm({
             counter — it is already in the cache on every private screen, so naming it here costs no
             request. `tabular-nums` because this number changes while the modal is open and the
             proportional digits of the mono face still differ in width for `1`. */}
-        <span className="ml-auto shrink-0 text-2xs tabular-nums text-gr-fg-3">
+        <span
+          data-testid="filter-matches"
+          data-count={matches}
+          className="ml-auto shrink-0 text-2xs tabular-nums text-gr-fg-3"
+        >
           {matches ?? "—"}
           {indexTotal != null && <span className="text-gr-fg-4">/{indexTotal}</span>}{" "}
           <Overline>{INDEX_TEXT.filters.match}</Overline>
         </span>
         <DialogClose
           aria-label={INDEX_TEXT.filters.close}
+          data-testid="filter-close"
           className="shrink-0 rounded-md text-base leading-none text-gr-fg-3 transition-colors duration-120 outline-none hover:text-gr-fg focus-visible:ring-3 focus-visible:ring-gr-ring"
         >
           <span aria-hidden>×</span>
@@ -185,6 +191,7 @@ function FilterForm({
         <Field
           label={INDEX_TEXT.filters.fields.title}
           placeholder={INDEX_TEXT.filters.fields.titlePlaceholder}
+          data-testid="filter-title"
           value={draft.title ?? ""}
           onChange={(event) => patch({ title: event.target.value || undefined })}
           autoFocus
@@ -226,6 +233,8 @@ function FilterForm({
             <Segment
               on={draft.stars == null}
               onClick={() => patch({ stars: undefined })}
+              data-testid="filter-stars"
+              data-min={0}
             >
               {INDEX_TEXT.filters.starLevels.any}
             </Segment>
@@ -234,6 +243,8 @@ function FilterForm({
                 key={stars}
                 on={draft.stars === stars}
                 onClick={() => patch({ stars: draft.stars === stars ? undefined : stars })}
+                data-testid="filter-stars"
+                data-min={stars}
               >
                 {INDEX_TEXT.filters.starLevels.min(stars)}
               </Segment>
@@ -249,6 +260,8 @@ function FilterForm({
                 key={level}
                 on={selectedPriorities.includes(level)}
                 onClick={() => patch({ priority: toggleList<PriorityFilter>(selectedPriorities, level) })}
+                data-testid="filter-priority"
+                data-level={level}
               >
                 {INDEX_TEXT.filters.priorityLevels[level] ?? level}
               </Segment>
@@ -264,6 +277,8 @@ function FilterForm({
             <Segment
               on={draft.alarm == null}
               onClick={() => patch({ alarm: undefined })}
+              data-testid="filter-alarm"
+              data-state="any"
             >
               {INDEX_TEXT.filters.reminderStates.any}
             </Segment>
@@ -272,6 +287,8 @@ function FilterForm({
                 key={state}
                 on={draft.alarm === state}
                 onClick={() => patch({ alarm: draft.alarm === state ? undefined : state })}
+                data-testid="filter-alarm"
+                data-state={state}
               >
                 {INDEX_TEXT.filters.reminderStates[state]}
               </Segment>
@@ -291,16 +308,19 @@ function FilterForm({
               label={INDEX_TEXT.filters.contains.screenshot}
               on={Boolean(draft.screenshot)}
               onClick={() => patch({ screenshot: !draft.screenshot || undefined })}
+              field="screenshot"
             />
             <CheckLine
               label={INDEX_TEXT.filters.contains.notes}
               on={Boolean(draft.notes)}
               onClick={() => patch({ notes: !draft.notes || undefined })}
+              field="notes"
             />
             <CheckLine
               label={INDEX_TEXT.filters.contains.url}
               on={Boolean(draft.url)}
               onClick={() => patch({ url: !draft.url || undefined })}
+              field="url"
             />
           </FieldGroup>
         </div>
@@ -335,6 +355,7 @@ function FilterForm({
           <Link
             href={toFilterHref(pathname, draft)}
             onClick={onClose}
+            data-testid="filter-apply"
           >
             {matches != null && !isStale
               ? INDEX_TEXT.filters.footer.apply(matches)
@@ -349,6 +370,7 @@ function FilterForm({
           <Link
             href={toFilterHref(pathname, clearFilters(query))}
             onClick={onClose}
+            data-testid="filter-reset"
           >
             {INDEX_TEXT.filters.footer.reset}
           </Link>
@@ -368,12 +390,14 @@ function FilterForm({
  * A real `<button aria-pressed>` rather than `ui/checkbox`: the brackets *are* the control, so a box
  * beside them would be two checkboxes for one filter, and the toggle-button pattern announces the
  * state without needing the glyph to be read. The brackets are `aria-hidden` for that reason. */
-function CheckLine({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
+function CheckLine({ label, on, onClick, field }: { label: string; on: boolean; onClick: () => void; field: string }) {
   return (
     <button
       type="button"
       aria-pressed={on}
       onClick={onClick}
+      data-testid="filter-contains"
+      data-field={field}
       className={cn(
         "flex items-center gap-1.5 rounded-md text-2xs transition-colors duration-120 outline-none",
         "focus-visible:ring-3 focus-visible:ring-gr-ring",

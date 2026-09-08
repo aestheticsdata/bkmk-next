@@ -86,6 +86,7 @@ function CursorTooltip({ point, children }: { point: CursorPoint | null; childre
     <div
       ref={bubble}
       data-slot="cursor-tooltip"
+      data-testid="cursor-tooltip"
       className={cn(
         TOOLTIP_SURFACE,
         "pointer-events-none fixed transition-opacity ease-out",

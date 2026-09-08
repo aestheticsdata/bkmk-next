@@ -57,6 +57,7 @@ function EditFields({
         value={draft.url}
         onChange={(event) => patch({ url: event.target.value })}
         message={messageFor("url", CREATE_TEXT.errors.url)}
+        data-testid="field-url"
       />
 
       {/* The focus lands here rather than on `url`: the title is the field an edit is most often
@@ -68,6 +69,7 @@ function EditFields({
         value={draft.title}
         onChange={(event) => patch({ title: event.target.value })}
         message={messageFor("title", CREATE_TEXT.errors.title)}
+        data-testid="field-title"
         autoFocus
       />
 
@@ -78,6 +80,7 @@ function EditFields({
         maxLength={FIELD_LIMITS.notes}
         value={draft.notes}
         onChange={(event) => patch({ notes: event.target.value })}
+        data-testid="field-note"
       />
 
       <TagsField

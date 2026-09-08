@@ -57,6 +57,7 @@ function IndexCommandBar({
         type="button"
         onClick={onOpenFilters}
         aria-label={INDEX_TEXT.command.openFilters}
+        data-testid="index-query"
         className="flex h-6.5 min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-md border border-gr-border bg-gr-sunk px-2 text-left text-2xs transition-colors duration-120 outline-none inset-shadow-gr-sunk hover:border-gr-border-2 focus-visible:border-gr-accent focus-visible:ring-3 focus-visible:ring-gr-ring"
       >
         <span
@@ -76,6 +77,7 @@ function IndexCommandBar({
         <Overline className="@max-3xl:hidden">{INDEX_TEXT.command.sort}</Overline>
         <Link
           href={toIndexHref(pathname, query, { sort: nextSort(query.sort, sort.column) as FiltersQuery["sort"] })}
+          data-testid="index-sort"
           className="rounded-md text-2xs text-gr-fg-2 outline-none hover:text-gr-fg focus-visible:ring-3 focus-visible:ring-gr-ring @max-3xl:hidden"
         >
           {INDEX_TEXT.sortLabels[sort.column] ?? sort.column}{" "}
@@ -83,7 +85,10 @@ function IndexCommandBar({
         </Link>
 
         <Overline className="@max-3xl:hidden">{INDEX_TEXT.command.rows}</Overline>
-        <span className="text-2xs tabular-nums">
+        <span
+          data-testid="index-rows"
+          className="text-2xs tabular-nums"
+        >
           {shown}
           {total != null && <span className="text-gr-fg-4">/{total}</span>}
         </span>
@@ -96,6 +101,7 @@ function IndexCommandBar({
           variant="chrome"
           size="chrome"
           onClick={onOpenFilters}
+          data-testid="index-filter"
         >
           {INDEX_TEXT.command.filter}
           <span

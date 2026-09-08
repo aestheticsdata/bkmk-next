@@ -44,6 +44,8 @@ function ImportOptions({
         on={options.skipDuplicates}
         disabled={disabled}
         onClick={toggle("skipDuplicates")}
+        data-testid="import-option"
+        data-option="skipDuplicates"
       >
         {IMPORT_TEXT.options.skipDuplicates}
       </Segment>
@@ -52,6 +54,8 @@ function ImportOptions({
         on={options.tagAsImported}
         disabled={disabled}
         onClick={toggle("tagAsImported")}
+        data-testid="import-option"
+        data-option="tagAsImported"
       >
         {IMPORT_TEXT.options.tagAsImported}
       </Segment>

@@ -69,7 +69,10 @@ function BookmarkRecord({ id }: { id: string }) {
           <Overline className="block">{RECORD_TEXT.sections.title}</Overline>
           {/* 21px in the handoff, snapped to 20 (`text-xl`) by the DS 01 table. `max-w-155` is the
               620px the mockup caps it at — a title is read in lines, not across a desk. */}
-          <h1 className="mt-1 mb-5 max-w-155 text-pretty text-xl font-semibold tracking-snug text-gr-fg-2">
+          <h1
+            data-testid="record-title"
+            className="mt-1 mb-5 max-w-155 text-pretty text-xl font-semibold tracking-snug text-gr-fg-2"
+          >
             {record.title}
           </h1>
 
