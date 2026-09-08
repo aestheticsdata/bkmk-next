@@ -64,7 +64,12 @@ function RecordCommandBar({
           variant="chrome"
           size="chrome"
         >
-          <Link href={editHref(id)}>{RECORD_TEXT.actions.edit}</Link>
+          <Link
+            href={editHref(id)}
+            data-testid="record-edit"
+          >
+            {RECORD_TEXT.actions.edit}
+          </Link>
         </Button>
 
         {/* The handoff's order — `edit`, `alarm`, then the primary. Disabled rather than absent on a
@@ -76,7 +81,12 @@ function RecordCommandBar({
             variant="chrome"
             size="chrome"
           >
-            <Link href={alarmHref(id)}>{RECORD_TEXT.actions.alarm}</Link>
+            <Link
+              href={alarmHref(id)}
+              data-testid="record-alarm"
+            >
+              {RECORD_TEXT.actions.alarm}
+            </Link>
           </Button>
         ) : (
           <Button
@@ -84,6 +94,7 @@ function RecordCommandBar({
             size="chrome"
             disabled
             title={RECORD_TEXT.actions.noAlarm}
+            data-testid="record-alarm"
           >
             {RECORD_TEXT.actions.alarm}
           </Button>
@@ -95,6 +106,7 @@ function RecordCommandBar({
           variant="danger"
           size="chrome"
           onClick={() => setConfirming(true)}
+          data-testid="record-remove"
         >
           {RECORD_TEXT.actions.remove}
         </Button>
@@ -111,6 +123,7 @@ function RecordCommandBar({
               href={url}
               target="_blank"
               rel="noopener"
+              data-testid="record-open"
             >
               {RECORD_TEXT.actions.open}
             </a>

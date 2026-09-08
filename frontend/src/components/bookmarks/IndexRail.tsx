@@ -100,6 +100,7 @@ function IndexRail({
             label={INDEX_TEXT.rail.all}
             count={stats?.records}
             on={selected.length === 0}
+            testId="rail-all"
           />
           {categories.map((category) => (
             <RailRow
@@ -111,6 +112,8 @@ function IndexRail({
                  live records, so a category nothing uses reads `000` rather than going blank. */
               count={category.bookmarks_count}
               on={selected.includes(category.id)}
+              testId="rail-category"
+              categoryId={category.id}
             />
           ))}
         </div>
@@ -132,21 +135,25 @@ function IndexRail({
             href={toIndexHref(pathname, query, { stars: query.stars ? undefined : 1 })}
             label={INDEX_TEXT.rail.starred}
             on={Boolean(query.stars)}
+            scope="starred"
           />
           <ScopeRow
             href={toIndexHref(pathname, query, { alarm: query.alarm === "armed" ? undefined : "armed" })}
             label={INDEX_TEXT.rail.alarm}
             on={query.alarm === "armed"}
+            scope="alarm"
           />
           <ScopeRow
             href={toIndexHref(pathname, query, { screenshot: !query.screenshot || undefined })}
             label={INDEX_TEXT.rail.shot}
             on={Boolean(query.screenshot)}
+            scope="shot"
           />
           <ScopeRow
             href={toIndexHref(pathname, query, { priority: isHighOnly ? undefined : HIGH_PRIORITY })}
             label={INDEX_TEXT.rail.priority}
             on={isHighOnly}
+            scope="priority"
           />
         </div>
       </div>
@@ -205,11 +212,30 @@ function RailStorage({ stats }: { stats: IndexStats }) {
  * `all 127` — the count was not clipped by the bar, it had been pushed out of the panel. The label's own
  * `min-w-0 flex-1 truncate` could never fire, because the row it lives in was never asked to fit.
  * With the minimum released, the row is exactly the track and the label truncates as designed. */
-function RailRow({ href, label, count, on }: { href: string; label: string; count?: number; on: boolean }) {
+function RailRow({
+  href,
+  label,
+  count,
+  on,
+  testId,
+  categoryId,
+}: {
+  href: string;
+  label: string;
+  count?: number;
+  on: boolean;
+  /** The mark the demo harness addresses the row by (BMK-73), with the count beside it as data: a
+   *  storyboard that opens "the category with several records" reads `data-count`, never a label. */
+  testId: string;
+  categoryId?: number;
+}) {
   return (
     <Link
       href={href}
       aria-current={on ? "page" : undefined}
+      data-testid={testId}
+      data-category-id={categoryId}
+      data-count={count}
       className={cn(
         "flex h-6 min-w-0 items-center gap-2 rounded-md px-2 text-2xs transition-colors duration-120 outline-none",
         "focus-visible:ring-3 focus-visible:ring-gr-ring",
@@ -235,11 +261,14 @@ function RailRow({ href, label, count, on }: { href: string; label: string; coun
  * It is a link like everything else in the rail, and `aria-pressed` would be a lie on an `<a>` —
  * `aria-current` says the same thing about a destination. The brackets are `aria-hidden`: they are
  * the visual state, and the state is already carried. */
-function ScopeRow({ href, label, on }: { href: string; label: string; on: boolean }) {
+function ScopeRow({ href, label, on, scope }: { href: string; label: string; on: boolean; scope: string }) {
   return (
     <Link
       href={href}
       aria-current={on ? "true" : undefined}
+      data-testid="rail-scope"
+      data-scope={scope}
+      data-on={on}
       className={cn(
         "flex items-center gap-2 rounded-md px-2 py-0.5 text-2xs transition-colors duration-120 outline-none",
         "focus-visible:ring-3 focus-visible:ring-gr-ring",

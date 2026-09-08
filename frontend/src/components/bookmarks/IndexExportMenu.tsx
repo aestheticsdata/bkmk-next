@@ -42,6 +42,7 @@ function IndexExportMenu() {
           open — the same treatment `UserMenu`'s trigger gets in the top chrome. */}
       <DropdownMenuTrigger
         disabled={exportIndex.isPending}
+        data-testid="export-menu"
         className="flex h-6.5 shrink-0 items-center gap-1.5 rounded-md border border-gr-border bg-gr-raise px-2 text-2xs text-gr-fg-2 transition-colors duration-120 outline-none hover:border-gr-border-2 hover:text-gr-fg focus-visible:border-gr-accent focus-visible:ring-3 focus-visible:ring-gr-ring disabled:opacity-60 data-[state=open]:border-gr-accent"
       >
         {exportIndex.isError ? INDEX_TEXT.export.failed : INDEX_TEXT.export.button}
@@ -58,12 +59,15 @@ function IndexExportMenu() {
       <DropdownMenuContent
         align="end"
         sideOffset={8}
+        data-testid="export-menu-content"
       >
         <DropdownMenuLabel>{INDEX_TEXT.export.caption}</DropdownMenuLabel>
 
         {EXPORT_FORMATS.map((format) => (
           <DropdownMenuItem
             key={format}
+            data-testid="export-format"
+            data-format={format}
             onSelect={() => exportIndex.mutate(format)}
           >
             {INDEX_TEXT.export.formats[format]}

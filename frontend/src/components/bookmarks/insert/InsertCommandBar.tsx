@@ -59,6 +59,7 @@ function InsertCommandBar({
             variant="chrome"
             size="chrome"
             onClick={onCancel}
+            data-testid="insert-cancel"
           >
             {CREATE_TEXT.command.cancel}
           </Button>
@@ -69,6 +70,7 @@ function InsertCommandBar({
           size="chrome"
           disabled={busy}
           onClick={onCommit}
+          data-testid="insert-commit"
         >
           {busy ? CREATE_TEXT.command.committing : CREATE_TEXT.command.commit}
         </Button>

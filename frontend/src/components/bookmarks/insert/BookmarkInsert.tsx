@@ -185,6 +185,7 @@ function BookmarkInsert() {
               onChange={(event) => patch({ url: event.target.value })}
               onBlur={fetchTitle}
               message={messageFor("url", CREATE_TEXT.errors.url)}
+              data-testid="field-url"
               autoFocus
             />
 
@@ -196,6 +197,7 @@ function BookmarkInsert() {
               maxLength={FIELD_LIMITS.title}
               value={draft.title}
               onChange={(event) => patch({ title: event.target.value })}
+              data-testid="field-title"
               message={
                 messageFor("title", CREATE_TEXT.errors.title) ??
                 (pageTitle.isPending ? (
@@ -216,6 +218,7 @@ function BookmarkInsert() {
               maxLength={FIELD_LIMITS.notes}
               value={draft.notes}
               onChange={(event) => patch({ notes: event.target.value })}
+              data-testid="field-note"
             />
 
             <TagsField

@@ -52,10 +52,16 @@ function RecordPreview({ record }: { record: BookmarkDetail }) {
         <img
           src={imageUrl}
           alt={RECORD_TEXT.aria.shot(record.title)}
+          data-testid="record-shot"
           className="w-full shrink-0 rounded-lg border border-gr-border-2 bg-gr-sunk inset-shadow-gr-sunk"
         />
       ) : (
-        <ShotSlot className="aspect-16/10 w-full shrink-0 px-4 text-center">{empty}</ShotSlot>
+        <ShotSlot
+          data-testid="record-shot-empty"
+          className="aspect-16/10 w-full shrink-0 px-4 text-center"
+        >
+          {empty}
+        </ShotSlot>
       )}
     </>
   );

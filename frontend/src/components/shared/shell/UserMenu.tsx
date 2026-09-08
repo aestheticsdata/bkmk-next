@@ -51,7 +51,10 @@ function UserMenu({ email }: { email: string }) {
             `white/22` wash inside a 24px box, and the two controls in the meta row — this one and
             `about` — are spaced to match (see `TopChrome`). The wash stays while the menu is open: the
             trigger of an open surface should read as held down. */}
-        <DropdownMenuTrigger className="flex h-6 items-center rounded-md px-2 text-3xs text-gr-fg-3 transition-colors duration-120 outline-none hover:bg-white/22 hover:text-gr-fg focus-visible:ring-3 focus-visible:ring-gr-ring data-[state=open]:bg-white/22 data-[state=open]:text-gr-fg-2">
+        <DropdownMenuTrigger
+          data-testid="user-menu"
+          className="flex h-6 items-center rounded-md px-2 text-3xs text-gr-fg-3 transition-colors duration-120 outline-none hover:bg-white/22 hover:text-gr-fg focus-visible:ring-3 focus-visible:ring-gr-ring data-[state=open]:bg-white/22 data-[state=open]:text-gr-fg-2"
+        >
           {email}
         </DropdownMenuTrigger>
 
@@ -60,10 +63,13 @@ function UserMenu({ email }: { email: string }) {
         <DropdownMenuContent
           align="end"
           sideOffset={8}
+          data-testid="user-menu-content"
         >
           <DropdownMenuLabel>{SHELL_TEXT.menu.caption}</DropdownMenuLabel>
 
           <DropdownMenuItem
+            data-testid="user-menu-item"
+            data-item="password"
             onSelect={(event) => {
               event.preventDefault();
               setOpenDialog("password");
@@ -74,6 +80,8 @@ function UserMenu({ email }: { email: string }) {
           </DropdownMenuItem>
 
           <DropdownMenuItem
+            data-testid="user-menu-item"
+            data-item="passphrase"
             onSelect={(event) => {
               event.preventDefault();
               setOpenDialog("passphrase");
@@ -83,7 +91,11 @@ function UserMenu({ email }: { email: string }) {
             {hasRecoveryPassphrase ? SHELL_TEXT.menu.passphraseChange : SHELL_TEXT.menu.passphrase}
           </DropdownMenuItem>
 
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem
+            disabled
+            data-testid="user-menu-item"
+            data-item="language"
+          >
             <GlobeIcon />
             {SHELL_TEXT.menu.language}
             <span className="ml-auto text-gr-fg-4">{SHELL_TEXT.menu.languageValue}</span>
@@ -96,6 +108,8 @@ function UserMenu({ email }: { email: string }) {
               signing out loses nothing and one more sign-in undoes it, which is not what oxide says. */}
           <DropdownMenuItem
             variant="primary"
+            data-testid="user-menu-item"
+            data-item="sign-out"
             onSelect={() => void signOut()}
           >
             <LogOutIcon />

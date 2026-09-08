@@ -100,6 +100,7 @@ function EditModal({ id }: { id: string }) {
       <DialogContent
         className="max-w-170"
         showCloseButton={false}
+        data-testid="edit-modal"
         onEscapeKeyDown={(event) => {
           if (!editor.dirty) return;
           event.preventDefault();

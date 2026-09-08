@@ -111,6 +111,18 @@ function IndexRow({
   return (
     <div
       data-slot="index-row"
+      /* The marks the demo harness reads a row by (BMK-73): which record it is, what it carries and
+         what it points at — so a storyboard picks "a record with a screenshot, a note and an alarm"
+         off the attributes rather than off a glyph in a cell. */
+      data-testid="index-row"
+      data-id={bookmark.id}
+      data-has-shot={Boolean(bookmark.screenshot)}
+      data-has-alarm={bookmark.alarm_id != null}
+      data-has-notes={Boolean(bookmark.notes)}
+      data-stars={bookmark.stars}
+      data-priority={bookmark.priority ?? ""}
+      data-tags={bookmark.categories.length}
+      data-url={url}
       role="row"
       onMouseMove={trackTags}
       onMouseLeave={clear}
@@ -157,6 +169,7 @@ function IndexRow({
             url out of the cell — above the fold, where they share a 30px line. */}
         <Link
           href={`${ROUTES.bookmarksRecord.path}/${bookmark.id}`}
+          data-testid="row-title"
           className="min-w-0 truncate rounded-sm text-gr-fg-2 outline-none after:absolute after:inset-0 after:content-[''] focus-visible:ring-3 focus-visible:ring-gr-ring @max-3xl:basis-full @max-3xl:overflow-visible @max-3xl:whitespace-normal"
         >
           {title}
@@ -184,6 +197,7 @@ function IndexRow({
       <div
         ref={tags}
         role="cell"
+        data-testid="row-tags"
         className="flex gap-1.5 overflow-hidden @max-3xl:hidden"
       >
         {bookmark.categories.slice(0, MAX_CHIPS).map((category) => (
@@ -319,6 +333,7 @@ function IndexRow({
                   target="_blank"
                   rel="noopener"
                   aria-label={INDEX_TEXT.row.open}
+                  data-testid="row-open"
                 >
                   ↗
                 </a>
@@ -328,6 +343,7 @@ function IndexRow({
                 disabled
                 aria-label={INDEX_TEXT.row.noUrl}
                 title={INDEX_TEXT.row.noUrl}
+                data-testid="row-open"
                 className="opacity-40"
               >
                 ↗
@@ -346,6 +362,7 @@ function IndexRow({
               <Link
                 href={editHref(bookmark.id)}
                 aria-label={INDEX_TEXT.row.edit}
+                data-testid="row-edit"
               >
                 ✎
               </Link>
@@ -358,6 +375,7 @@ function IndexRow({
               danger
               title={INDEX_TEXT.row.remove}
               aria-label={INDEX_TEXT.row.remove}
+              data-testid="row-remove"
               onClick={onAskRemove}
             >
               ✕

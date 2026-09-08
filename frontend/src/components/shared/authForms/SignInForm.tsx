@@ -66,6 +66,7 @@ function SignInForm({
         label={copy.identity}
         type="email"
         autoComplete="email"
+        data-testid="login-email"
         error={messageFor("email")}
         {...register("email")}
       />
@@ -74,6 +75,7 @@ function SignInForm({
         label={copy.key}
         type="password"
         autoComplete="current-password"
+        data-testid="login-password"
         error={messageFor("password")}
         {...register("password")}
       />

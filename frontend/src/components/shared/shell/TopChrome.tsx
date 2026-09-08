@@ -63,6 +63,8 @@ function TopChrome() {
               key={item.tab}
               href={item.path}
               aria-current={on ? "page" : undefined}
+              data-testid="nav-tab"
+              data-tab={item.tab}
               className={cn(
                 "flex h-6 items-center gap-2 rounded-md border px-3 outline-none",
                 "text-2xs uppercase tracking-widest transition-colors duration-120",
@@ -98,7 +100,10 @@ function TopChrome() {
             the tab row: `gap-1`, and the padding is what separates the words.** It was `gap-3.5`
             between two bare labels whose only hover was a shade of ink — invisible at 10px, on the
             two things in the chrome you are meant to click. */}
-        <div className="flex items-center gap-1 @max-3xl:hidden">
+        <div
+          data-testid="chrome-meta"
+          className="flex items-center gap-1 @max-3xl:hidden"
+        >
           {/* `asChild`: wrapped, the link would be a 12px flex item around a 10px label and its
               strut would sit it below the `Overline`s beside it. */}
           <Overline

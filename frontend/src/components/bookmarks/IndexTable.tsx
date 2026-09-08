@@ -90,6 +90,8 @@ function IndexTable({
                 href={toIndexHref(pathname, query, {
                   sort: nextSort(query.sort, header.column) as FiltersQuery["sort"],
                 })}
+                data-testid="index-header"
+                data-column={header.column}
                 className="flex items-center gap-1 rounded-sm outline-none hover:text-gr-fg-2 focus-visible:ring-3 focus-visible:ring-gr-ring"
               >
                 <Overline className={active ? "text-gr-fg-2" : undefined}>{header.label}</Overline>

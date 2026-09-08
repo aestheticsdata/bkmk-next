@@ -31,6 +31,7 @@ function RecordFields({ record }: { record: BookmarkDetail }) {
           href={record.original_url}
           target="_blank"
           rel="noopener"
+          data-testid="record-url"
           className="break-all rounded-sm text-gr-accent underline underline-offset-2 outline-none hover:text-gr-fg-2 hover:no-underline focus-visible:ring-3 focus-visible:ring-gr-ring"
         >
           {record.original_url}

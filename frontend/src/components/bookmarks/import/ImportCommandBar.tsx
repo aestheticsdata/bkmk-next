@@ -38,6 +38,7 @@ function ImportCommandBar({
           variant="chrome"
           size="chrome"
           onClick={onCancel}
+          data-testid="import-cancel"
         >
           {IMPORT_TEXT.command.cancel}
         </Button>
@@ -46,6 +47,7 @@ function ImportCommandBar({
           size="chrome"
           disabled={busy || !ready}
           onClick={onSend}
+          data-testid="import-send"
         >
           {busy ? IMPORT_TEXT.command.sending : IMPORT_TEXT.command.send}
         </Button>

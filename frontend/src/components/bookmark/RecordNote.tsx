@@ -51,7 +51,10 @@ function RecordNote({ note }: { note?: string | null }) {
     <>
       <Overline className="mt-5.5 mb-2 block">{RECORD_TEXT.sections.note}</Overline>
       {text ? (
-        <p className="max-w-155 whitespace-pre-wrap break-words leading-relaxed text-gr-fg">
+        <p
+          data-testid="record-note"
+          className="max-w-155 whitespace-pre-wrap break-words leading-relaxed text-gr-fg"
+        >
           {segments(text).map((segment) =>
             segment.isLink ? (
               <a

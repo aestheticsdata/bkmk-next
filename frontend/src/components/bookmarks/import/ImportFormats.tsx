@@ -57,7 +57,10 @@ function ImportFormats() {
         <Shape>{IMPORT_TEXT.formats.csv}</Shape>
       </div>
 
-      <p className="border-t border-gr-border pt-3 text-3xs leading-relaxed text-gr-fg-4">
+      <p
+        data-testid="import-last"
+        className="border-t border-gr-border pt-3 text-3xs leading-relaxed text-gr-fg-4"
+      >
         {lastImport
           ? IMPORT_TEXT.lastImport.line(lastImport.ranAt, lastImport.entries, lastImport.skipped)
           : IMPORT_TEXT.lastImport.none}

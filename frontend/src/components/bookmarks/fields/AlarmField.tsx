@@ -33,6 +33,8 @@ function AlarmField({
       <Segment
         on={value == null}
         onClick={() => onChange(null)}
+        data-testid="alarm-segment"
+        data-days={0}
       >
         {CREATE_TEXT.fields.alarmOff}
       </Segment>
@@ -41,6 +43,8 @@ function AlarmField({
           key={days}
           on={value === days}
           onClick={() => onChange(value === days ? null : days)}
+          data-testid="alarm-segment"
+          data-days={days}
         >
           {CREATE_TEXT.fields.alarmDays(days)}
         </Segment>

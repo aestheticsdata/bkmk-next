@@ -67,6 +67,7 @@ function ImportDropZone({
       </div>
 
       <DropZone
+        data-testid="import-drop"
         onDragEnter={(event) => {
           event.preventDefault();
           setDragDepth((depth) => depth + 1);
@@ -93,6 +94,7 @@ function ImportDropZone({
               that opens the picker. */}
           <label
             htmlFor={inputId}
+            data-testid="import-choose"
             className="cursor-pointer"
           >
             {file ? IMPORT_TEXT.drop.replace : IMPORT_TEXT.drop.choose}
@@ -106,6 +108,7 @@ function ImportDropZone({
           id={inputId}
           accept={ACCEPTED_EXTENSIONS.join(",")}
           aria-label={IMPORT_TEXT.aria.file}
+          data-testid="import-file"
           className="sr-only"
           onChange={(event) => {
             accept(event.target.files?.[0]);
