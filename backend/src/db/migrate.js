@@ -51,33 +51,7 @@ const MIGRATIONS_DIR = path.join(__dirname, "migrations");
 const TABLE = "schema_migrations";
 const EXTENSIONS = [".sql", ".js"];
 
-/* The connection settings.
- *
- * `process.env` first, which is what pm2 hands the server. A runner invoked from a shell has none of
- * it, though — bkmk's environment lives in `ecosystem.config.js`, untracked, which is also what
- * `server.js` tells you when `SESSION_SECRET` is missing. So the file is read as a fallback, and the
- * environment is picked by `NODE_ENV`, defaulting to dev: a runner that reaches for production
- * because a variable was unset is not a mistake worth making once. */
-const readConnectionSettings = () => {
-  const { HOST, DB_USER, DB_PASSWORD, DB } = process.env;
-  if (HOST && DB_USER && DB) {
-    return { host: HOST, user: DB_USER, password: DB_PASSWORD, database: DB };
-  }
-
-  const configPath = path.join(__dirname, "..", "..", "ecosystem.config.js");
-  if (!fs.existsSync(configPath)) {
-    throw new Error(`no database settings: set HOST/DB_USER/DB_PASSWORD/DB, or add ${configPath}`);
-  }
-
-  const wanted = process.env.NODE_ENV === "production" ? "env_production" : "env_dev";
-  const app = require(configPath).apps?.find((candidate) => candidate[wanted]?.DB);
-  const env = app?.[wanted];
-  if (!env) {
-    throw new Error(`no ${wanted} with a DB in ecosystem.config.js`);
-  }
-
-  return { host: env.HOST, user: env.DB_USER, password: env.DB_PASSWORD, database: env.DB };
-};
+const { readConnectionSettings } = require("./connectionSettings");
 
 const connect = async () => {
   const settings = readConnectionSettings();

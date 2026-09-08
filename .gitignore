@@ -8,6 +8,10 @@ node_modules
 ecosystem.config.js*
 ecosystem.config.prod.js*
 frontend/public/screenshotsUpload/*
+# Local credentials cheat sheet (same file in pfa, zeus, spira, iknos, trekker) — pointers to the
+# secret files and the dev account, never committed. Both deploy scripts rsync from their own
+# folder, so a file at the root never reaches the server either.
+ACCOUNTS.md
 notes/*
 /.next/
 /out/

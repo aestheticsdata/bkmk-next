@@ -9,6 +9,7 @@
     "lint": "biome check ./src && node scripts/check-require-paths.js",
     "lint:fix": "biome check --write ./src && node scripts/check-require-paths.js",
     "lint:paths": "node scripts/check-require-paths.js",
+    "seed": "node scripts/seed.js",
     "migrate": "node src/db/migrate.js up",
     "migrate:status": "node src/db/migrate.js status",
     "migrate:dry-run": "node src/db/migrate.js dry-run",
