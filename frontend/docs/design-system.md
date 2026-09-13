@@ -8,7 +8,8 @@ Built with Tailwind v4, CSS-first: no `tailwind.config.js`, the theme lives in C
 Established by **COS-290 (DS 01)**, modelled on `~/dev/pfa/front/docs/design-system.md`.
 
 Every value below was read out of the code, not remembered. If a number here disagrees with the
-CSS, **the CSS wins** — fix the document.
+CSS, **the CSS wins** — fix the document. Last read against the code in full at **`34559387`**
+(BMK-24); sections written after that carry their own ticket.
 
 ---
 
@@ -17,8 +18,15 @@ CSS, **the CSS wins** — fix the document.
 These are decisions, not preferences. They were argued once so they don't have to be argued on
 every screen.
 
-**Use a token, never a raw value.** No `text-[12.5px]`, no `rounded-[7px]`, no `p-[14px]`, no
-`bg-[#a3a4a0]`. Every one of those has a canonical equivalent below.
+**Use a token, never a raw value.** No arbitrary value in square brackets — not for a size, a
+radius, a colour, a ring or a blur. Every one has a canonical equivalent below.
+
+**And when there is genuinely no equivalent, name it in `styles/utilities.css`** — a value in a
+unit the scale does not have (`em`, `ch`, `vw`, a `calc()` against the viewport) becomes an
+`@utility` used by name, not a bracket repeated at each site. **This holds in `ui/` too**, which is
+where it had been let slide: a regenerable file is worth having, and it is not worth an exception to
+the one rule the whole system rests on. Re-running the CLI over a file whose only edits are named
+utilities is still a merge you can read.
 
 **No stock Tailwind palette.** Not `gray-400`, not `emerald-700`. GRAPHITE's colours are chosen
 hues; Tailwind's greys don't come close and would clash beside them.
@@ -48,11 +56,56 @@ triggers are all `<button>`. `base.css` restores it once for `button` and `[role
 this should not be true of, and the next one written gets it for free. It sits in `@layer base`, so a
 `cursor-*` utility still wins where a screen needs something else.
 
+**No rubber band.** Every scroller — the desk, the rail's category list, a modal's body, the mobile
+category scroller, the document itself — carries `overscroll-behavior-y: none`, from one rule on `*`
+in `base.css` rather than a class per surface, so the next scroller written gets it too. `none` and
+not `contain`: `contain` stops the gesture chaining to the parent and leaves the local bounce, which
+is the part being removed. The horizontal axis is left alone — that one is the browser's back
+gesture.
+
 **Path aliases only**, never `./` or `../`, not even within a module.
 
 ---
 
-## 2. Colour
+## 2. Where things live
+
+Two trees, and the split is pfa's: **the styles sit outside `src/`, the components inside it.**
+
+```
+styles/
+  globals.css     the single entry point — imports only, in order, and no rule of its own
+  tokens/         one file per kind: breakpoints - colors - radius - typography - elevation
+  base.css        resets that apply to every element
+  animations.css  the @keyframes, and the `--animate-*` shorthands that name them
+  utilities.css   @utility — what the framework has no vocabulary for: the two scrollbars,
+                  and the geometry in units the scale does not carry
+src/
+  app/            App Router: (public) - (private) - the @modal slot the edit route is intercepted into
+  components/
+    ui/           shadcn, restyled onto these tokens — regenerable (§9)
+    ds/           what GRAPHITE has and no registry ships (§9)
+    shared/       shell/ - authForms/ - config/ — the frames, and what crosses screens
+    bookmarks/ bookmark/ reminders/    one directory per screen
+  schemas/        zod, at the network boundary
+  services/       one react-query hook per endpoint, each owning its own invalidation
+  helpers/ lib/   the non-visual utilities; `lib/query/keys.ts` holds every cache key
+  text/           every string on screen, one file per screen
+```
+
+**A token goes in `styles/tokens/`, in the file named after its kind, and nowhere else.** That is
+the rule the five files exist to make obvious: a colour is not declared beside the component that
+first needed it, and a shadow is not inlined because it is used once. Two things deliberately stay
+out of `tokens/` — the `@keyframes` in `animations.css`, which are not values, and the `@utility`
+blocks in `utilities.css`, which are rules.
+
+**There is no `styles/components/`**, which is a departure from pfa and is argued in §10.
+
+**Path aliases only** — `@components/…`, `@src/schemas/…`, `@text/…`, `@styles/…`. Never `./` or
+`../`, not even between siblings.
+
+---
+
+## 3. Colour
 
 `styles/tokens/colors.css`. Authority: `design_handoff_graphite/README.md`.
 
@@ -69,15 +122,21 @@ this should not be true of, and the next one written gets it for free. It sits i
 | `gr-fg-3` | `#474944` | secondary text, micro-labels |
 | `gr-fg-4` | `#6a6c66` | tertiary text — counters, timestamps |
 | `gr-accent` | `#1d5b4f` | muted teal — LED, caret, primary action, selected row |
-| `gr-accent-2` | `#7d3714` | oxide — stars, imminent alarm |
+| `gr-accent-2` | `#7d3714` | oxide — imminent alarm |
 | `gr-danger` | `#8a3512` | errors |
+| `gr-star` | `#fc0382` | the star rating |
+| `gr-pri-1` … `gr-pri-4` | `#94c2f0` `#5aa1e7` `#207fdf` `#1861aa` | the priority gauge, low → highest |
 | `gr-border` | `rgb(22 23 21 / 0.16)` | inner rules |
 | `gr-border-2` | `rgb(22 23 21 / 0.32)` | structural rules, button borders |
 | `gr-hair` | `rgb(255 255 255 / 0.45)` | 1px light edge along the top of surfaces |
 | `gr-ring` | `rgb(29 91 79 / 0.26)` | focus ring, 3px |
 | `gr-selection` | `rgb(29 91 79 / 0.20)` | text selection |
+| `gr-scrim` | `rgb(28 30 27 / 0.4)` | modal backdrop, blurred — the handoff's 3px on the native 4px step |
 
-| `gr-scrim` | `rgb(28 30 27 / 0.4)` | modal backdrop, blurred 3px |
+**`gr-star` and the four `gr-pri-*` are tokens for a reason** (COS-412). Both
+used to read `gr-accent-2` and two of the inks, which are shared with errors, the delete flow and
+body text — so a screen that repainted any of those repainted the stars with them. Four priority
+hues rather than two, because the gauge has four levels to tell apart (§9).
 
 Two fills come as sets of four, because a gradient needs both stops, a border and a foreground.
 **Affirmative** — primary button, selected segment: `gr-teal-from` `#256b5c`, `gr-teal-to`
@@ -87,7 +146,7 @@ Two fills come as sets of four, because a gradient needs both stops, a border an
 
 ---
 
-## 3. Type
+## 4. Type
 
 `styles/tokens/typography.css`. One family, **IBM Plex Mono**, loaded through `next/font`.
 
@@ -160,7 +219,7 @@ stars.
 
 ---
 
-## 4. Radius
+## 5. Radius
 
 `styles/tokens/radius.css`. **No token at all**: all eight of the handoff's radii land on the native
 scale (`md` 6 · `lg` 8 · `xl` 12 · `2xl` 16 · `full`).
@@ -186,9 +245,13 @@ being a surface laid over everything else.
 > = 14px on the CSS side, `rounded-lg` = 10px on the utility side), which it lists among its known
 > rough edges. Here `rounded-*` in TSX and `var(--radius-*)` in the partials mean the same thing.
 
+**One variable survives, and it is not a scale.** `:root { --radius: 0.5rem }` is in the file
+because `ui/sonner` reads it from an inline style, where no utility reaches. It is pinned to the
+step the utilities already give fields and buttons, so it cannot say anything the scale does not.
+
 ---
 
-## 5. Elevation
+## 6. Elevation
 
 `styles/tokens/elevation.css`. Each token is a complete `box-shadow` value, usable as `shadow-gr-*`
 or as `var(--shadow-gr-*)`.
@@ -223,7 +286,7 @@ hover:shadow-gr-2                   →  only the outer half grows; the hair lin
 
 ---
 
-## 6. Spacing and heights
+## 7. Spacing and heights
 
 No tokens: everything lands on the numbered scale, **half-steps included and quarter-steps not**.
 
@@ -292,7 +355,7 @@ spot the handoff filled with an aside.
 
 ---
 
-## 7. Responsive
+## 8. Responsive
 
 `styles/tokens/breakpoints.css`. **No token** — and a single switching point.
 
@@ -310,7 +373,7 @@ width of the app screen, not the window.
 ### Where that rule stops: portalled surfaces
 
 The rule holds for anything rendered **inside** the app screen, which declares the system's only
-`container-type` (§9). A container query needs such an ancestor; with none, it does not fall back to
+`container-type` (§10). A container query needs such an ancestor; with none, it does not fall back to
 the viewport, it evaluates false at every width. So `@max-3xl:` on anything Radix portals to
 `document.body` — a dialog, an alert dialog, a toast — is not a fold, it is a no-op.
 
@@ -329,7 +392,7 @@ is measurable. Same argument `DialogFooter` won on. So the standing answer for a
 
 ⚠️ **A portal escapes the typeface as well, and that one was a bug** (found in COS-321, measured
 through CDP). `font-mono` lives on the screen root — `AppShell`, `AuthShell` — and `body` carries no
-font at all while the global reset waits for the last legacy screen (§14). So every portalled surface
+font at all while the global reset waits for the last legacy screen (§16). So every portalled surface
 came back `-apple-system, system-ui, …`: the filter modal had been drawing in the system sans since
 COS-300, on a design that is one typeface end to end. `font-mono` now sits on `DialogContent` and on
 the dropdown menu's two contents. **Anything new that portals needs it too**, until `body` gets the
@@ -383,7 +446,7 @@ and `fires` sharing the rank under it. Its column header goes with the change �
 **Everything else measured right**, and the numbers are recorded so the next change can be checked
 against them: chrome 38 → 48, command bar 46 → 54 (it grows past that where it wraps, which is the
 `flex-wrap` answer above, not a fold), buttons 30 → 34, desk padding and gap 14/12 → 8/8, card radius
-12 → 16 (the handoff's 14, snapped — §4), tab bar four columns of 48, the rail replaced by its
+12 → 16 (the handoff's 14, snapped — §5), tab bar four columns of 48, the rail replaced by its
 scroller at 32px segments, the index and import headers gone, `pri`/`stars`/`tags`/`shot`/`added`
 gone, the row actions at `opacity: 1` and 26px, the two-pane screens in one column with a top rule
 instead of a left one at 16/14, and the import table down to title + state. At 1440 nothing moved on
@@ -408,7 +471,7 @@ Two live consequences, both deliberate:
 
 ---
 
-## 8. The primitives
+## 9. The primitives
 
 Established by **COS-291 (DS 02)**. Two directories, and which one a component lands in is decided
 by one question: **does shadcn already provide it?**
@@ -423,6 +486,7 @@ by one question: **does shadcn already provide it?**
 | `Card` | `.gr-card` | the panel everything sits on |
 | `CommandBar` · `PagerBar` | `.gr-cmd` · `.gr-pager` | the strips at a card's top and bottom |
 | `Field` | — | composite: `Overline` bound to a `ui/input` |
+| `FieldGroup` | — | `Field`'s sibling for everything that is not an input — same two rows, same heights |
 | `Segment` | `.gr-seg` | a toggle, not a tab — see below |
 | `Chip` | `.gr-chip` | the dot's hue comes from the data |
 | `Overline` | `.gr-lab` | the most-used label in the system — `asChild` when it is a link; see below |
@@ -442,6 +506,7 @@ by one question: **does shadcn already provide it?**
 | `input` · `textarea` | `.gr-in` |
 | `progress` | `.gr-meter` |
 | `dialog` · `alert-dialog` | `.gr-modal` |
+| `dropdown-menu` | — the account menu (§10); the registry's, repainted |
 | `tooltip` | — the handoff draws none, and the bubble is ours; see below |
 
 ### The button
@@ -486,9 +551,10 @@ it is an **underscore** rather than a block — a solid slab is the heaviest thi
 1px rules, 1px light edges and a 6px meter, where an underscore is the same terminal signal at the
 system's weight.
 
-Its dimensions are the one place `em` beats the spacing scale: half an em wide and `0.08em` thick —
+Its dimensions are the one place `em` beats the spacing scale: half an em wide and 0.08em thick —
 2px under a 24px title, 1px under 12px text — so it tracks whatever it closes. A caret that does not
-scale with its own text is the bug being fixed.
+scale with its own text is the bug being fixed. The four em values live together as the `gr-caret`
+utility, under the handoff's own name for it, rather than inline on the element (§15).
 
 ### The tooltip is one bubble and two engines (BMK-69)
 
@@ -516,7 +582,7 @@ Four things it settles for both:
 **`z-60`, above every other portalled surface** — the modal is 50 and the delete confirmation 52 / 53.
 A tooltip is the one thing that may legitimately be drawn over any of them.
 
-**Both portal, so both state the typeface and the size.** §7's rule, and the bug COS-342: `font-mono`
+**Both portal, so both state the typeface and the size.** §8's rule, and the bug COS-342: `font-mono`
 lives on the screen root and `body` carries nothing. `TOOLTIP_SURFACE` says `font-mono text-2xs`, and
 that is measured, not assumed — CDP reads `IBM Plex Mono` at 11px off the bubble.
 
@@ -535,7 +601,7 @@ constant drives both; a `duration-*` class beside a constant is the pair that go
 
 ---
 
-## 9. The shell
+## 10. The shell
 
 Established by **COS-292 (DS 03)**. `components/shared/shell/` — the frame every application
 screen is rendered into, mounted once in `app/(private)/layout.tsx`:
@@ -546,6 +612,13 @@ AppShell        the screen root: @container, h-dvh, the grey field
   Desk          the cards float here; the only thing that scrolls
   StatusBar     26px — state word, the screen's keyboard hints, one value at the right
   TabBar        below @3xl only — the four modules as a bottom bar
+```
+
+`TopChrome` carries two more of its own: `UserMenu`, the account menu below, and `MobileMenu`,
+which is that menu's trigger under the fold (COS-414) — the chrome hides `about` and the e-mail
+there, and `TabBar` has only the four tabs, so without it `log out` had nothing to open it.
+
+```
 ```
 
 `SHELL_TABS` (`shell/config/constants.ts`) is the single list of modules; the chrome and the tab bar
@@ -566,12 +639,12 @@ block saves. **There is no `styles/components/` directory.**
 
 `AppShell` carries `@container`. Every `@max-3xl:` variant in this system — here, in `ds/`, in the
 restyled `ui/` — resolves against it, which is what makes the interface fold on the width of the app
-panel rather than the window (§7).
+panel rather than the window (§8).
 
 Two consequences worth knowing. `container-type` makes that element the containing block for
 `position: fixed` descendants; it spans the viewport exactly, so nothing inside notices. And
 **anything portalled to `document.body` lands outside the container** and gets no `@max-3xl` at all —
-which is why `ui/dialog` carries no width variants. That boundary, and what to do at it, is in §7.
+which is why `ui/dialog` carries no width variants. That boundary, and what to do at it, is in §8.
 
 ### What is alive and what is furniture
 
@@ -595,7 +668,7 @@ arrives — `000` would be a wrong answer, not a pending one.
 value. A layout cannot take props from the page it renders, and the alternative — a store every
 screen writes into on mount — buys a flash of the wrong content and an effect per screen in exchange
 for a table of constants. Two screens compute their right-hand slot from the counters instead, and the
-record screen reads its `record <id>` off the address bar (COS-301) — see §12.
+record screen reads its `record <id>` off the address bar (COS-301) — see §13.
 
 ### The fold is narrow, not mobile
 
@@ -642,11 +715,12 @@ the step-2 shadow, rows at 12px with the white wash under the lit one, `SIGNED I
 **The lit row is `focus:`, never `hover:`.** Radix moves focus with the pointer as well as with the
 arrow keys, so a single rule covers the mouse and the keyboard and the two cannot disagree.
 
-**Three of the four entries are drawn disabled** — `change password`, the recovery passphrase, and
-`language` with its current value. Each needs a route or a layer that does not exist yet. They are
-shown because the menu is also how you learn what an account has, and greyed because the only thing
-worse than a missing entry is one that does nothing when pressed. For the same reason the chevron on
-`language` is **not** drawn: a chevron promises a submenu, and none opens.
+**Three of the four entries shipped drawn disabled, and two of them work now.** `change password`
+and the recovery passphrase each open a dialog (COS-404); `language` is still greyed, and still
+carries its current value. They were shown before they worked because the menu is also how you learn
+what an account has, and greyed because the only thing worse than a missing entry is one that does
+nothing when pressed. For the same reason the chevron on `language` is **not** drawn: a chevron
+promises a submenu, and none opens.
 
 `/logout` left with this ticket. Signing out is `useSignOut`, the ordering COS-296 established —
 `POST /users/logout` first, while the CSRF token is still in memory, then the context, then the
@@ -771,7 +845,7 @@ phrase is on a leak list. zxcvbn would, and is 400kb shipped to one field on one
 
 ---
 
-## 10. The index (COS-299)
+## 11. The index (COS-299)
 
 The heaviest screen in the system, and the one every convention below was written for. Two cards:
 the rail at 196px, the table card filling the rest, `gap-3` between them.
@@ -845,8 +919,9 @@ one column of this table has the same two options, and the same answer.
 is what `<table>` cannot do without a fight, so the structure is divs and the semantics are put back
 by hand: `table` → `row` / `rowgroup` → `row` → `cell`, with `aria-sort` on the headers that carry it.
 Biome's `useSemanticElements` and `useFocusableInteractive` both fire on exactly this, correctly by
-their own rule and wrongly here; they are switched off for `components/bookmarks/Index*.tsx` in
-`biome.json` rather than suppressed line by line a dozen times.
+their own rule and wrongly here; they are switched off in `biome.json` rather than suppressed line by
+line a dozen times — for this screen, and since then for the two others built on the same structure,
+the staged import table and the alarms list.
 
 **`asChild` is now the DS's answer to "this control navigates".** `Overline`, `Segment` and `RowAction`
 all take it, for the same reason each time: a filter, a category and `↗` are addresses, and an address
@@ -861,7 +936,7 @@ announce a control that does not exist, so a link gets `aria-current`.
 | the screenshot as a glyph beside the title | a **`shot` column**, 44px, sortable | Back from the legacy list, where it is a column of its own. A column is what makes it scannable down the page, and `screenshot` is one of the backend's sort cases, so the header does something. The alarm glyph stays beside the title — one row-level mark is enough there. |
 | `all 312`, `dev 188`, `demoscene 041` | one real count, on the row it describes | Per-category counts are DATA 05 (COS-310). There is exactly **one** number available — the current query's `total_count` — and pinning it to `all` regardless was a bug: selecting a category showed `all 002`. `countedRow` puts it on `all` when nothing is filtered, on a category when that is the only filter, and nowhere when no single row describes the query. |
 | `storage` — `shots 84/312` + gauge, `db 1.4 mb` | **absent** | Same ticket, and nothing to wire: a permanent `0/0` is worse than a block that arrives meaning something. |
-| a `filter ⌥F` button, and a query field that opens the modal | both, since COS-300 | UI 03 shipped the field read-only, because a button that opens nothing is worse than a button that has not arrived. UI 04 brought the modal, and with it the button and the field's click — see §11. |
+| a `filter ⌥F` button, and a query field that opens the modal | both, since COS-300 | UI 03 shipped the field read-only, because a button that opens nothing is worse than a button that has not arrived. UI 04 brought the modal, and with it the button and the field's click — see §12. |
 | `> tag:demoscene stars:>3` | `cat:demoscene stars:1+ prio:high\|highest` | That is a query *language*; the app has a filter object. `describeQuery` prints the object in the same shape, so the line is readable and also true. |
 | chip colours from a `tagPalette` fixture | hue from `category.color` | The prototype has no database; bkmk does, and the colour is the user's own. GRAPHITE keeps the treatment — `hsl(hue 34% 32%)` — so eighteen chosen colours cannot turn a screen of greys into a pin board. Grey or unparseable falls back to a hash of the name, not to one shared default. |
 
@@ -871,7 +946,7 @@ exact frequency. Four checkboxes of which one filters is worse than none, so
 `getBookmarksController` gained three parameterised conditions, in the shape DATA 01 (COS-306) will
 formalise. `prio high` sends `high,highest`: a shortcut named for the level below the top would hide
 the records that matter most. **COS-300 finished the set and cost two of those parameters their
-shape** — see §11.
+shape** — see §12.
 
 **Every column sorts, as the legacy list had it** — which `tags` could not, until it was given a
 server-side order. It sorts on the aggregated category names (`categories_names`), so `amiga,css` comes
@@ -930,8 +1005,8 @@ to remove.
 
 The rail scrolls vertically and **never horizontally** (`overflow-x-hidden`): every label truncates, so a
 horizontal bar could only mean something is mis-sized — and it did, when a fixed `3ch` counter clipped a
-four-digit total to a plausible-looking `127` and pushed the row wide. `min-w-[3ch]` now: three digits
-is the handoff's padding, not a ceiling.
+four-digit total to a plausible-looking `127` and pushed the row wide. It is a minimum now, and a
+named one — `gr-digits-3`: three digits is the handoff's padding, not a ceiling.
 
 **Where the bar sits is two numbers, and both were wrong once** (COS-300). An overlay thumb — macOS
 Chrome's default — is painted *over* the content instead of in a reserved channel, so the scroll
@@ -959,7 +1034,7 @@ out of the address bar so a clean link stays clean and one page stays one cache 
 
 ---
 
-## 11. The filter modal (COS-300)
+## 12. The filter modal (COS-300)
 
 The first real modal in the system, and the screen's one piece of state that is **not** in the URL.
 
@@ -1007,7 +1082,7 @@ own body scrolling, footer where it was.
 ### A draft, not seven navigations
 
 Everywhere else on the index a control is a `<Link>` and a click is a navigation, because the query
-lives in the address bar (§10). Here seven controls describe **one** filter, and applying each as it is
+lives in the address bar (§11). Here seven controls describe **one** filter, and applying each as it is
 clicked would be seven navigations and seven round trips to reach one list. So the modal edits a draft
 in `useState`, counts it live, and applies it in a single move — which is what the handoff's footer
 already says it does: `filter — 27 results` is a button, not a status line.
@@ -1123,9 +1198,9 @@ two clipping ancestors now instead of one, which is an argument for the row and 
 - **The close glyph is in the header row**, after the match count, as the handoff draws it.
   `DialogContent`'s own is absolutely positioned and would sit on top of that count, so this modal
   passes `showCloseButton={false}` and puts a `DialogClose` in the flow.
-- **`ui/dialog` carries the GRAPHITE width now**, `w-[calc(100%-1.25rem)] max-w-160`, replacing
-  shadcn's `sm:max-w-lg`. The gutter is the fluid half and stays; a modal that wants another size
-  changes the cap — `max-w-110` for the delete confirmation (COS-320), `max-w-170` for the edit modal
+- **`ui/dialog` carries the GRAPHITE width now**, `gr-modal-panel max-w-160`, replacing shadcn's
+  `sm:max-w-lg`. The gutter and the height ceiling are the fluid half, shared by all three modals
+  and named once in `utilities.css`; a modal that wants another size changes the cap — `max-w-110` for the delete confirmation (COS-320), `max-w-170` for the edit modal
   (COS-319). `alert-dialog.tsx` still has the stock width and no consumer; COS-320 is where it lands.
 - **The entrance is `bkmk-pop` under another name.** `fade-in-0 zoom-in-95` over 200ms is that
   keyframe's `opacity 0 → 1, scale .96 → 1` written in `tw-animate-css`'s vocabulary, which is what
@@ -1139,7 +1214,7 @@ two clipping ancestors now instead of one, which is an argument for the row and 
 
 ---
 
-## 12. The record (COS-301)
+## 13. The record (COS-301)
 
 One card, split: the record on the left, its screenshot on the right. It is **read-only** — §9 of the
 handoff makes editing a modal laid over whichever screen you are on (COS-319), not a second page with
@@ -1174,8 +1249,9 @@ application has. The same ratio carries the three empty states, which are three 
 capture was ever taken, one is on its way, and the file the record names could not be read. A capture
 pipeline that runs out of band needs all three.
 
-A plain `<img>` and the one `biome-ignore` in the codebase: the API answers with the file base64-encoded
-into a `data:` URL, which has nothing to optimise and no `next/image` loader.
+A plain `<img>`, and one of the three `biome-ignore`s in the codebase: the API answers with the file
+base64-encoded into a `data:` URL, which has nothing to optimise and no `next/image` loader. The
+second is the same call on the insert screen's local preview; the third is on `FieldGroup` (§9).
 
 ### Three actions, not the handoff's four
 
@@ -1185,7 +1261,7 @@ form's field, and the legacy screen this replaces had `back / edit / delete` and
 value is on the screen, in `fields`.
 
 Both bridges are gone now. `edit` is a `<Link>` into the intercepted route, so it lays the edit modal
-over this page (COS-319); `delete` opens the confirmation panel (COS-320, §13), and the in-place
+over this page (COS-319); `delete` opens the confirmation panel (COS-320, §14), and the in-place
 `delete? confirm cancel` that stood in for it — deliberately the smaller thing to throw away — was
 thrown away. On this screen the pair was always the wrong shape anyway: what it asked about was the
 whole page behind it, not a line under the cursor.
@@ -1205,7 +1281,7 @@ whole page behind it, not a line under the cursor.
   text around them can only ever be text. Same behaviour, and it earns its keep: notes in this index
   are full of urls.
 - **The status bar prints `record <id>`**, read off the address bar by `useShellRoute` rather than
-  passed down — a layout cannot take props from the page it renders (§9). `/bookmarks/edit/<id>` is a
+  passed down — a layout cannot take props from the page it renders (§10). `/bookmarks/edit/<id>` is a
   `detail` screen whose next segment is a word, so the pattern only matches digits and that screen
   falls back to the index counter.
 - **No keyboard hints.** The handoff's `esc back · e edit · a alarm · x delete` names four keys
@@ -1214,7 +1290,7 @@ whole page behind it, not a line under the cursor.
 
 ---
 
-## 13. The delete flow (COS-320)
+## 14. The delete flow (COS-320)
 
 **Two ways to ask, chosen by what is on the screen behind the question.** This is §10 of the handoff,
 and it is the only place in the system where one action has two confirmations by design rather than by
@@ -1257,7 +1333,7 @@ the filter modal's 640 and the edit modal's 680. It is a default here where 640 
 because an alert dialog asks one short question and `ui/dialog` has three consumers wanting three
 widths.
 
-It restates `font-mono text-xs` for the reason §7 gives twice over (COS-321, COS-342), and its body is
+It restates `font-mono text-xs` for the reason §8 gives twice over (COS-321, COS-342), and its body is
 the scroll container for the reason COS-341 gives. Three lines of prose will never scroll; a record
 with a 400-character title on a short viewport will, and the alternative is the `delete record` button
 pushed off the bottom of the screen.
@@ -1288,7 +1364,7 @@ bubble time was a fresh closure holding `confirm === "none"`, and it waved the k
 Probed through CDP, printing the state at all four phases: `window-capture` and `document-capture`
 still read `remove`, `window-bubble` reads `none` while the panel is visibly still on screen.
 
-Asking the DOM instead — the trick the index uses for `⌥F` (§10) — fails the same way and worse: at
+Asking the DOM instead — the trick the index uses for `⌥F` (§11) — fails the same way and worse: at
 bubble time the node is still present only because its exit animation is playing, so the check would
 pass or fail on a timer. **`capture: true` is the fix**, and it is a general rule, not a local one:
 *a guard that reads render state has to run before whatever else is going to change that state in the
@@ -1322,7 +1398,59 @@ same event.*
 
 ---
 
-## 14. What is still legacy
+## 15. Deliberate exceptions
+
+Everything on this list breaks a rule above on purpose. Anything **not** on it that breaks one is a
+defect, not a precedent — and the list is shorter than it was, because two of its entries turned out
+to be excuses rather than reasons.
+
+⚠️ **What used to be here: arbitrary values inside `ui/`.** `ring-[3px]`, `rounded-[4px]`,
+`p-[3px]`, `min-w-[8rem]`, a percentage centring spelled four ways — all of it left as it came from
+the registry, on the argument that a file nobody imports is not worth repainting and that editing
+one costs you the clean re-run of the CLI. Both halves were wrong. Every one of those values had an
+exact native step sitting next to it (§1's whole point), the swap changes not one byte of the
+compiled CSS, and a file whose only edits are named utilities still re-runs as a merge you can read.
+**They are gone**, in `ui/` as everywhere else.
+
+**The stock components keep the filler palette, which is a different question.** `checkbox`,
+`label`, `popover`, `scroll-area`, `select`, `separator`, `sonner` and `tabs` still paint in
+shadcn's neutral semantic tokens — the ones §3 describes as filler that a screen rewires when it
+lands. That is a colour decision waiting on a design, not a raw value waiting on a rule; nothing
+imports any of them, and repainting a component no screen renders would be inventing the design
+rather than applying it.
+
+**`--radius` is the one radius variable in a system that has no radius scale** (§5). `ui/sonner`
+reads it from an inline style, where a utility cannot reach.
+
+**Two a11y lint rules are off for three groups of files.** `useSemanticElements` and
+`useFocusableInteractive` fire on the ARIA table roles the index, the staged import table and the
+alarms list put over a CSS grid, which is argued in §11. `biome.json` names the three by glob —
+thirteen files today — rather than suppressing them line by line, and they are not off globally.
+
+**Three `biome-ignore`s exist and no more.** Two are `noImgElement` on images that have nothing to
+optimise — a `data:` URL and an object URL. The third is `useSemanticElements` on `FieldGroup`,
+where `<fieldset>` would put the label inside the box and take the two columns out of alignment.
+
+### What is still written in square brackets, and why none of it is a value
+
+The rule is about **design values**. These are not, which is why they neither snap to a step nor
+become a utility:
+
+| What | Where | Why there is nothing to snap |
+|---|---|---|
+| grid track lists | eleven screens | A template is a structure, and the framework has no vocabulary past twelve equal columns. Every fixed track in them already reads `--spacing(n)`, so the numbers *are* on the scale. |
+| state variants | throughout | `data-[state=open]` selects, it does not measure. |
+| `content-['']` | the two row overlays | An empty string. |
+| the chip's fill | `ds/Chip` | The hue is the user's own category colour, resolved at runtime (§11). |
+| a `calc`, an `inherit`, and two Radix variables | `tabs`, `scroll-area`, `select` | The last three unimported stock files. A keyword and a height Radix publishes at runtime have no step to take; they leave with the palette above, when something first renders them. |
+
+One more, and it is the rule catching itself: `globals.css` names a forbidden value in the comment
+explaining why the docs are kept out of Tailwind's scan. Verified against the bundle — it does not
+reach it.
+
+---
+
+## 16. What is still legacy
 
 Three files still carry tokens from the old UI, marked as such: **15 colours** in `colors.css`,
 **2 shadows** in `elevation.css`, **3 sizes and 3 families** in `typography.css`. They are not this

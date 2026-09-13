@@ -24,7 +24,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       type={type}
       data-slot="input"
       className={cn(
-        "w-full min-w-0 rounded-lg border border-gr-border bg-gr-sunk px-3 py-2 text-xs text-gr-fg inset-shadow-gr-sunk transition-[box-shadow] duration-150 outline-none",
+        "w-full min-w-0 rounded-lg border border-gr-border bg-gr-sunk px-3 py-2 text-xs text-gr-fg inset-shadow-gr-sunk transition-shadow duration-150 outline-none",
         "selection:bg-gr-selection selection:text-gr-fg-2 placeholder:text-gr-fg-4",
         "file:inline-flex file:border-0 file:bg-transparent file:text-3xs file:uppercase file:tracking-widest file:text-gr-fg-3",
         /* **The ring carries the state on its own, and the border never changes colour.**
@@ -34,8 +34,8 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
          * edge inside it. Two edges for one state, one of them the only saturated colour on a panel
          * of greys. Owner's call, and a departure from the handoff — hence the ring alone.
          *
-         * `transition-[box-shadow]` rather than `[border-color,box-shadow]` follows from it: there is
-         * no border colour left to animate. */
+         * The transition narrows to the shadow alone because of it: there is no border colour left
+         * to animate. The token fields still animate both, and carry their own utility for the pair. */
         "focus-visible:ring-3 focus-visible:ring-gr-ring",
         "aria-invalid:ring-3 aria-invalid:ring-gr-danger/25",
         "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",

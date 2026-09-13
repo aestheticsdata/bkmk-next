@@ -77,9 +77,10 @@ que la v2 est un sur-ensemble strict de la v1 : 4 fichiers modifiés, 10 identiq
 | DATA 03 | COS-308 — détection de doublons à la création | ✅ mergé (PR #35) |
 | AUTH 05 | COS-324 — récupération par passphrase : écran `/recover` et route | ✅ mergé (PR #40) |
 | DATA 05 | COS-310 — compteurs du rail, bloc `storage`, charge des 14 jours | ✅ mergé (PR #41) |
-| FIN 01 | COS-311 — passe responsive `@container` sur les 9 écrans | ⏳ en relecture |
+| FIN 01 | COS-311 — passe responsive `@container` sur les 9 écrans | ✅ mergé (PR #47) |
 | hors lot | COS-401 — alarms : `snooze` / `done` injoignables au doigt sous le pli | ⏳ ouvert par FIN 01 |
-| hors lot | COS-404 — menu utilisateur : câbler `change password` et `set recovery passphrase` | ⏳ ouvert |
+| hors lot | COS-404 — menu utilisateur : câbler `change password` et `set recovery passphrase` | ✅ mergé (PR #48) |
+| FIN 03 | BMK-24 (COS-313) — doc du design system, relue contre le code | ⏳ en relecture |
 
 ⚠️ **DATA 03 n'a qu'un étage sur les deux que son ticket décrit, et c'est une mesure qui l'a
 tranché.** Le premier — même url normalisée — trouve 17 groupes et 56 fiches sur l'index réel. Le
@@ -1371,7 +1372,7 @@ Ajouté au passage : `styles/animations.css` (`bkmk-blink`, `bkmk-pop`, `bkmk-fa
 
 ### Ce qui a été posé (COS-291, le 2026-07-29)
 
-Le détail est dans **`frontend/docs/design-system.md` §8**, qui fait autorité. Ici, seulement les
+Le détail est dans **`frontend/docs/design-system.md` §9**, qui fait autorité. Ici, seulement les
 décisions.
 
 **La question qui range chaque composant : shadcn le fournit-il déjà ?** Le ticket liste `Button`,
@@ -1419,7 +1420,7 @@ ici serait deviner à sa place.
 
 ### Ce qui a été posé (COS-292, le 2026-07-29)
 
-Le détail est dans **`frontend/docs/design-system.md` §9**, qui fait autorité. Ici, seulement les
+Le détail est dans **`frontend/docs/design-system.md` §10**, qui fait autorité. Ici, seulement les
 décisions.
 
 Le shell vit dans `components/shared/shell/` et est monté **une fois**, dans
@@ -1453,7 +1454,7 @@ toutes les largeurs. Les variantes `@max-3xl:` que DS 02 avait posées sur l'en-
   pire que jamais.
 
 Reste su et assumé : `size="chrome"` d'un bouton porte `@max-3xl:h-8.5`, qui marche sur les écrans et
-ne s'appliquera pas dans une modale. Le détail est au §7 de `frontend/docs/design-system.md`.
+ne s'appliquera pas dans une modale. Le détail est au §8 de `frontend/docs/design-system.md`.
 
 **Cinq écarts assumés, tous documentés dans le DS :**
 
@@ -1909,7 +1910,7 @@ propre, lint front inchangé (53 erreurs avant et après, la ligne de base héri
 
 ### Ce qui a été posé (COS-297, le 2026-07-30)
 
-Le détail visuel est dans **`frontend/docs/design-system.md` §9**, qui fait autorité. Ici, les
+Le détail visuel est dans **`frontend/docs/design-system.md` §10**, qui fait autorité. Ici, les
 décisions.
 
 **`AuthShell` est un frère d'`AppShell`, pas une variante.** Le chrome applicatif existe pour porter
@@ -1987,7 +1988,7 @@ précède est du markup et du CSS, pas une capture. La QA visuelle reste à fair
 
 ### Ce qui a été posé (COS-298, le 2026-07-30)
 
-Le détail visuel est dans **`frontend/docs/design-system.md` §9**, qui fait autorité. Ici, les
+Le détail visuel est dans **`frontend/docs/design-system.md` §10**, qui fait autorité. Ici, les
 décisions — dont une qui n'était pas dans le ticket d'origine.
 
 **La récupération de mot de passe par email est abandonnée.** Décision du 2026-07-30, prise en
@@ -2197,7 +2198,7 @@ avant d'affirmer quoi que ce soit sur une géométrie.
 ### Ce qui a été posé (COS-328 — le sur-titre et le pitch, le 2026-07-31)
 
 Deux lignes de copie sur les écrans d'auth, décidées par le propriétaire. Le détail est dans
-**`frontend/docs/design-system.md` §9**, septième ligne du tableau des écarts.
+**`frontend/docs/design-system.md` §10**, septième ligne du tableau des écarts.
 
 **Le sur-titre du login passe de `session` à `BKMK`.** `session` nommait un mécanisme que le visiteur
 n'a aucune raison de reconnaître ; la porte d'entrée porte le nom du produit. Le mot est donc à
@@ -2582,7 +2583,7 @@ qu'UI 01.
 
 Le seul ticket du chantier dont le livrable est **une mesure**, pas une fonctionnalité : relire le
 bloc `@container` du handoff sur les neuf écrans et corriger ce qui ne le tient pas. Le détail des
-correctifs est dans **`frontend/docs/design-system.md` §7**, sous « What the pass over all nine
+correctifs est dans **`frontend/docs/design-system.md` §8**, sous « What the pass over all nine
 screens found ». Ce qui suit est ce qui mérite d'être retenu au niveau de la spec.
 
 ### Le harnais, et pourquoi il compte plus que les quatre correctifs

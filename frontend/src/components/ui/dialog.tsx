@@ -48,7 +48,7 @@ function DialogOverlay({ className, ...props }: React.ComponentProps<typeof Dial
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-gr-scrim backdrop-blur-[3px] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",
+        "fixed inset-0 z-50 bg-gr-scrim backdrop-blur-xs data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",
         className,
       )}
       {...props}
@@ -58,18 +58,19 @@ function DialogOverlay({ className, ...props }: React.ComponentProps<typeof Dial
 
 /* **The GRAPHITE geometry, set here rather than by each modal** (COS-300).
  *
- * `w-[calc(100%-1.25rem)] max-w-160` is the handoff's `min(640px, 100% - 20px)` written as two
- * classes: the width is always the viewport less a 10px gutter each side, capped at 640. It replaces
- * shadcn's `w-full max-w-[calc(100%-1.25rem)] sm:max-w-lg`, which pinned every modal to 512px above
- * 640px of viewport and needed three overrides to unpin.
+ * `gr-modal-panel max-w-160` is the handoff's `min(640px, 100% - 20px)` written as two classes: the
+ * width is always the viewport less a 10px gutter each side, capped at 640. It replaces the
+ * registry's own arrangement, which pinned every modal to 512px above 640px of viewport and needed
+ * three overrides to unpin. The gutter lives in the utility because all three modals share it —
+ * `styles/utilities.css` says why a viewport measure minus a fixed gutter cannot be a scale step.
  *
  * 640 is the filter modal's number and also the middle of the system's three — the delete
  * confirmation is `min(440px, …)` (COS-320) and the edit modal `min(680px, …)` (COS-319). Both are one
  * `max-w-*` away, which is the point of leaving the fluid half fixed: a caller changes the cap, never
  * the gutter.
  *
- * `max-h-[calc(100dvh-1.5rem)]` is the handoff's `calc(100% - 24px)`, and what "fluid and scrollable"
- * means on a short viewport is settled one level down: **the panel is a column that does not scroll,
+ * The height ceiling in that same utility is the handoff's `calc(100% - 24px)`, and what "fluid and
+ * scrollable" means on a short viewport is settled one level down: **the panel is a column that does not scroll,
  * and `DialogBody` is the scroll container** (COS-341).
  *
  * It shipped the other way round — the panel itself scrolled, and the header and both consumers'
@@ -105,7 +106,7 @@ function DialogContent({
              came back at the browser's 16px default while the whole app is 12, and the padding
              around a 16px line made every one of them taller with it. Both measured through CDP,
              on both portalled surfaces. */
-          "fixed top-[50%] left-[50%] z-50 flex max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.25rem)] max-w-160 translate-x-[-50%] translate-y-[-50%] flex-col overflow-hidden rounded-2xl border border-gr-border-2 bg-gr-panel font-mono text-xs text-gr-fg shadow-gr-modal duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          "fixed top-1/2 left-1/2 z-50 flex gr-modal-panel max-w-160 -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-gr-border-2 bg-gr-panel font-mono text-xs text-gr-fg shadow-gr-modal duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className,
         )}
         {...props}
@@ -150,7 +151,7 @@ function DialogContent({
  *   never.
  * - What the filter modal's body needed was a fold in the other direction — two pairs of
  *   groups becoming one column — and it got it from `flex-wrap` plus a measured `min-w-*`,
- *   with no query at all. See §7 and §11 of docs/design-system.md. */
+ *   with no query at all. See §8 and §12 of docs/design-system.md. */
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

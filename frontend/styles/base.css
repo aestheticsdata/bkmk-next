@@ -101,3 +101,25 @@ input:-webkit-autofill:active {
   -webkit-text-fill-color: var(--color-gr-fg);
   caret-color: var(--color-gr-fg);
 }
+
+/* ═══ OVERSCROLL ═══════════════════════════════════════════════════════════════════
+ *
+ * **No rubber band, on any scroller, ever.** One rule on `*` rather than a class each
+ * surface has to remember: the desk, the rail's category list, a modal's body, the mobile
+ * category scroller and the document itself all bounce by default on macOS and iOS, and
+ * the next scroller added would bounce too.
+ *
+ * `none`, not `contain`. `contain` only stops the gesture chaining to the parent scroller
+ * and leaves the local bounce in place, which is the part being removed — a card that lifts
+ * off a fixed chrome strip reads as the layout coming apart.
+ *
+ * **The vertical axis only.** `overscroll-behavior-x` is the browser's back/forward swipe,
+ * not decoration, and nothing here is horizontal enough to want it disabled.
+ *
+ * In `@layer base`, so an `overscroll-*` utility still wins wherever a surface genuinely
+ * needs the chaining back. */
+@layer base {
+  * {
+    overscroll-behavior-y: none;
+  }
+}
