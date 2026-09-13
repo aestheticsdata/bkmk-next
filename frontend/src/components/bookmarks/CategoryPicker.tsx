@@ -97,7 +97,7 @@ function CategoryPicker({
           box (`focus-within`) rather than on the input, because the box is what reads as the control
           and the tokens live inside it. `flex-wrap` so a long selection grows the field downwards
           instead of scrolling sideways. */}
-      <div className="flex min-h-8.5 flex-wrap items-center gap-1.5 rounded-lg border border-gr-border bg-gr-sunk px-2 py-1.5 transition-[box-shadow,border-color] duration-150 inset-shadow-gr-sunk focus-within:border-gr-accent focus-within:ring-3 focus-within:ring-gr-ring">
+      <div className="flex min-h-8.5 flex-wrap items-center gap-1.5 rounded-lg border border-gr-border bg-gr-sunk px-2 py-1.5 gr-field-transition duration-150 inset-shadow-gr-sunk focus-within:border-gr-accent focus-within:ring-3 focus-within:ring-gr-ring">
         {tokens.map((category) => (
           <Token
             key={category.id}

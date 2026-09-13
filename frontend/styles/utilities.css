@@ -3,7 +3,7 @@
  *
  * This is the file globals.css says the shell does not need. The index needs it: a scrollbar is one of
  * the few things the framework has no vocabulary for, and pfa keeps its own
- * `components/chrome.css` for exactly that. See §10 of docs/design-system.md. */
+ * `components/chrome.css` for exactly that. See §11 of docs/design-system.md. */
 
 /* ═══ SCROLLBAR ════════════════════════════════════════════════════════════════════
  *
@@ -72,4 +72,68 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* ═══ GEOMETRY NO SCALE REACHES ════════════════════════════════════════════════════
+ *
+ * Four utilities, and each exists because the value it carries is in a unit the Tailwind
+ * scale does not have — `em`, `ch`, `vw`, and a `calc()` against the viewport. The rule they
+ * satisfy is §1's: snap to the native step where one exists, and where none does, name the
+ * value once here rather than spelling it inline at each use. */
+
+/* `gr-caret` — the blinking mark that closes a title (`.gr-caret` in the handoff).
+ *
+ * **`em`, and that is the whole point.** A caret that does not scale with its own text is
+ * the bug COS-298 fixed: half an em wide and 0.08em thick gives 2px under a 24px title and
+ * 1px under 12px text, which is the system's hairline weight at either size. The spacing
+ * scale is rem-based and cannot express "as thin as the rules, as wide as a character".
+ *
+ * The nudge down the baseline is where the `_` glyph sits, so the drawn mark lands where
+ * the typed one would have. Colour comes from `bg-current`, at the point of use. */
+@utility gr-caret {
+  display: inline-block;
+  margin-left: 0.12em;
+  width: 0.5em;
+  height: 0.08em;
+  translate: 0 0.06em;
+}
+
+/* `gr-modal-panel` — the fluid half of every modal's box, which the three of them share.
+ *
+ * The handoff writes `min(640px, 100% - 20px)`; the cap is the part that differs per modal
+ * and stays at the point of use as a `max-w-*` step, the gutter is the part that does not.
+ * `100dvh - 24px` is the height ceiling, also the handoff's. Neither is expressible on a
+ * scale: both are a viewport measure minus a fixed gutter. */
+@utility gr-modal-panel {
+  width: calc(100% - 1.25rem);
+  max-height: calc(100dvh - 1.5rem);
+}
+
+/* `gr-digits-3` — three digits of padding under a counter, so a rail row's name and its
+ * number do not shuffle sideways as the count changes.
+ *
+ * `ch` is the unit the requirement is written in — "three digits wide" — and the scale has
+ * no equivalent, since the answer moves with the font size. `min-width`, never `width`: a
+ * real index reaches four digits, and a fixed box clipped 1290 to `127`. */
+@utility gr-digits-3 {
+  min-width: 3ch;
+}
+
+/* `gr-drawer-cap` — the narrow-width account drawer's ceiling.
+ *
+ * The panel is a fixed 288px from the scale; this only stops it touching both edges on a
+ * phone narrower than 339px. A viewport percentage is the only way to say that, and the
+ * `max-w-*` scale is spacing and container widths. */
+@utility gr-drawer-cap {
+  max-width: 85vw;
+}
+
+/* `gr-field-transition` — the token fields' focus animation.
+ *
+ * Two properties, and the pair has no native utility: `transition-shadow` is box-shadow
+ * alone and `transition-colors` is every colour there is. These boxes animate their ring
+ * **and** their border, unlike `ui/input`, which dropped its border change (see the note in
+ * that file) and so gets the native one. */
+@utility gr-field-transition {
+  transition-property: box-shadow, border-color;
 }

@@ -249,7 +249,7 @@ function RailRow({
           clipped a real index of 1290 records to a plausible-looking `127`, and pushed the row wide
           enough to give the rail a horizontal scrollbar. The label truncates instead — a count that
           cannot be read is worse than a name that ends in an ellipsis. */}
-      <span className="min-w-[3ch] shrink-0 text-right tabular-nums text-gr-fg-4">
+      <span className="gr-digits-3 shrink-0 text-right tabular-nums text-gr-fg-4">
         {count == null ? "" : String(count).padStart(3, "0")}
       </span>
     </Link>

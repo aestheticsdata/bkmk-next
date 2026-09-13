@@ -40,10 +40,7 @@ function BlinkCursor({ className, ...props }: React.ComponentProps<"span">) {
     <span
       data-slot="blink-cursor"
       aria-hidden
-      className={cn(
-        "ml-[0.12em] inline-block h-[0.08em] w-[0.5em] translate-y-[0.06em] animate-gr-caret bg-current",
-        className,
-      )}
+      className={cn("gr-caret animate-gr-caret bg-current", className)}
       {...props}
     />
   );

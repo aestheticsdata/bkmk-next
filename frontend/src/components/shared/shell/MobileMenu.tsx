@@ -21,8 +21,8 @@ import { useEffect, useRef, useState } from "react";
  * `DialogHeader` carries the same note, and is why a modal in this system has no narrow
  * variant at all. The hamburger trigger below needs `@max-3xl:flex` to stay hidden above that
  * width, which only works if the whole panel stays under the shell's own `@container` rather
- * than escaping it the way a Radix-portalled panel would. `bg-gr-scrim backdrop-blur-[3px]` is
- * still borrowed from `ui/dialog.tsx` — a plain class, not the Radix piece that carries it there.
+ * than escaping it the way a Radix-portalled panel would. The scrim's fill and its blur are still
+ * borrowed from `ui/dialog.tsx` — plain classes, not the Radix piece that carries them there.
  *
  * Scope is deliberately narrow: this panel carries only what `@max-3xl:hidden` hides today,
  * `about` and `UserMenu`. The four module tabs already work under `@max-3xl` via `TabBar` and
@@ -92,7 +92,7 @@ function MobileMenu({ email }: { email: string }) {
         aria-hidden
         onClick={close}
         className={cn(
-          "fixed inset-0 z-30 bg-gr-scrim backdrop-blur-[3px] transition-opacity duration-200",
+          "fixed inset-0 z-30 bg-gr-scrim backdrop-blur-xs transition-opacity duration-200",
           open ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       />
@@ -107,7 +107,7 @@ function MobileMenu({ email }: { email: string }) {
         aria-hidden={!open}
         inert={!open}
         className={cn(
-          "fixed top-0 left-0 z-40 flex h-full w-72 max-w-[85vw] flex-col",
+          "gr-drawer-cap fixed top-0 left-0 z-40 flex h-full w-72 flex-col",
           "border-r border-gr-border-2 bg-gr-panel shadow-gr-modal transition-transform duration-200",
           open ? "translate-x-0" : "-translate-x-full",
         )}

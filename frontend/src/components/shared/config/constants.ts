@@ -43,15 +43,15 @@ export const alarmHref = (id: number | string): string => `${ROUTES.bookmarksRem
 export const alarmRowId = (id: number | string): string => `alarm-${id}`;
 
 export const COLUMN_WIDTH = {
-  linkIcon: "w-[20px]",
-  title: "w-[400px]",
-  stars: "w-[78px]",
-  notes: "w-[300px]",
-  priority: "w-[80px]",
-  categories: "w-[380px]",
-  screenshot: "w-[80px]",
-  alarm: "w-[70px]",
-  dateAdded: "w-[160px]",
+  linkIcon: "w-5",
+  title: "w-100",
+  stars: "w-19.5",
+  notes: "w-75",
+  priority: "w-20",
+  categories: "w-95",
+  screenshot: "w-20",
+  alarm: "w-17.5",
+  dateAdded: "w-40",
 };
 
 export const PAGES = {
