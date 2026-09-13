@@ -21,8 +21,8 @@ set -Eeuo pipefail
 # The nginx switch is deliberately NOT in this script. It needs root, and it is the one step that
 # should be run by hand with `nginx -t` in front of it. It was done once, and this script used to
 # end by warning that it had not been — a fixed string, checking nothing, alarming after every
-# successful deploy (BMK-70). `location /` on ks-b proxies to 127.0.0.1:3100; if that ever changes,
-# the vhost is where it will say so, not a `log` line here.
+# successful deploy (BMK-70). `location /` on ks-b proxies to the front's pm2 address; if that ever
+# changes, the vhost is where it will say so, not a `log` line here.
 ######################################
 
 ######################################
@@ -37,6 +37,25 @@ RELEASES_DIR="$WEB_ROOT_BASE/front-releases"
 PM2_ECOSYSTEM_FILE="ecosystem.config.cjs"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Where the front ends up listening, read out of the pm2 ecosystem file beside this script.
+#
+# ⚠️ **Not written here as a literal.** ZEU-74 moved the front from 3100 to 3001 -- nginx,
+# `ecosystem.config.cjs` and Zeus's registry all followed, and the closing `log` line below did not,
+# so every successful deploy signed off with the old number. That is BMK-70's defect exactly: a fact
+# hard-coded into deploy output that quietly stopped being true. One file decides the address, so
+# this reads that file and the next move needs no edit here.
+#
+# Prints nothing on an unexpected shape rather than guessing: the caller drops the line, and a
+# missing address is better than a confident wrong one -- which is the whole point of this change.
+front_address() {
+  local args port host
+  args=$(sed -n 's/.*args:[[:space:]]*"\([^"]*\)".*/\1/p' "$SCRIPT_DIR/$PM2_ECOSYSTEM_FILE" 2>/dev/null | head -1)
+  port=$(printf '%s' "$args" | sed -n 's/.*-p[[:space:]]\{1,\}\([0-9]\{1,\}\).*/\1/p')
+  host=$(printf '%s' "$args" | sed -n 's/.*-H[[:space:]]\{1,\}\([^[:space:]]\{1,\}\).*/\1/p')
+  [ -n "$port" ] || return 1
+  printf '%s:%s' "${host:-127.0.0.1}" "$port"
+}
 
 ######################################
 # Reporting to Zeus (BMK-71)
@@ -519,7 +538,9 @@ EOF
   zeus_report "success" || log "⚠️  Zeus was not told about this deploy (non-fatal)"
 
   log "✅ Front deployment completed"
-  log "ℹ️  bkmk-front is listening on 127.0.0.1:3100"
+  if FRONT_ADDRESS=$(front_address); then
+    log "ℹ️  bkmk-front is listening on $FRONT_ADDRESS"
+  fi
   log "ℹ️  Previous version: $BACKUP_DIR"
   log "ℹ️  Releases:         $RELEASES_DIR"
   log "ℹ️  Rollback with:    ./deploy-front.sh rollback"
