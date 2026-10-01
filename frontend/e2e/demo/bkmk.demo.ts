@@ -235,6 +235,9 @@ test("bkmk, end to end", async ({ demo }) => {
   const recordUrl = await page.getByTestId("record-url").getAttribute("href");
   expect(recordUrl, "the record has no url").toBeTruthy();
   await demo.dwell(1000);
+  // For the landing page's film: what it frames whole — the record's preview and its note.
+  if (heroHasShot) await demo.mark(shot);
+  if (heroHasNote) await demo.mark(page.getByTestId("record-note"));
   if (heroHasNote) await demo.moveTo(page.getByTestId("record-note"), { dwell: 900, aim: "text" });
   if (heroHasShot) await demo.moveTo(shot, { dwell: 900 });
   demo.shot("record");
@@ -253,6 +256,7 @@ test("bkmk, end to end", async ({ demo }) => {
   await expect(edit).toBeVisible();
   await demo.chapter("Edit");
   await expect(edit.getByTestId("field-title")).toHaveValue(/./);
+  await demo.mark(edit);
   await demo.dwell(1000);
 
   // Stars: five, unless the record already has five — then three. Priority: a level that is off.
@@ -309,6 +313,7 @@ test("bkmk, end to end", async ({ demo }) => {
   await demo.click(page.getByTestId("index-query"));
   const filters = page.getByTestId("filter-modal");
   await expect(filters).toBeVisible();
+  await demo.mark(filters);
   await demo.dwell(800);
   await demo.click(filters.locator('[data-testid="filter-stars"][data-min="3"]'));
   await demo.click(filters.locator('[data-testid="filter-priority"][data-level="high"]'));
@@ -331,6 +336,7 @@ test("bkmk, end to end", async ({ demo }) => {
   const exportMenu = page.getByTestId("export-menu-content");
   await expect(exportMenu).toBeVisible();
   await expect(exportMenu).toContainText(INDEX_TEXT.export.caption);
+  await demo.mark(exportMenu);
   await sweep(exportMenu.getByTestId("export-format"), [0, 1, 2], 350);
   await demo.dwell(400);
   await demo.press("Escape");
@@ -352,6 +358,7 @@ test("bkmk, end to end", async ({ demo }) => {
   const duplicates = page.getByTestId("insert-duplicates");
   await expect(duplicates).toBeVisible({ timeout: 15_000 });
   await expect(duplicates).toHaveAttribute("data-count", /^[1-9]/, { timeout: 15_000 });
+  await demo.mark(duplicates);
   await demo.moveTo(duplicates, { dwell: 1300, aim: "text" });
 
   await demo.click(page.getByTestId("tags-suggestion").first());
@@ -369,6 +376,7 @@ test("bkmk, end to end", async ({ demo }) => {
   await demo.click(page.getByTestId("shot-choose"));
   await (await shotChooser).setFiles(SHOT);
   await expect(page.getByTestId("shot-preview")).toBeVisible();
+  await demo.mark(page.getByTestId("shot-preview"));
   await demo.dwell(1300);
   demo.shot("insert", async (target) => {
     await fillInsert(target, recordUrl ?? "");
@@ -385,6 +393,7 @@ test("bkmk, end to end", async ({ demo }) => {
   await demo.chapter("Alarms");
   await expect(page.getByTestId("alarms-load")).toBeVisible({ timeout: 20_000 });
   await demo.dwell(1400);
+  await demo.mark(page.getByTestId("alarms-load"));
   demo.shot("alarms");
 
   // The fortnight's load, four bars of it. Each bar carries its day and its count as a native title.
@@ -420,6 +429,7 @@ test("bkmk, end to end", async ({ demo }) => {
   const staged = page.getByTestId("import-staged");
   await expect(staged).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('[data-testid="import-staged-row"][data-state="DUP"]').first()).toBeVisible();
+  await demo.mark(staged);
   await demo.dwell(1200);
   await sweep(page.getByTestId("import-staged-row"), [0, 2, 5], 450, "text");
   await demo.moveTo(page.locator('[data-testid="import-option"][data-option="skipDuplicates"]'), { dwell: 600 });
@@ -440,6 +450,7 @@ test("bkmk, end to end", async ({ demo }) => {
   const menu = page.getByTestId("user-menu-content");
   await expect(menu).toBeVisible();
   await demo.chapter("Account");
+  await demo.mark(menu);
   await sweep(menu.getByTestId("user-menu-item"), [0, 1], 500);
   await demo.dwell(900);
   await demo.press("Escape");

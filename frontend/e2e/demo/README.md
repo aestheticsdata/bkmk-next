@@ -16,6 +16,7 @@ Output lands in `e2e/demo/out/` (gitignored):
 - `chapters.vtt` — WebVTT, for `<track kind="chapters">` on the portfolio's own `<video>`
 - `chapters.ffmeta` — ffmpeg metadata; already applied to the mp4, kept so a re-encode can reapply it
 - `chapters.json` — the same marks with millisecond precision
+- `events.json` — everything the hand did, on the film's clock: see **For the landing page's films**
 - `shots/01-record.png` and six more — stills at 3840×2160, for a page that wants pictures too
 - `upload/page.png` and `upload/bookmarks.csv` — the screenshot chapter 5 attaches and the export
   chapter 7 imports, both drawn by the storyboard itself
@@ -187,6 +188,26 @@ resolves to two elements. The storyboard scopes it to the meta row (`chrome-meta
 **`category.name` is unique across accounts on the live database**, which `bkmk.sql` does not
 declare — the seeder names its categories to avoid the real index's and refuses when one collides.
 Not the harness's business, but the reason the seeded categories are called `code` and `lab`.
+
+## For the landing page's films: `events.json`
+
+The landing page cuts a film of about a minute from this take with Remotion (`landing-page/films/`):
+it pushes in on each action, speeds through the reading pauses, and draws its own big pointer.
+Pixels alone cannot drive that, so every take also writes `events.json` (`events.ts`, ported from
+Trekker's harness with the log in `cursor.ts`, `fixture.ts` and `recorder.ts`): every pointer step,
+every press, every key, and every storyboard verb — `click`, `moveTo`, `fill`, `type`, `press`,
+`scroll`, `dwell` — with its start and end on the film's clock and the `data-testid`, `data-*`
+members and box of the element it was aimed at. The edit names its beats by those marks, never by
+a second, so a re-take keeps it. `demo.mark(locator)` notes where an element is with no pointer
+and no time: the storyboard marks what the film frames whole — the record's preview and note, the
+edit and filter modals, the export menu, the duplicates panel, the screenshot preview, the load
+chart, the staged import, the user menu. A take for a film is filmed without the drawn arrow, which
+the film redraws, on an account seeded the same day:
+
+```bash
+cd backend && pnpm seed --wipe
+cd ../frontend && DEMO_CURSOR=off DEMO_FPS=30 pnpm video:generate
+```
 
 ## Knobs
 
