@@ -1,14 +1,15 @@
-import { isForgedAction } from "@lib/proxy/forgedAction";
+import { isServerActionRequest } from "@lib/proxy/serverAction";
 import { NextResponse } from "next/server";
 
 import type { NextRequest } from "next/server";
 
 /**
- * Only here to turn away forged Server Action probes (BMK-75). The matcher runs it on requests that
- * carry a `Next-Action` header and on nothing else, so pages and assets never pass through it.
+ * Only here to turn away Server Action probes (BMK-76). This front has no Server Actions, so every
+ * request carrying a `Next-Action` header is unwanted. The matcher runs it on those requests and on
+ * nothing else, so pages and assets never pass through it.
  */
 const proxy = (request: NextRequest): NextResponse =>
-  isForgedAction(request.headers) ? new NextResponse(null, { status: 400 }) : NextResponse.next();
+  isServerActionRequest(request.headers) ? new NextResponse(null, { status: 400 }) : NextResponse.next();
 
 export default proxy;
 
