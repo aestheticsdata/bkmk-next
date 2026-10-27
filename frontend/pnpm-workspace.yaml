@@ -3,3 +3,10 @@ allowBuilds:
   # pas utilisé aujourd'hui, mais autoriser son build évite une erreur en production
   # le jour où il le sera.
   sharp: true
+
+overrides:
+  # Patched for security advisories in transitive deps (2026-10-27).
+  nanoid: "^3.3.18"
+  source-map-js: "^1.2.2"
+  follow-redirects: "^1.16.1"
+  decode-uri-component: "^0.5.0"
