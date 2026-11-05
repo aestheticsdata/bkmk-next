@@ -24,7 +24,7 @@ function Desk({ children }: { children: React.ReactNode }) {
   return (
     <main
       key={pathname}
-      className="flex min-h-0 flex-1 animate-gr-screen flex-col gap-3 overflow-auto p-3.5 @max-3xl:gap-2 @max-3xl:p-2"
+      className="flex min-h-0 flex-1 animate-gr-screen flex-col gap-3 overflow-auto overscroll-y-none p-3.5 @max-3xl:gap-2 @max-3xl:p-2"
     >
       {children}
     </main>

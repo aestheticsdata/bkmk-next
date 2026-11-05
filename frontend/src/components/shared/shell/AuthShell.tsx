@@ -51,7 +51,7 @@ function AuthShell({
         <Led />
       </header>
 
-      <main className="grid min-h-0 flex-1 animate-gr-screen grid-cols-1 place-items-center overflow-auto p-3.5 @max-3xl:p-2">
+      <main className="grid min-h-0 flex-1 animate-gr-screen grid-cols-1 place-items-center overflow-auto overscroll-y-none p-3.5 @max-3xl:p-2">
         {children}
       </main>
 

@@ -56,9 +56,12 @@ triggers are all `<button>`. `base.css` restores it once for `button` and `[role
 this should not be true of, and the next one written gets it for free. It sits in `@layer base`, so a
 `cursor-*` utility still wins where a screen needs something else.
 
-**No rubber band.** Every scroller — the desk, the rail's category list, a modal's body, the mobile
-category scroller, the document itself — carries `overscroll-behavior-y: none`, from one rule on `*`
-in `base.css` rather than a class per surface, so the next scroller written gets it too. `none` and
+**No rubber band.** Every vertical scroller — the desk, the rail's category list, a modal's body, a
+menu, the document itself — carries `overscroll-behavior-y: none`. Not from a rule on `*`: every
+`overflow-hidden` card and `overflow-x-auto` strip is a scroll container too, and with `none` it kept
+the wheel and froze the page under the pointer. `base.css` puts it on `html`, `body`, `.overflow-y-auto`
+and `.overflow-y-scroll`, so a new scroller is covered as long as it says `overflow-y-auto`; one that
+scrolls through plain `overflow-auto` (the desk, the auth shell) carries `overscroll-y-none` itself. `none` and
 not `contain`: `contain` stops the gesture chaining to the parent and leaves the local bounce, which
 is the part being removed. The horizontal axis is left alone — that one is the browser's back
 gesture.

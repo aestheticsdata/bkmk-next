@@ -104,10 +104,16 @@ input:-webkit-autofill:active {
 
 /* ═══ OVERSCROLL ═══════════════════════════════════════════════════════════════════
  *
- * **No rubber band, on any scroller, ever.** One rule on `*` rather than a class each
- * surface has to remember: the desk, the rail's category list, a modal's body, the mobile
- * category scroller and the document itself all bounce by default on macOS and iOS, and
- * the next scroller added would bounce too.
+ * **No rubber band, on any scroller, ever** — the desk, the rail's category list, a modal's
+ * body, a menu, the document itself all bounce by default on macOS and iOS.
+ *
+ * **On the page and the vertical scrollers, NOT on `*`.** Any element whose overflow is not
+ * `visible` — an `overflow-hidden` card, an `overflow-x-auto` strip — is a scroll container,
+ * and with `none` it keeps the wheel instead of handing it on: the page froze while the
+ * pointer was over one. So the rule names what really scrolls vertically: `html`, `body`, and
+ * anything that says so with `overflow-y-auto` / `-scroll`. A new vertical scroller is covered
+ * as long as it says so; one that scrolls through plain `overflow-auto` (the desk, the auth
+ * shell's main) carries `overscroll-y-none` itself.
  *
  * `none`, not `contain`. `contain` only stops the gesture chaining to the parent scroller
  * and leaves the local bounce in place, which is the part being removed — a card that lifts
@@ -119,7 +125,7 @@ input:-webkit-autofill:active {
  * In `@layer base`, so an `overscroll-*` utility still wins wherever a surface genuinely
  * needs the chaining back. */
 @layer base {
-  * {
+  :is(html, body, .overflow-y-auto, .overflow-y-scroll) {
     overscroll-behavior-y: none;
   }
 }
