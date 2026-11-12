@@ -503,7 +503,9 @@ command -v pm2  >/dev/null 2>&1 || { echo "❌ ERROR: pm2 is not installed on th
 
 cd "$STAGING_DIR"
 rm -rf node_modules
-pnpm install --frozen-lockfile --prod=false
+# devDependencies too. Spelt as NODE_ENV, not a flag: pnpm 12 rejects `--prod=false` outright, and
+# with no `--prod` given it reads NODE_ENV, the one spelling a CLI change cannot deprecate.
+NODE_ENV=development pnpm install --frozen-lockfile
 EOF
 
   ######################################
