@@ -314,7 +314,25 @@ check_pnpm_baseline() {
   log "➡️  pnpm baseline — local $local_v / server $remote_v"
 }
 
+# The laptop is short on disk: a deploy leaves no local dependencies behind, whether it succeeds or
+# not. Nothing here builds (the server runs the source as is and installs its own dependencies), so
+# the only weight is the local node_modules; `pnpm install` restores it from the lockfile. Kept while
+# the API runs from this checkout (pm2's `bkmk-server`, whose command line carries the script's
+# full path), which loads from it.
+clean_local_build() {
+  # Runs on exit, after a failure too: the ERR trap must not report the deploy a second time.
+  trap - ERR
+  if pgrep -f "$SCRIPT_DIR/src/server.js" > /dev/null 2>&1; then
+    log "ℹ️  the API is running from here: local node_modules kept"
+  elif [ -d "$SCRIPT_DIR/node_modules" ]; then
+    log "🧹 Removing $(du -sh "$SCRIPT_DIR/node_modules" 2>/dev/null | cut -f1 || true) node_modules"
+    rm -rf -- "$SCRIPT_DIR/node_modules"
+  fi
+  return 0
+}
+
 deploy() {
+  trap clean_local_build EXIT
   check_pnpm_baseline
   cd "$SCRIPT_DIR"
 
@@ -522,7 +540,7 @@ if [ ! -s "$DUMP_FILE" ]; then
   exit 1
 fi
 
-echo "✅ dump: $DUMP_FILE ($(du -h "$DUMP_FILE" | cut -f1))"
+echo "✅ dump: $DUMP_FILE ($(du -h "$DUMP_FILE" | cut -f1 || true))"
 EOF
 
   log "➡️  Migrations — state before"

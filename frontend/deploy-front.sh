@@ -332,7 +332,41 @@ check_pnpm_baseline() {
   log "➡️  pnpm baseline — local $local_v / server $remote_v"
 }
 
+# The laptop is short on disk: a deploy leaves no build output behind, whether it succeeds or not.
+# Nothing here builds locally (the server installs and builds the release), but a `next build` or a
+# demo-film take from an earlier session leaves hundreds of MB in `.next` and `test-results`. The
+# film itself (`e2e/demo/out`) is a product, not build output, and is never touched. The one
+# exception is a `next dev` running from this checkout: its `.next/dev` is live, and pulling it out
+# from under the dev server breaks it, so `.next` is left alone while one is running. Matched on
+# the path of this checkout's own next binary: a bare "next dev" would match any project's.
+clean_local_build() {
+  # Runs on exit, after a failure too: the ERR trap must not report the deploy a second time.
+  trap - ERR
+  local freed=() dev_pattern="$SCRIPT_DIR/node_modules/.*next dev"
+  if pgrep -f "$dev_pattern" > /dev/null 2>&1; then
+    log "ℹ️  next dev is running: local .next kept"
+  elif [ -d "$SCRIPT_DIR/.next" ]; then
+    freed+=("$(du -sh "$SCRIPT_DIR/.next" 2>/dev/null | cut -f1 || true) .next")
+    rm -rf -- "$SCRIPT_DIR/.next"
+  fi
+  if [ -d "$SCRIPT_DIR/test-results" ]; then
+    freed+=("$(du -sh "$SCRIPT_DIR/test-results" 2>/dev/null | cut -f1 || true) test-results")
+    rm -rf -- "$SCRIPT_DIR/test-results"
+  fi
+  [ ${#freed[@]} -gt 0 ] && log "🧹 Local build output removed: ${freed[*]}"
+  # node_modules too: `pnpm install` restores it from the lockfile. Kept while a `next dev` runs
+  # from here, which loads from it.
+  if pgrep -f "$dev_pattern" > /dev/null 2>&1; then
+    log "ℹ️  next dev is running: local node_modules kept"
+  elif [ -d "$SCRIPT_DIR/node_modules" ]; then
+    log "🧹 Removing $(du -sh "$SCRIPT_DIR/node_modules" 2>/dev/null | cut -f1 || true) node_modules"
+    rm -rf -- "$SCRIPT_DIR/node_modules"
+  fi
+  return 0
+}
+
 deploy() {
+  trap clean_local_build EXIT
   check_pnpm_baseline
   cd "$SCRIPT_DIR"
 
